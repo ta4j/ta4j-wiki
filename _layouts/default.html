@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="{{ site.lang | default: "en-US" }}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+{% seo %}
+
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <a href="/ta4j-wiki/"> <h1>Ta4j Wiki</h1> </a>
+        <p>Documentation, examples and further information</p>
+
+        {% if site.github.is_project_page %}
+          <p class="view"><a href="https://github.com/ta4j/ta4j">View the Project on GitHub <small>{{ github_name }}</small></a></p>
+        {% endif %}
+          <p class="view"><a href="{{ site.github.repository_url }}">View the Wiki On GitHub</a></p>
+
+        {% if site.github.is_user_page %}
+          <p class="view"><a href="{{ site.github.owner_url }}">View My GitHub Profile</a></p>
+        {% endif %}
+          <!-- Custom div for the sidebar-->
+        <div>
+            <nav>
+                <dl class="sidebar" >
+                    <dt class="sidebar">General</dt>
+                        <dd><a href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.11/ta4j-core-0.11-javadoc.jar/!/index.html">Javadoc (0.11)</a></dd>
+                        <dd><a href="Release-notes.html">Release Notes</a></dd>
+                        <dd><a href="Roadmap-and-tasks.html">Roadmap</a></dd>
+                    <dt clas="sidebar">User’s guide</dt>
+                        <dd><a href="Getting-started.html">Getting Started</a></dd>
+                        <dd><a href="Time-series-and-bars.html">Time series and Bars</a></dd>
+                        <dd><a href="Technical-indicators.html">Technical Indicators</a></dd>
+                        <dd><a href="Trading-strategies.html">Trading Strategies</a></dd>
+                        <dd><a href="Backtesting.html">Backtesting</a></dd>
+                        <dd><a href="Live-trading.html">Live Trading</a></dd>
+                    <dt clas="sidebar">Contributoring</dt>
+                        <dd><a href="Found-a-bug.html">Found a bug</a></dd>
+                        <dd><a href="Branching-model.html">Branching model</a></dd>
+                        <dd><a href="How-to-contribute">How to Contribute</a></dd>
+                        <dd><a href="XLS-Testing.html">XLS Testing</a></dd>
+                    <dt clas="sidebar">Development Features</dt>
+                        <dd><a href="Num.html">Num</a></dd>
+                    <dt class="sidebar">Miscellaneous</dt>
+                        <dd><a href="Related-projects.html">Related Projects</a></dd>
+                        <dd><a href="Alternative-libraries">Alternative Libraries</a></dd>
+                        <dd><a href="Maven-notes.html">Maven Notes</a></dd>
+                </dl>
+            </nav>
+        </div>
+        {% if site.show_downloads %}
+          <ul>
+            <li><a href="{{ site.github.zip_url }}">Download <strong>ZIP File</strong></a></li>
+            <li><a href="{{ site.github.tar_url }}">Download <strong>TAR Ball</strong></a></li>
+            <li><a href="https://github.com/ta4j/ta4j">Ta4j<strong>GitHub</strong></a></li>
+          </ul>
+        {% endif %}
+
+        <p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }} Organization</a></p>
+      </header>
+
+      <section>
+
+      {{ content }}
+
+      </section>
+    
+
+
+    </div>
+    <script src="{{ '/assets/js/scale.fix.js' | relative_url }}"></script>
+
+
+  {% if site.google_analytics %}
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+        ga('create', '{{ site.google_analytics }}', 'auto');
+        ga('send', 'pageview');
+    </script>
+  {% endif %}
+  </body>
+</html>

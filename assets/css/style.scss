@@ -1,0 +1,20 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+.sidebar dl
+{
+    
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 10px;
+}
+
+.sidebar dt
+{
+    display: list-item;
+    list-style-type: disc;
+    margin: 5px;
+    display: list-item;
+}
