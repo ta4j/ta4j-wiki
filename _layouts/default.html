@@ -15,23 +15,26 @@
   <body>
     <div class="wrapper">
       <header>
-        <a href="/ta4j-wiki/"> <h1>Ta4j Wiki</h1> </a>
+        <a href="/ta4j-wiki/"> <h3>Ta4j Wiki</h3> </a>
         <p>Documentation, examples and further information</p>
-
-        {% if site.github.is_project_page %}
-          <p class="view"><a href="https://github.com/ta4j/ta4j">View the Project on GitHub <small>{{ github_name }}</small></a></p>
+        {% if site.show_downloads %}
+          <ul>
+            <li><a href="{{ site.github.zip_url }}">Download <strong>ZIP File</strong></a></li>
+            <li><a href="{{ site.github.tar_url }}">Download <strong>TAR Ball</strong></a></li>
+            <li><a href="https://github.com/ta4j/ta4j">Ta4j<strong>GitHub</strong></a></li>
+          </ul>
         {% endif %}
-          <p class="view"><a href="{{ site.github.repository_url }}">View the Wiki On GitHub</a></p>
+          <p class="view"><a target="_blank" href="{{ site.github.repository_url }}">View the Wiki On GitHub</a></p>
 
         {% if site.github.is_user_page %}
-          <p class="view"><a href="{{ site.github.owner_url }}">View My GitHub Profile</a></p>
+          <p class="view"><a target="_blank" href="{{ site.github.owner_url }}">View My GitHub Profile</a></p>
         {% endif %}
           <!-- Custom div for the sidebar-->
         <div>
             <nav>
                 <dl class="sidebar" >
                     <dt class="sidebar">General</dt>
-                        <dd><a href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.11/ta4j-core-0.11-javadoc.jar/!/index.html">Javadoc (0.11)</a></dd>
+                        <dd><a target="_blank" href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.11/ta4j-core-0.11-javadoc.jar/!/index.html">Javadoc (0.11)</a></dd>
                         <dd><a href="Release-notes.html">Release Notes</a></dd>
                         <dd><a href="Roadmap-and-Tasks.html">Roadmap</a></dd>
                     <dt clas="sidebar">User’s guide</dt>
@@ -55,13 +58,6 @@
                 </dl>
             </nav>
         </div>
-        {% if site.show_downloads %}
-          <ul>
-            <li><a href="{{ site.github.zip_url }}">Download <strong>ZIP File</strong></a></li>
-            <li><a href="{{ site.github.tar_url }}">Download <strong>TAR Ball</strong></a></li>
-            <li><a href="https://github.com/ta4j/ta4j">Ta4j<strong>GitHub</strong></a></li>
-          </ul>
-        {% endif %}
 
         <p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }} Organization</a></p>
       </header>

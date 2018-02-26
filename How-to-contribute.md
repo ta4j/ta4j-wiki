@@ -10,7 +10,7 @@ You are always welcome. We suggest you before you contribute a bigger work to ge
 ## How to contribute?
 In the most cases (e.g. bug fixes and little enhancements) you can create a pull request to the `develop` branch. For bigger improvements please open an issue to discuss your plans.
 * _Note_: **Pull requests to the `master `branch will not be accepted**
-* _Note_: **Pull requests with respect to items of the [Roadmap](https://github.com/ta4j/ta4j/wiki/Roadmap) are very welcome!**
+* _Note_: **Pull requests with respect to items of the [Roadmap](Roadmap-and-Tasks.md) are very welcome!**
 
 
 Take a look at the [branching model](Branching-model.htlm) to get an overview. You can fork and clone the repository and set up the develop branch as follows:

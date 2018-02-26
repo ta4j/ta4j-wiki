@@ -1,4 +1,4 @@
-# Num (in progress..)
+# The Num Interface
 
 ## What is Num?
 Since release 0.12 Ta4j supports using different types for basic calculations proceeded in `Indicator` or `TimeSeries`. That means you have the possibility to write your own implementation of the `Num` interface or you can choose between existing implementations. At the moment there are two existing implementations available: `BigDecimalNum` (default) and `DoubleNum`. As the names suggest, the available implementations use different types (delegates) for arithmetic calculations. `DoubleNum` uses the `double` primitive and `BigDecimalNum` uses the `BigDecimal` class for calculations. The following code snippets illustrate the difference:
@@ -33,7 +33,7 @@ The [right way](https://stackoverflow.com/questions/8148684/what-is-the-best-dat
 ### BigDecimalNum
 The `BigDecimalNum` implementation of `Num` uses [BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) as delgate and can represent any decimal value exact up to 32 decimal places. It can be used to do highly accurate calculations and to work with crypto currencies which representation needs a lot of decimal places. It is the default `Num` implementation if you create a `BaseTimeSeries`. For some purposes that requier very fast or a lot calculations you could notice a performance bottleneck due to this implementation of `Num`
 
-```
+```java
 TimeSeries series_1 = BaseTimeSeries.SeriesBuilder().build() // implicit initialize TimeSeries with BigDecimalNum
 TimeSeries series_2 = BaseTimeSeries.SeriesBuilder.withNumType(BigDecimalNum::valueOf).build() // explicit initialize TimeSeries with BigDecimalNum
 ```
@@ -42,14 +42,67 @@ TimeSeries series_2 = BaseTimeSeries.SeriesBuilder.withNumType(BigDecimalNum::va
 ### DoubleNum
 
 After having found out the disadvanteges about`DoubleNum`, please note that it can give your Ta4j application a heavy performance boost. You can create a `BaseTimeSeries` using `DoubleNum` as follows:
-```
+```java
 TimeSeries series_3 = BaseTimeSeries.SeriesBuilder.withNumType(DoubleNum::valueOf).build() // explicit initialize TimeSeries with DoubleNum
 ```
+<br>
+<br>
 
+## Design and other possible implementations
+If you want to write your own implementation of `Num` you just have to let your class implement the ``Num`` interface:
+```java
+public class MyNum implements Num {
+    // Override interface functions...
+}
+```
+For instance you could use `integer` or `long` as delegate to solve the problem of performance vs. accuracy. An existing alternative to ``BigDecimal`` could be [Decimal4j](https://github.com/tools4j/decimal4j).
 
-## Other possible implementations
-The primitives `integer` or `long` could also used as delegate to solve the problem of performance vs. accuracy.
-(in progess)
+Special attention requiers the following prototype of the ``Num`` interface:
+```java
+public Function<Number, Num> function(); // required from every class that implements Num..
+```
+This function must returns a [java.util.Function](https://docs.oracle.com/javase/8/docs/api/java/util/function/package-summary.html) object, that allows users and other classes of the library to convert any [Number](https://docs.oracle.com/javase/7/docs/api/java/lang/Number.html) extending class (like Double, Integer, BigDecimal, ...) into your Num implementation.
 
-## Writing a custom Num implementation
-(in progess)
+The existing implementations ``DoubleNum`` and ``BigDecimalNum`` provide static functions to convert a ``Number`` into the corresponding ``Num`` implementing class:
+```java
+    /**
+     * Returns a {@code Num} version of the given {@code Number}.
+     * Warning: This method turns the number into a string first
+     * @param val the number
+     * @return the {@code Num}
+     */
+    public static BigDecimalNum valueOf(Number val) {
+        return new BigDecimalNum(val.toString());
+    }
+```
+
+The `function()` should return a lamba expression of this static ``valueOf()`` function. The following code snipped shows how the ``BigDecimalNum`` class overrides the `function()` function with help of a [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html):
+```java
+    @Override
+    public Function<Number, Num> function() {
+        return BigDecimalNum::valueOf;
+    }
+```
+### Handling Num
+``TimeSeries`` and ``Bar`` need a reference to this ``Function`` object that enables to transform any ``Number`` to the wanted ``Num`` implementation. Because of that you have to pass this function when creating a ``Bar`` manually:
+```java
+// The bar object has to transform the intput into Num with help of the given function
+Bar bar = new BaseBar(ZonedDateTime.now(),1,3,1,1,1,BigDecimalNum::valueOf);
+```
+
+Also the TimeSeries needs this ``Function``. The easiest way to handle this is to use the SeriesBuilder and to add bar data directly to the TimeSeries:
+```java
+TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("mySeries").build(); // the builder uses BigDecimalNum as default
+
+ZonedDateTime endTime = ZonedDateTime.now();
+// add bar data directly. It will be transformed automatically to Num implementation of TimeSeries
+series.addBar(endTime, 105.42, 112.99, 104.01, 111.42, 1337); 
+series.addBar(endTime.plusDays(1), 111.43, 112.83, 107.77, 107.99, 1234);
+series.addBar(endTime.plusDays(2), 107.90, 117.50, 107.90, 115.42, 4242);
+```
+
+You can determine the ``Num`` transforming ``Function`` with the builder by using the ``withNumTypeOf(function)`` function:
+
+```java
+TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("mySeries").withNumTypeOf(DoubleNum::valueOf).build();
+```

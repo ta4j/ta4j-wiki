@@ -11,7 +11,7 @@ Backtesting is the main use case of ta4j.
 
 ### Running your backtest
 
-Once you constructed [your time series](Time series and ticks) and [your trading strategy](Trading strategies), you can backtest the strategy by just calling:
+Once you constructed [your time series](Time-series-and-bars.md) and [your trading strategy](Trading-strategies.md), you can backtest the strategy by just calling:
 
 ```java
 TimeSeries series = ...
@@ -43,8 +43,8 @@ TimeSeriesManager seriesManager = new TimeSeriesManager(series);
 Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strategy1, strategy2));
 ```
 
-Ta4j comes with several analysis criteria which are all listed [in the Javadoc](https://oss.sonatype.org/service/local/repositories/releases/archive/eu/verdelhan/ta4j/0.6/ta4j-0.6-javadoc.jar/!/eu/verdelhan/ta4j/AnalysisCriterion.html).
+Ta4j comes with several analysis criteria which are all listed [in the Javadoc](https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.11/ta4j-core-0.11-javadoc.jar/!/index.html).
 
 ### Walk-forward optimization
 
-Ta4j allows you to perform a well-known *Walk-forward* optimization. An example can be found [[here|Usage examples#trading-strategies]].
+Ta4j allows you to perform a well-known *Walk-forward* optimization. An example can be found [here](Usage-examples.md).
