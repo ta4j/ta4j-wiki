@@ -70,7 +70,7 @@ Rule buyingRule = new CrossedUpIndicatorRule(shortSma, longSma)
 // Selling rules
 // We want to sell:
 //  - if the 5-ticks SMA crosses under 30-ticks SMA
-//  - or if if the price looses more than 3%
+//  - or if the price loses more than 3%
 //  - or if the price earns more than 2%
 Rule sellingRule = new CrossedDownIndicatorRule(shortSma, longSma)
         .or(new StopLossRule(closePrice, 3.0))
@@ -117,4 +117,4 @@ Trading strategies can be easily compared according to [a set of analysis criter
 
 ### Going further
 
-Ta4j can also be used for [live trading](live-trading.html) with more complicated [strategies](Trading-strategies.html). Check out the rest of the documentation and [the examples](Usage-examples.html).
+Ta4j can also be used for [live trading](Live-trading.html) with more complicated [strategies](Trading-strategies.html). Check out the rest of the documentation and [the examples](Usage-examples.html).
