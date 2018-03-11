@@ -30,7 +30,7 @@ At the beginning we just need a time series.
 TimeSeries series = ...;
 ```
 
-See the [Time series and bars](Time-Series-and-bars.html) to learn about time series and to know how you can construct one.
+See the [Time series and bars](Time-series-and-bars.html) to learn about time series and to know how you can construct one.
 
 ##### Using indicators
 
