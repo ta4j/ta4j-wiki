@@ -9,6 +9,8 @@ The following table contains scheduled features, enhancements and ideas for the 
 |Redesign of backtesting logic (buy/sell at any index, drop 'just one open trade' concept)||+++++|[0.13](https://github.com/ta4j/ta4j/milestone/6)|
 |Remove concept of constrained TimeSeries from BaseTimeSeries||+++|[0.13](https://github.com/ta4j/ta4j/milestone/6)|
 |Add indicator registering system to trading record (stop-loss, stop-gain)||+++|[0.13](https://github.com/ta4j/ta4j/milestone/6)|
+|Add FAQ section to wiki|+++||
+|Add Android support|+++|(Cannot use because ZonedDateTime)[https://github.com/ta4j/ta4j/issues/184]|+++|[0.13](https://github.com/ta4j/ta4j/milestone/6)|
 |Update code to Java 8||+++|
 |Clean mock objects ||+++|
 |Add **more indicators** <br>[MVWAP](http://www.investopedia.com/articles/trading/11/trading-with-vwap-mvwap.asp), [HPI](http://www.metastock.com/customer/resources/taaz/?c=3&p=61), [Zigzag](http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:zigzag), Some of this [list](http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators)| [Heikken ashi](https://github.com/ta4j/ta4j/issues/155), [Tom DeMark Sequential](https://github.com/ta4j/ta4j/issues/110), [Corrected Moving Average](https://github.com/ta4j/ta4j/issues/59), [KalmanFilterIndicator](https://github.com/ta4j/ta4j/issues/78) [Schaff Trend Cycle](https://github.com/ta4j/ta4j/issues/60) |+++|[0.13](https://github.com/ta4j/ta4j/milestone/6)
