@@ -17,5 +17,6 @@ If a different solution to initialization is required, then the `EMAIndicator` m
 * [Exponential moving average](https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average) at Wikipedia
 * [Examining the EMA](https://www.fidelity.com/bin-public/060_www_fidelity_com/documents/ExaminingEMA.pdf) at Fidelity
 * [Cutler's RSI](https://en.wikipedia.org/wiki/Relative_strength_index#Cutler's_RSI) at Wikipedia
+* [StochRSI ta4j vs tradingview](https://github.com/ta4j/ta4j/issues/147#issuecomment-364556354) at Github
 
 Note that due to the volume of questions of this nature, you are highly encourage to fully educate yourself on these issues prior to being engaged in a conversation about them.
