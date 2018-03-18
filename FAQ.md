@@ -1,6 +1,6 @@
-# ta4j FAQ #
+# Frequently Asked Questions
 
-## Why does my `Indicator` not match someone else's values? ##
+### Why does my `Indicator` not match someone else's values? ##
 
 If you are using an `Indicator` that uses an exponential moving average (EMA) such as `EMAIndicator` or `RSIIndicator` then you will have to understand data length dependence and convergence.  The short answer is that you need to "seed" your `Indicator` with several hundred `Bars` of data prior to the indices for which you seek the values or those values will have relatively large error.   
 
