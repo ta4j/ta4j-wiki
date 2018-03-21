@@ -11,7 +11,7 @@ In ta4j, all technical indicators implement the `Indicator` interface. So a list
 
 ### Backtesting indicators
 
-Technicals also need to be backtested on historic data to see how effective they would have been to predict future prices. [Some examples](Usage-20examples.html) are available in this sense.
+Technicals also need to be backtested on historic data to see how effective they would have been to predict future prices. [Some examples](Usage-examples.html) are available in this sense.
 
 ### Caching mechanism
 
