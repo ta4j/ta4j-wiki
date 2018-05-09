@@ -30,6 +30,7 @@ git push --set-upstream origin feature/*
 ```
 
 * _Note_: **If you have finished your work, please make sure to maintain the _CHANGELOG.md_ file if you have added, fixed or enhanced something.**
+* _Note_: **Before submitting a pull request, please make sure you have run the complete test suite on your branch using `mvn test`.**
 
 ```
 git add myNewFiles.java CHANGELOG.md 
