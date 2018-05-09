@@ -37,7 +37,7 @@ git commit
 git push
 ```
 The last step would be to do a pull request **from your branch to the `develop` branch of the ta4j repository**. If you want to do a pull-request, the best way is to do is via Git UI:
-* [Introduction-create a pull request](https://www.digitalocean.com/community/tutorials/how-to-create-a-pull-request-on-github) (you have to change the base branch from `master` to `develop` at the last step)
+* [Introduction-create a pull request](https://www.digitalocean.com/community/tutorials/how-to-create-a-pull-request-on-github) (you have to change the base branch from `master` to `develop` at the last step). Your pull-request will be reviewed and changes could be requested. Please maintain your PR if necessary.
 
 ## Coding rules and conventions
 

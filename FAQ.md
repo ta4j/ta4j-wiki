@@ -1,4 +1,7 @@
 # Frequently Asked Questions
+### Is there a ta4j chat? 
+We are at [riot](https://riot.im/app/#/room/#ta4j:matrix.org). Create your account and join!
+
 
 ### Why does my `Indicator` not match someone else's values? ##
 
