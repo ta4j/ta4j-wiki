@@ -1,11 +1,13 @@
 # Frequently Asked Questions
-### Is there a ta4j chat? 
+### Is there a ta4j chat?
 We are at [riot](https://riot.im/app/#/room/#ta4j:matrix.org). Create your account and join!
 
+### What does `Num` or `Function<Number, Num>`?
+With help of the `Num` interface and a `Function<Number, Num>` ta4j enables the use of different data types like `Double` or `BigDecimal` for storage and calculations. For further information take a look at the [Num article](Num.html).
 
 ### Why does my `Indicator` not match someone else's values? ##
 
-If you are using an `Indicator` that uses an exponential moving average (EMA) such as `EMAIndicator` or `RSIIndicator` then you will have to understand data length dependence and convergence.  The short answer is that you need to "seed" your `Indicator` with several hundred `Bars` of data prior to the indices for which you seek the values or those values will have relatively large error.   
+If you are using an `Indicator` that uses an exponential moving average (EMA) such as `EMAIndicator` or `RSIIndicator` then you will have to understand data length dependence and convergence.  The short answer is that you need to "seed" your `Indicator` with several hundred `Bars` of data prior to the indices for which you seek the values or those values will have relatively large error.
 
 Since EMA's use the prior value in their calculation, the values depend on how many prior values you have.  Related, there is some question as to how to initialize the first value of an EMA.  The first problem is generally solved by including at least 200 `Bars` of `TimeSeries` data prior to the indices for which you are interested.  The second problem is currently solved by setting the first EMA value to the first data value:
 ```

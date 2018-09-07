@@ -26,10 +26,16 @@ In this quick example we will backtest a trading strategy over a price time seri
 At the beginning we just need a time series.
 
 ```java
-// Getting a time series (from any provider: CSV, web service, etc.)
-TimeSeries series = ...;
+// Creating a time series (from any provider: CSV, web service, etc.)
+TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("AXP_Stock").build();
 ```
+After createing a `TimeSeries` we can add OHLC data and volume to the series:
 
+```java
+// adding open, high, low, close and volume data to the series
+series.addBar(ZonedDateTime.now(), 105.42, 112.99, 104.01, 111.42, 1337);
+
+```
 See the [Time series and bars](Time-series-and-bars.html) to learn about time series and to know how you can construct one.
 
 ##### Using indicators

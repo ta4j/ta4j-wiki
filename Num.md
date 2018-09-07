@@ -1,7 +1,7 @@
 # The Num Interface
 
 ## What is Num?
-Since release 0.12 Ta4j supports using different types for basic calculations proceeded in `Indicator` or `TimeSeries`. That means you have the possibility to write your own implementation of the `Num` interface or you can choose between existing implementations. At the moment there are two existing implementations available: `BigDecimalNum` (default) and `DoubleNum`. As the names suggest, the available implementations use different types (delegates) for arithmetic calculations. `DoubleNum` uses the `double` primitive and `BigDecimalNum` uses the `BigDecimal` class for calculations. The following code snippets illustrate the difference:
+Since release 0.12 Ta4j supports using different types for basic calculations proceeded in `Indicator` or `TimeSeries`. That means you have the possibility to write your own implementation of the `Num` interface or you can choose between existing implementations. At the moment there are two existing implementations available: `PrecisionNum` (default) and `DoubleNum`. As the names suggest, the available implementations use different types (delegates) for arithmetic calculations. `DoubleNum` uses the `double` primitive and `PrecisionNum` uses the `BigDecimal` class for calculations. The following code snippets illustrate the difference:
 
 
 **Plus operation of `DoubleNum`:**
@@ -12,7 +12,7 @@ public Num plus(Num augend) {
 }
 ```
 
-**Plus operation of `BigDecimalNum`:**
+**Plus operation of `PrecisionNum`:**
 ```java
 public Num plus(Num augend) {
     return augend.isNaN() ? NaN : new BigDecimalNum(delegate.add(((BigDecimalNum)augend).delegate, MATH_CONTEXT));
@@ -30,12 +30,12 @@ The output will be `0.0999999999999999998` witch is not equal to 0.1. This is no
 The [right way](https://stackoverflow.com/questions/8148684/what-is-the-best-data-type-to-use-for-money-in-java-app) to solve this problem is to use `BigDecimal`, `int` or `long` for monetary calculations. **It doesn't mean though that doubles can never be used for that purpose.** Based of the fact that indicator just use monetary values as input but further calculations and results do not have a monetary dimension, Double's 53 significant bits (~16 decimal digits) are usually good enough for things that merely require accuracy.
 **You have to know your application and you should study your goals and inform yourself about which kind of data type implementation works best for you.**
 
-### BigDecimalNum
-The `BigDecimalNum` implementation of `Num` uses [BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) as delgate and can represent any decimal value exact up to 32 decimal places. It can be used to do highly accurate calculations and to work with crypto currencies which representation needs a lot of decimal places. It is the default `Num` implementation if you create a `BaseTimeSeries`. For some purposes that requier very fast or a lot calculations you could notice a performance bottleneck due to this implementation of `Num`
+### PrecisionNum
+The `PrecisionNum` implementation of `Num` uses [BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) as delgate and can represent any decimal value exact up to 32 decimal places. It can be used to do highly accurate calculations and to work with crypto currencies which representation needs a lot of decimal places. It is the default `Num` implementation if you create a `BaseTimeSeries`. For some purposes that requier very fast or a lot calculations you could notice a performance bottleneck due to this implementation of `Num`.
 
 ```java
-TimeSeries series_1 = BaseTimeSeries.SeriesBuilder().build() // implicit initialize TimeSeries with BigDecimalNum
-TimeSeries series_2 = BaseTimeSeries.SeriesBuilder.withNumType(BigDecimalNum::valueOf).build() // explicit initialize TimeSeries with BigDecimalNum
+TimeSeries series_1 = BaseTimeSeries.SeriesBuilder().build() // implicit initialize TimeSeries with PrecisionNum
+TimeSeries series_2 = BaseTimeSeries.SeriesBuilder.withNumType(PrecisionNum::valueOf).build() // explicit initialize TimeSeries with PrecisionNum
 ```
 
 
@@ -45,7 +45,6 @@ After having found out the disadvanteges about`DoubleNum`, please note that it c
 ```java
 TimeSeries series_3 = BaseTimeSeries.SeriesBuilder.withNumType(DoubleNum::valueOf).build() // explicit initialize TimeSeries with DoubleNum
 ```
-<br>
 <br>
 
 ## Design and other possible implementations
@@ -105,4 +104,13 @@ You can determine the ``Num`` transforming ``Function`` with the builder by usin
 
 ```java
 TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("mySeries").withNumTypeOf(DoubleNum::valueOf).build();
+```
+<br>
+**Please note that once instantiating a `TimeSeries` with a specific `Num` implementation you cannot add data in another `Num` implementation to the `TimeSeries`.**
+
+```java
+TimeSeries series = BaseTimeSeries.SeriesBuilder().build() // implicit initialize with PrecisionNum
+series.addTrade(DoubleNum.valueOf(volume), DoubleNum.valueOf(bid)); // try to add DoubleNum values
+// throws ClassCastException: org.ta4j.core.num.DoubleNum
+// cannot be cast to org.ta4j.core.num.PrecisionNum
 ```
