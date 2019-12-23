@@ -49,7 +49,3 @@ Note that due to the volume of questions of this nature, you are highly encourag
 
 Ta4j lives from your participation! For more information, take a look at the [how to contribute](How-to-contribute.html) section.
 
-### Chatroom
-
-Chat room on riot.im:
-[https://riot.im/app/#/room/#ta4j:matrix.org](https://riot.im/app/#/room/#ta4j:matrix.org)
