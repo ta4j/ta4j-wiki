@@ -45,7 +45,7 @@ If a different solution to initialization is required, then the `EMAIndicator` m
 
 Note that due to the volume of questions of this nature, you are highly encourage to fully educate yourself on these issues prior to being engaged in a conversation about them.
 
-### How to contribute?###
+### How to contribute?
 
 Ta4j lives from your participation! For more information, take a look at the [how to contribute](How-to-contribute.html) section.
 
