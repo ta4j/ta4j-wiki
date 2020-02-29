@@ -38,7 +38,7 @@ The trading phase itself can be designed as a simple infinite loop in which you 
 Bar newBar = // Get the exchange new tick here...;
 series.addBar(newBar);
 ```
-**Since release 0.12 you can also add the bar data directly to your TimeSeries with the addBar(data...) functions. This is the recommendet way:**
+**Since release 0.12 you can also add the bar data directly to your TimeSeries with the addBar(data...) functions. This is the recommended way:**
 ```java
 series.addBar(ZonedDateTime.now(),5,10,1,9); // add data directly to the series
 ```
@@ -62,6 +62,6 @@ if (strategy.shouldEnter(endIndex)) {
 }
 ```
 
-Note that the strategy gives you a *you-should-enter* information, then it's up to you to call the `TradingRecord#enter()`/`TradingRecord#exit()` methods with the price you really spent. It's justified by the fact that you may not follow your strategy on any signal; this way you can take external events into account.
+Note that the strategy gives you a *you-should-enter* information, then it's up to you to call the `TradingRecord#enter()`/`TradingRecord#exit()` methods with the price you'll really spend. It's justified by the fact that you may not follow your strategy on any signal; this way you can take external events into account.
 
 This documentation has also [live trading engine examples](Usage-examples.html).

@@ -103,9 +103,6 @@ System.out.println("Number of trades for our strategy: " + tradingRecord.getTrad
 Here is how we can analyze the results of our backtest:
 
 ```java
-// Getting the cash flow of the resulting trades
-CashFlow cashFlow = new CashFlow(series, tradingRecord);
-
 // Getting the profitable trades ratio
 AnalysisCriterion profitTradesRatio = new AverageProfitableTradesCriterion();
 System.out.println("Profitable trades ratio: " + profitTradesRatio.calculate(series, tradingRecord));

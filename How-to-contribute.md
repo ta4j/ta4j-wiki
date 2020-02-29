@@ -46,7 +46,7 @@ The last step would be to do a pull request **from your branch to the `develop` 
 (in progress..)<br>
 First things first: Feel free to write awesome code! Do not hesitate to open an issue or a pull request just because you fear making a mistake. Others can review your code, give you tips and can correct you.
 * Be aware that your code is easily legible and transparent.
-* Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator, but you also found bugs or little enhancements on `TimeSeries` and `TrandingRecord` **fix them in a new pull request**.
+* Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator add but you also found bugs or little enhancements on TimeSeries and TradingRecord **fix them in a new pull request**.
 
 ## Hints
 * use `int startIndex = timeSeries.getBeginIndex()` instead of `int startIndex = 0` to get the first valid index of a TimeSeries.
