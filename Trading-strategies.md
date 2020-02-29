@@ -49,4 +49,4 @@ TimeSeriesManager seriesManager = new TimeSeriesManager(series);
 TradingRecord tradingRecord = seriesManager.run(myStrategy);
 ```
 
-Or used for [live trading](./Live%20trading), as it's done in [the bot examples](./Usage%20examples#trading-bots).
+Or used for [live trading](./Live-trading), as it's done in [the bot examples](./Usage-examples#trading-bots).
