@@ -23,7 +23,7 @@ mvn clean deploy
 ```bash
 (check existing tags)
 mvn clean
-mvn release:prepare -Dgpg.passphrase=********  -Psonatype-oss-release
+mvn release:clean release:prepare -Darguments=-Dgpg.passphrase=thephrase  -Psonatype-oss-release
 
 mvn release:perform -Psonatype-oss-release
 ```

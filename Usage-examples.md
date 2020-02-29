@@ -28,7 +28,7 @@ These examples demonstrate different aspects of the Ta4j API. Each example can b
 
 ##### Trading bots
 
-  * [Dummy trading bot example](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingTimeSeries.java)
+  * [Dummy trading bot example](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingBarSeries.java)
 
 ##### Logging
 

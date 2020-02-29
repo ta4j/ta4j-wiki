@@ -53,6 +53,18 @@ Or if you are receiving interperiodic prices and want to add it to the last bar:
 series.addPrice(105.44); // will update the close price of the last bar (and min/max price if necessary)
 ```
 
+The `TimeSeries#addTrade(Number, Number)` function allows you to update the last `Bar` of the series with price and volume data:
+
+```java
+series.addTrade(price, volume);
+```
+
+You can use the `TimeSeries#addBar(Bar, boolean)` function, thats `replaces` the last `Bar` of the series if the `boolean` flag is `true`.
+
+```java
+series.addBar(bar, true) // last bar will be replaced
+```
+
 In this mode, we strongly advise you to:
 
   * initialize your series with the last data from the exchange (as it's described above for backtesting). It ensures your trading strategy will get enough data to be relevant.
