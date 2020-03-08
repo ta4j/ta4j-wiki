@@ -22,13 +22,13 @@ If you start your trading phase on the 3rd tick:
   * Without initialization: `SMA(3) --> 30 / 1 = 30`
   * After your series have been initialized with last ticks: `SMA(3) --> (5 + 10 + 30) / 3 = 15`
 
-##### Maximum tick count
+##### Maximum bar count
 
-Since you will continuously feed your time series with new ticks during the trading phase, it will grow infinitely and you will encounter memory issues soon. To avoid that you have to set a maximum tick count to your series. It represents the maximum number of ticks your trading strategy needs to be run.
+Since you will continuously feed your bar series with new ticks during the trading phase, it will grow infinitely and you will encounter memory issues soon. To avoid that you have to set a maximum bar count to your series. It represents the maximum number of ticks your trading strategy needs to be run.
 
-For instance: if your strategy relies on a SMA(200) and a RSI(2), then your maximum tick count should be 200. You may want to set it to 400 (it's more an order of magnitude than a strict value, but it has to be larger than the maximum tick count you need); it will ensure that your series will never be more than 400-ticks long (i.e. adding a new tick will be preceded with the deletion of the oldest tick).
+For instance: if your strategy relies on a SMA(200) and a RSI(2), then your maximum bar count should be 200. You may want to set it to 400 (it's more an order of magnitude than a strict value, but it has to be larger than the maximum tick count you need); it will ensure that your series will never be more than 400-ticks long (i.e. adding a new tick will be preceded with the deletion of the oldest tick).
 
-You just have to call the `TimeSeries#setMaximumTickCount(int)` method.
+You just have to call the `BarSeries#setMaximumTickCount(int)` method.
 
 ### Trading phase
 
@@ -38,6 +38,7 @@ The trading phase itself can be designed as a simple infinite loop in which you 
 Bar newBar = // Get the exchange new tick here...;
 series.addBar(newBar);
 ```
+
 **Since release 0.12 you can also add the bar data directly to your TimeSeries with the addBar(data...) functions. This is the recommended way:**
 ```java
 series.addBar(ZonedDateTime.now(),5,10,1,9); // add data directly to the series

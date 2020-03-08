@@ -14,8 +14,8 @@ Backtesting is the main use case of ta4j.
 Once you constructed [your time series](Time-series-and-bars.md) and [your trading strategy](Trading-strategies.md), you can backtest the strategy by just calling:
 
 ```java
-TimeSeries series = ...
-TimeSeriesManager seriesManager = new TimeSeriesManager(series);
+BarSeries series = ...
+BarSeriesManager seriesManager = new BarSeriesManager(series);
 Strategy myStrategy = ...
 
 TradingRecord tradingRecord = seriesManager.run(myStrategy);
@@ -39,7 +39,7 @@ criterion.calculate(series, record2); // Returns the result for strategy2
 If you just want to get the best strategy according to an analysis criterion you just have to call:
 
 ```java
-TimeSeriesManager seriesManager = new TimeSeriesManager(series);
+BarSeriesManager seriesManager = new BarSeriesManager(series);
 Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strategy1, strategy2));
 ```
 

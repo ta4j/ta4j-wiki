@@ -14,7 +14,7 @@ Ta4j is available on Maven. You can [create a Maven project](http://www.tech-rec
 <dependency>
   <groupId>org.ta4j</groupId>
   <artifactId>ta4j-core</artifactId>
-  <version>0.12</version>
+  <version>0.13</version>
 </dependency>
 ```
 Another way could be to [clone this git repository](https://git-scm.com/book/en/v1/Git-Basics-Getting-a-Git-Repository) or to simply download this library and add the source code to your existing eclipse project.
@@ -27,7 +27,7 @@ At the beginning we just need a time series.
 
 ```java
 // Creating a time series (from any provider: CSV, web service, etc.)
-TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("AXP_Stock").build();
+BarSeries series = new BaseBarSeriesBuilder().withName("AXP_Stock").build();
 ```
 After createing a `TimeSeries` we can add OHLC data and volume to the series:
 
@@ -36,11 +36,11 @@ After createing a `TimeSeries` we can add OHLC data and volume to the series:
 series.addBar(ZonedDateTime.now(), 105.42, 112.99, 104.01, 111.42, 1337);
 
 ```
-See the [Time series and bars](Time-series-and-bars.html) to learn about time series and to know how you can construct one.
+See the [Bar Series and Bars section](Time-series-and-bars.html) to learn about time series and to know how you can construct one.
 
 ##### Using indicators
 
-We can calculate indicator over this time series, in order to forecast the direction of prices through the study of past market data.
+We can calculate indicator over this bar series, in order to forecast the direction of prices through the study of past market data.
 
 ```java
 // Getting the close price of the ticks
@@ -93,7 +93,7 @@ The backtest step is pretty simple:
 
 ```java
 // Running our juicy trading strategy...
-TimeSeriesManager manager = new TimeSeriesManager(series);
+BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord tradingRecord = manager.run(strategy);
 System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
 ```

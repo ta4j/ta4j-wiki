@@ -34,17 +34,17 @@ Using ta4j, you can check if an entry/exit condition is met by calling the `Rule
 
 ### Trading strategies
 
-A trading strategy is just a pair of rules designed to achieve a profitable return over a time series. It is made of an entry rule and an exit rule.
+A trading strategy is just a pair of rules designed to achieve a profitable return over a bar series. It is made of an entry rule and an exit rule.
 
 ```java
 Strategy myStrategy = new BaseStrategy(entryRule, exitRule);
 ```
 
-It can be [backtested](Backtesting) over a time series:
+It can be [backtested](Backtesting) over a bar series:
 
 ```java
-TimeSeries series = ...
-TimeSeriesManager seriesManager = new TimeSeriesManager(series);
+BarSeries series = ...
+BarSeriesManager seriesManager = new BarSeriesManager(series);
 
 TradingRecord tradingRecord = seriesManager.run(myStrategy);
 ```

@@ -10,12 +10,12 @@ Enhancements, new features and fixes should be pushed to a [fork](https://help.g
 
 
 ## Snapshots
-A SNAPSHOT is the develop version of the **next** release version. For instance a 0.12-Snapshot is the current build that should become the next 0.12 release. You can use the current SNAPSHOT version by adding the following dependency to your `pom.xml` file:
+A SNAPSHOT is the develop version of the **next** release version. For instance a 0.14-Snapshot is the current build that should become the next 0.14 release. You can use the current SNAPSHOT version by adding the following dependency to your `pom.xml` file:
 ```
 <dependency>
   <groupId>org.ta4j</groupId>
   <artifactId>ta4j-core</artifactId>
-  <version>0.12-SNAPSHOT</version>
+  <version>0.14-SNAPSHOT</version>
 </dependency>
 ```
 

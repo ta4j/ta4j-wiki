@@ -1,7 +1,7 @@
 # The Num Interface
 
 ## What is Num?
-Since release 0.12 Ta4j supports using different types for basic calculations proceeded in `Indicator` or `TimeSeries`. That means you have the possibility to write your own implementation of the `Num` interface or you can choose between existing implementations. At the moment there are two existing implementations available: `PrecisionNum` (default) and `DoubleNum`. As the names suggest, the available implementations use different types (delegates) for arithmetic calculations. `DoubleNum` uses the `double` primitive and `PrecisionNum` uses the `BigDecimal` class for calculations. The following code snippets illustrate the difference:
+Since release 0.12 Ta4j supports using different types for basic calculations proceeded in `Indicator` or `BarSeries`. That means you have the possibility to write your own implementation of the `Num` interface or you can choose between existing implementations. At the moment there are two existing implementations available: `PrecisionNum` (default) and `DoubleNum`. As the names suggest, the available implementations use different types (delegates) for arithmetic calculations. `DoubleNum` uses the `double` primitive and `PrecisionNum` uses the `BigDecimal` class for calculations. The following code snippets illustrate the difference:
 
 
 **Plus operation of `DoubleNum`:**
@@ -18,7 +18,7 @@ public Num plus(Num augend) {
     return augend.isNaN() ? NaN : new BigDecimalNum(delegate.add(((BigDecimalNum)augend).delegate, MATH_CONTEXT));
 }
 ```
-Take a look at the corresponding section in the [usage examples](Usage-examples.html) to find out how to use ``Num`` and ``BaseTimeSeries``.
+Take a look at the corresponding section in the [usage examples](Usage-examples.html) to find out how to use ``Num`` and ``BaseBarSeries``.
 
 ## Choosing the right `Num` implementation
 The main purpose of supporting different data types for arithmetic operations are opposing goals in technical analysis. On the one hand performance is a critical  factor in high frequency trading or big data analysis, on the other hand crypto currencies and the general [handling of monetary values](link-to-source) require arithmetic that is **not** based on [*binary floating-point*](https://en.wikipedia.org/wiki/IEEE_754) types like `double` or `float`. For example the following simple code fragment using `double` will print an unexpected result:
@@ -31,19 +31,19 @@ The [right way](https://stackoverflow.com/questions/8148684/what-is-the-best-dat
 **You have to know your application and you should study your goals and inform yourself about which kind of data type implementation works best for you.**
 
 ### PrecisionNum
-The `PrecisionNum` implementation of `Num` uses [BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) as delgate and can represent any decimal value exact up to 32 decimal places. It can be used to do highly accurate calculations and to work with crypto currencies which representation needs a lot of decimal places. It is the default `Num` implementation if you create a `BaseTimeSeries`. For some purposes that requier very fast or a lot calculations you could notice a performance bottleneck due to this implementation of `Num`.
+The `PrecisionNum` implementation of `Num` uses [BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) as delgate and can represent any decimal value exact up to 32 decimal places. It can be used to do highly accurate calculations and to work with crypto currencies which representation needs a lot of decimal places. It is the default `Num` implementation if you create a `BaseBarSeries`. For some purposes that requier very fast or a lot calculations you could notice a performance bottleneck due to this implementation of `Num`.
 
 ```java
-TimeSeries series_1 = BaseTimeSeries.SeriesBuilder().build() // implicit initialize TimeSeries with PrecisionNum
-TimeSeries series_2 = BaseTimeSeries.SeriesBuilder.withNumType(PrecisionNum::valueOf).build() // explicit initialize TimeSeries with PrecisionNum
+BarSeries series_1 = new BaseBarSeriesBuilder().build() // implicit initialize BarSeries with PrecisionNum
+BarSeries series_2 = new BaseBarSeriesBuilder().withNumType(PrecisionNum::valueOf).build() // explicit initialize BarSeries with PrecisionNum
 ```
 
 
 ### DoubleNum
 
-After having found out the disadvanteges about`DoubleNum`, please note that it can give your Ta4j application a heavy performance boost. You can create a `BaseTimeSeries` using `DoubleNum` as follows:
+After having found out the disadvanteges about`DoubleNum`, please note that it can give your Ta4j application a heavy performance boost. You can create a `BaseBarSeries` using `DoubleNum` as follows:
 ```java
-TimeSeries series_3 = BaseTimeSeries.SeriesBuilder.withNumType(DoubleNum::valueOf).build() // explicit initialize TimeSeries with DoubleNum
+BarSeries series_3 = new BaseBarSeriesBuilder().withNumType(DoubleNum::valueOf).build() // explicit initialize BarSeries with DoubleNum
 ```
 <br>
 
@@ -83,18 +83,18 @@ The `function()` should return a lamba expression of this static ``valueOf()`` f
     }
 ```
 ### Handling Num
-``TimeSeries`` and ``Bar`` need a reference to this ``Function`` object that enables to transform any ``Number`` to the wanted ``Num`` implementation. Because of that you have to pass this function when creating a ``Bar`` manually:
+``BarSeries`` and ``Bar`` need a reference to this ``Function`` object that enables to transform any ``Number`` to the wanted ``Num`` implementation. Because of that you have to pass this function when creating a ``Bar`` manually:
 ```java
 // The bar object has to transform the intput into Num with help of the given function
 Bar bar = new BaseBar(ZonedDateTime.now(),1,3,1,1,1,BigDecimalNum::valueOf);
 ```
 
-Also the TimeSeries needs this ``Function``. The easiest way to handle this is to use the SeriesBuilder and to add bar data directly to the TimeSeries:
+Also the BarSeries needs this ``Function``. The easiest way to handle this is to use the SeriesBuilder and to add bar data directly to the BarSeries:
 ```java
-TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("mySeries").build(); // the builder uses BigDecimalNum as default
+BarSeries series = new BaseBarSeries.SeriesBuilder().withName("mySeries").build(); // the builder uses BigDecimalNum as default
 
 ZonedDateTime endTime = ZonedDateTime.now();
-// add bar data directly. It will be transformed automatically to Num implementation of TimeSeries
+// add bar data directly. It will be transformed automatically to Num implementation of BarSeries
 series.addBar(endTime, 105.42, 112.99, 104.01, 111.42, 1337); 
 series.addBar(endTime.plusDays(1), 111.43, 112.83, 107.77, 107.99, 1234);
 series.addBar(endTime.plusDays(2), 107.90, 117.50, 107.90, 115.42, 4242);
@@ -103,13 +103,13 @@ series.addBar(endTime.plusDays(2), 107.90, 117.50, 107.90, 115.42, 4242);
 You can determine the ``Num`` transforming ``Function`` with the builder by using the ``withNumTypeOf(function)`` function:
 
 ```java
-TimeSeries series = new BaseTimeSeries.SeriesBuilder().withName("mySeries").withNumTypeOf(DoubleNum::valueOf).build();
+BarSeries series = new BaseBarSeries.SeriesBuilder().withName("mySeries").withNumTypeOf(DoubleNum::valueOf).build();
 ```
 <br>
-**Please note that once instantiating a `TimeSeries` with a specific `Num` implementation you cannot add data in another `Num` implementation to the `TimeSeries`.**
+**Please note that once instantiating a `BarSeries` with a specific `Num` implementation you cannot add data in another `Num` implementation to the `BarSeries`.**
 
 ```java
-TimeSeries series = BaseTimeSeries.SeriesBuilder().build() // implicit initialize with PrecisionNum
+BarSeries series = BaseBarSeries.SeriesBuilder().build() // implicit initialize with PrecisionNum
 series.addTrade(DoubleNum.valueOf(volume), DoubleNum.valueOf(bid)); // try to add DoubleNum values
 // throws ClassCastException: org.ta4j.core.num.DoubleNum
 // cannot be cast to org.ta4j.core.num.PrecisionNum
