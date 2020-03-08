@@ -3,9 +3,9 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
 ## 0.13 (released November 5, 2019)
 
 ### Breaking
-- :boom: **Breaking** Refactored from Max/Min to High/Low in Bar class
-- :boom: **Breaking** Removed redundant constructors from BaseBar class
-- :boom: **Breaking** Renamed `TimeSeries` to `BarSeries`
+- **Breaking** Refactored from Max/Min to High/Low in Bar class
+- **Breaking** Removed redundant constructors from BaseBar class
+- **Breaking** Renamed `TimeSeries` to `BarSeries`
 
 ### Fixed
 - **Fixed `BaseBarSeries`**: problem with getSubList for series with specified `maximumBarCount`.
@@ -27,34 +27,34 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
 - **TrailingStopLossRule** added ability to look back the last x bars for calculating the trailing stop loss
 
 ### Added
-- :tada: **Enhancement** Added getters for AroonDownIndicator and AroonUpIndicator in AroonOscillatorIndicator
-- :tada: **Enhancement** Added common constructors in BaseBar for BigDecimal, Double and String values
-- :tada: **Enhancement** Added constructor in BaseBar with trades property
-- :tada: **Enhancement** Added BaseBarBuilder and ConvertibleBaseBarBuilder - BaseBar builder classes
-- :tada: **Enhancement** Added BarAggregator and TimeSeriesAggregator to allow aggregates bars and time series 
-- :tada: **Enhancement** Added LWMA Linearly Weighted Moving Average Indicator
-- :tada: **Enhancement** Implemented trading cost models (linear transaction and borrowing cost models)
-- :tada: **Enhancement** Implemented Value at Risk Analysis Criterion
-- :tada: **Enhancement** Implemented Expected Shortfall Analysis Criterion
-- :tada: **Enhancement** Implemented Returns class to analyze the time series of return rates. Supports logarithmic and arithmetic returns
-- :tada: **Enhancement** Implemented a way to find the best result for multiple strategies by submitting a range of numbers while backtesting
-- :tada: **Enhancement** Implemented NumberOfBreakEvenTradesCriterion for counting break even trades 
-- :tada: **Enhancement** Implemented NumberOfLosingTradesCriterion for counting losing trades
-- :tada: **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
-- :tada: **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
-- :tada: **Enhancement** Implemented ProfitLossPercentageCriterion for calculating the total performance percentage of your trades 
-- :tada: **Enhancement** Implemented TotalProfit2Criterion for calculating the total profit of your trades 
-- :tada: **Enhancement** Implemented TotalLossCriterion for calculating the total loss of your trades
-- :tada: **Enhancement** Added ADX indicator based strategy to ta4j-examples  
-- :tada: **Enhancement** TrailingStopLossRule: added possibility of calculations of TrailingStopLossRule also for open, high, low price. Added getter 
+- **Enhancement** Added getters for AroonDownIndicator and AroonUpIndicator in AroonOscillatorIndicator
+- **Enhancement** Added common constructors in BaseBar for BigDecimal, Double and String values
+- **Enhancement** Added constructor in BaseBar with trades property
+- **Enhancement** Added BaseBarBuilder and ConvertibleBaseBarBuilder - BaseBar builder classes
+- **Enhancement** Added BarAggregator and TimeSeriesAggregator to allow aggregates bars and time series
+- **Enhancement** Added LWMA Linearly Weighted Moving Average Indicator
+-  **Enhancement** Implemented trading cost models (linear transaction and borrowing cost models)
+- **Enhancement** Implemented Value at Risk Analysis Criterion
+- **Enhancement** Implemented Expected Shortfall Analysis Criterion
+- **Enhancement** Implemented Returns class to analyze the time series of return rates. Supports logarithmic and arithmetic returns
+- **Enhancement** Implemented a way to find the best result for multiple strategies by submitting a range of numbers while backtesting
+- **Enhancement** Implemented NumberOfBreakEvenTradesCriterion for counting break even trades 
+- **Enhancement** Implemented NumberOfLosingTradesCriterion for counting losing trades
+- **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
+- **Enhancement** Implemented NumberOfWinningTradesCriterion for counting winning trades 
+- **Enhancement** Implemented ProfitLossPercentageCriterion for calculating the total performance percentage of your trades 
+- **Enhancement** Implemented TotalProfit2Criterion for calculating the total profit of your trades 
+- **Enhancement** Implemented TotalLossCriterion for calculating the total loss of your trades
+- **Enhancement** Added ADX indicator based strategy to ta4j-examples
+- **Enhancement** TrailingStopLossRule: added possibility of calculations of TrailingStopLossRule also for open, high, low price. Added getter
 for currentStopLossLimitActivation
-- :tada: **Enhancement** Add constructors with parameters to allow custom implementation of ReportGenerators in BacktestExecutor
-- :tada: **Enhancement** Added license checker goal on CI's pipeline
-- :tada: **Enhancement** Added source format checker goal on CI's pipeline
+- **Enhancement** Add constructors with parameters to allow custom implementation of ReportGenerators in BacktestExecutor
+- **Enhancement** Added license checker goal on CI's pipeline
+- **Enhancement** Added source format checker goal on CI's pipeline
 
 ## 0.12 (released September 10, 2018)
 
-### Breaking: 
+### Breaking:
    - `Decimal` class has been replaced by new `Num` interface. Enables using `Double`, `BigDecimal` and custom data types for calculations. 
    - Big changes in `TimeSeries` and `BaseTimeSeries`. Multiple new `addBar(..)` functions in `TimeSeries` allow to add data directly to the series
 
