@@ -22,7 +22,7 @@ git remote add develop https://github.com/yourAccount/ta4j.git
 git checkout develop
 ```
 
-You should always create a new branch for enhancements or bug fixes:
+You should always create a new branch (forked from ``develop`` branch) for enhancements or bug fixes:
 ```
 git checkout -b feature/name-of-your-feature-branch
 git push --set-upstream origin feature/*
@@ -34,7 +34,7 @@ git push --set-upstream origin feature/*
 
 ```
 // implement changes on your branch
-// format code, add license header and run unit tests:
+// format code, add license header and run unit tests with maven:
 mvn -B clean license:format formatter:format test
 git add myNewFiles.java CHANGELOG.md
 git commit
