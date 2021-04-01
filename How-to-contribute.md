@@ -22,17 +22,20 @@ git remote add develop https://github.com/yourAccount/ta4j.git
 git checkout develop
 ```
 
-If necessary and coordinated, you can also create a new feature branch for bigger enhancements:
+You should always create a new branch for enhancements or bug fixes:
 ```
 git checkout -b feature/name-of-your-feature-branch
 git push --set-upstream origin feature/*
 ```
 
 * _Note_: **If you have finished your work, please make sure to maintain the _CHANGELOG.md_ file if you have added, fixed or enhanced something.**
-* _Note_: **Before submitting a pull request, please make sure you have run the complete test suite on your branch using `mvn test`.**
+* _Note_: **Before submitting a pull request, please make sure you run the complete test suite on your branch using `mvn test`. There are github actions checking for
+  code format and licence header as well:**
 
 ```
-mvn test // run tests
+// implement changes on your branch
+// format code, add license header and run unit tests:
+mvn -B clean license:format formatter:format test
 git add myNewFiles.java CHANGELOG.md
 git commit
 git push
@@ -43,7 +46,7 @@ The last step would be to do a pull request **from your branch to the `develop` 
 ## Coding rules and conventions
 
 ### General
-(in progress..)<br>
+(in progress...)<br>
 First things first: Feel free to write awesome code! Do not hesitate to open an issue or a pull request just because you fear making a mistake. Others can review your code, give you tips and can correct you.
 * Be aware that your code is easily legible and transparent.
 * Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator add but you also found bugs or little enhancements on TimeSeries and TradingRecord **fix them in a new pull request**.
