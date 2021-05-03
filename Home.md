@@ -2,6 +2,6 @@
 
 **Welcome to the ta4j wiki**!
 
-If you're not sure what to look at, why not take a look at [the Getting started page](Getting%20started) or the [FAQ](FAQ.md) section? 
+If you're not sure what to look at, why not take a look at [the Getting started page](Getting-started) or the [FAQ](FAQ.md) section? 
 
 There is also a [ta4j-Discord channel](https://discord.gg/HX9MbWZ)!
