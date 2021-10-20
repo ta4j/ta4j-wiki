@@ -29,7 +29,8 @@ This section contains applications which make use of ta4j:
 |MyOpenTrader|Trading-engine which connects to the Interactive Brokers API|[Link](http://myopentrader.org/)|
 |the-turbine|Set of server-side components that perform automated technical analysis on stocks|[GitHub](https://github.com/the-james-burton/the-turbine)
 |samurai|A GUI and workbench for testing and developing strategies|[GitHub](https://github.com/sirolf2009/samurai)|
-|TAcharting|A charting application for downloading and plotting indicators, trading records and time series|[GitHub](https://github.com/team172011/TAcharting)|
+|ta4jCharting|A simple charting application for plotting indicators, trading records and bar series|[GitHub](https://github.com/team172011/ta4jCharting)|
+|TAcharting|A charting application for downloading and plotting indicators, trading records and bar series|[GitHub](https://github.com/team172011/TAcharting)|
 |Cassandre|A trading bot framework for developing your own strategy |[Link](https://trading-bot.cassandre.tech), [GitHub](https://github.com/cassandre-tech/cassandre-trading-bot)|
 
 
