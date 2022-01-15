@@ -7,6 +7,16 @@
 mvn license:check
 ```
 
+### Check source code format
+```bash
+mvn formatter:validate
+```
+
+### Format source code
+```bash
+mvn formatter:format
+```
+
 ### Format license headers
 
 ```bash
