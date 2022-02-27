@@ -4,6 +4,6 @@
 <br>
 Welcome to the ta4j wiki!
 
-Use the sidebar on the left. If you're not sure what to look at, why not take a look at the <a href="Getting-started.html">Getting started page</a> or the [FAQ](FAQ.md) section? 
+Use the sidebar on the left. If you're not sure what to look at, why not take a look at the <a href="https://ta4j.github.io/ta4j-wiki/Getting-started.html">Getting started page</a> or the [FAQ](FAQ.md) section? 
 
 There is also a [ta4j-Discord channel](https://discord.gg/HX9MbWZ)!
