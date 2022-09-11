@@ -43,8 +43,7 @@ BarSeriesManager seriesManager = new BarSeriesManager(series);
 Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strategy1, strategy2));
 ```
 
-Ta4j comes with several analysis criteria which are all listed [in the Javadoc](https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.11/ta4j-core-0.11-javadoc.jar/!/index.html).
-
+Ta4j comes with several analysis criteria which are all listed [in the Javadoc](https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.15/ta4j-core-0.15-javadoc.jar/!/org/ta4j/core/criteria/package-summary.html).
 ### Walk-forward optimization
 
 Ta4j allows you to perform a well-known *Walk-forward* optimization. An example can be found [here](Usage-examples.md).
