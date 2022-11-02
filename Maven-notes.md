@@ -23,7 +23,27 @@ mvn formatter:format
 mvn license:format
 ```
 
-### Deploy a snapshot
+### Test deploying a snapshot
+
+Replace the `<snapshotRepository>` with a local file path like:
+
+```xml
+	<distributionManagement>
+		<snapshotRepository>
+			<id>local</id>
+			<name>local</name>
+			<url>file:../local_repo/deploy</url>
+		</snapshotRepository>
+		<repository>
+			<id>sonatype-nexus-staging</id>
+			<name>Sonatype Nexus release repository</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+```
+and run: `mvn clean deploy`
+
+### Deploy a snapshot to Sonatype Nexus snapshot repository
 
 ```bash
 mvn clean deploy
