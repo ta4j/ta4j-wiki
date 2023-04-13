@@ -1,8 +1,8 @@
 # Frequently Asked Questions
 ### Is there a ta4j chat?
-We are at [riot](https://riot.im/app/#/room/#ta4j:matrix.org). Create your account and join!
+We are at [discord](https://discord.gg/HX9MbWZ). Create your account and join!
 
-### How to make a sell/short order when running a `Strategy` ? ###
+### How to make a sell/short order when running a `Strategy` ?
 You can determine the kind of order in the `TimeSeriesManager#run` method with help of the `OrderType` parameter:
 
 ```java
@@ -22,9 +22,10 @@ The standard value for this mehtod is `OrderType.BUY`. That means entry signals 
 * **Note:** At the moment it is only possible to run a `Strategy` with [long](https://www.investopedia.com/terms/l/long.asp) (buy-sell) **or** with [short](https://www.investopedia.com/terms/s/short.asp) (sell-buy) trades. There is no possibility to mix short and long trades in one and the same run done by the `TimeSeriesManager`.
 
 ### What does `Num` or `Function<Number, Num>`?
+
 With help of the `Num` interface and a `Function<Number, Num>` ta4j enables the use of different data types like `Double` or `BigDecimal` for storage and calculations. For further information take a look at the [Num article](Num.html).
 
-### Why does my `Indicator` not match someone else's values? ##
+### Why does my `Indicator` not match someone else's values?
 
 If you are using an `Indicator` that uses an exponential moving average (EMA) such as `EMAIndicator` or `RSIIndicator` then you will have to understand data length dependence and convergence.  The short answer is that you need to "seed" your `Indicator` with several hundred `Bars` of data prior to the indices for which you seek the values or those values will have relatively large error.
 
@@ -45,6 +46,6 @@ If a different solution to initialization is required, then the `EMAIndicator` m
 
 Note that due to the volume of questions of this nature, you are highly encourage to fully educate yourself on these issues prior to being engaged in a conversation about them.
 
-###How to contribute?###
+### How to contribute?
 
 Ta4j lives from your participation! For more information, take a look at the [how to contribute](How-to-contribute.html) section.
