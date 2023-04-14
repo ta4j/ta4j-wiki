@@ -7,10 +7,10 @@ These examples demonstrate different aspects of the Ta4j API. Each example can b
 
 ##### Time series and Num
 
-  * [How to build a bar series with differen Num implementation and more](https://github.com/ta4j/ta4j/blob/develop/ta4j-examples/src/main/java/ta4jexamples/timeSeries/BuildTimeSeries.java)
+  * [How to build a bar series with differen Num implementation and more](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/timeSeries/BuildTimeSeries.java)
   * [How to build a bar series from trades](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/loaders/CsvTradesLoader.java)
   * [How to build a bar series from ticks](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/loaders/CsvBarsLoader.java)
-  * [DoubleNum vs BigDecimalNum](https://github.com/ta4j/ta4j/blob/develop/ta4j-examples/src/main/java/ta4jexamples/num/DoubleNumVsBigDecimalNum.java)
+  * [DoubleNum vs BigDecimalNum](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/DoubleNumVsBigDecimalNum.java)
 
 ##### Playing with indicators
 
