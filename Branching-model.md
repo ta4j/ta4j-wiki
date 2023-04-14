@@ -1,16 +1,15 @@
 # Branching model
-Enhancements, new features and fixes should be pushed to a [fork](https://help.github.com/articles/fork-a-repo/) of the develop branch. Once completed they will be merged with the develop branch during a [pull request](https://help.github.com/articles/about-pull-requests/). Bevore making a release the develop branch (containig all the updates) will be merged into the master branch and the final release version will get a corresponding tag.
+Enhancements, new features and fixes should be pushed to a [fork](https://help.github.com/articles/fork-a-repo/) of the master branch. Once completed they will be merged with the master branch during a [pull request](https://help.github.com/articles/about-pull-requests/). GitHub actions are configured to run the tests, validate the licence header and source code format. After the PR has been merged a new SNAPSHOT will be deployed.
 
-* **Only the develop branch can be modified by pull requests from other forked develop branches**
+This development process is similar to  [github flow](https://docs.github.com/en/get-started/quickstart/github-flow)
+
 * **Only the content of the master branch is going to become a release.**
-* **There is no release branch**
+* **There is no release branch nor a mandatory develop branch**
 
-
-![branch model](http://nvie.com/img/git-model@2x.png)
 
 
 ## Snapshots
-A SNAPSHOT is the develop version of the **next** release version. For instance a 0.16-Snapshot is the current build that should become the next 0.16 release. You can use the current SNAPSHOT version by adding the following dependency to your `pom.xml` file:
+A SNAPSHOT is the latest version of the **next** release. For instance a 0.16-Snapshot is the current build that should become the next 0.16 release. You can use the current SNAPSHOT version by adding the following dependency to your `pom.xml` file:
 ```
 <dependency>
   <groupId>org.ta4j</groupId>
@@ -19,7 +18,7 @@ A SNAPSHOT is the develop version of the **next** release version. For instance 
 </dependency>
 ```
 
-The SNAPSHOT version contains all fixes, enhancements and new features that have been added to the develop build so far and that will be part of the next release.
+The SNAPSHOT version contains all fixes, enhancements and new features that have been added to the master build so far and that will be part of the next release.
 
 Please note that a SNAPSHOT version can be changed in any way at any time.
 

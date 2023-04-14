@@ -8,29 +8,25 @@ Or you have even a nice idea, which you would like to contribute as code?
 You are always welcome. We suggest you before you contribute a bigger work to get prior permission, since we want to verify first if the contribution will bring the lib forward. We will give quickly a feedback if we will accept the contribution.
 
 ## How to contribute?
-In the most cases (e.g. bug fixes and little enhancements) you can create a pull request to the `develop` branch. For bigger improvements please open an issue to discuss your plans.
-* _Note_: **Pull requests to the `master `branch will not be accepted**
+In the most cases (e.g. bug fixes and little enhancements) you can create a pull request to the `master` branch. For bigger improvements please open an issue to discuss your plans.
 * _Note_: **Pull requests with respect to items of the [Roadmap](Roadmap-and-Tasks.md) are very welcome!**
 
 
-Take a look at the [branching model](Branching-model.htlm) to get an overview. You can fork and clone the repository and set up the develop branch as follows:
+Take a look at the [branching model](Branching-model.md) to get an overview. You can fork and clone the repository and set up the master branch as follows:
 ```
 // fork repositroy on Git UI from https://github.com/ta4j/ta4j.git to https://github.com/yourAccount/ta4j.git
 git clone https://github.com/yourAccount/ta4j.git
 cd ta4j
-git remote add develop https://github.com/yourAccount/ta4j.git
-git checkout develop
 ```
 
-You should always create a new branch (forked from ``develop`` branch) for enhancements or bug fixes:
+You should always create a new branch (forked from ``master`` branch) for enhancements or bug fixes:
 ```
 git checkout -b feature/name-of-your-feature-branch
 git push --set-upstream origin feature/*
 ```
 
 * _Note_: **If you have finished your work, please make sure to maintain the _CHANGELOG.md_ file if you have added, fixed or enhanced something.**
-* _Note_: **Before submitting a pull request, please make sure you run the complete test suite on your branch using `mvn test`. There are github actions checking for
-  code format and licence header as well:**
+* _Note_: **Before submitting a pull request, please make sure you run the complete test suite on your branch using `mvn test`. There are github actions checking for code format and licence header as well:**
 
 ```
 // implement changes on your branch
@@ -40,8 +36,8 @@ git add myNewFiles.java CHANGELOG.md
 git commit
 git push
 ```
-The last step would be to do a pull request **from your branch to the `develop` branch of the ta4j repository**. If you want to do a pull-request, the best way is to do is via Git UI:
-* [Introduction-create a pull request](https://www.digitalocean.com/community/tutorials/how-to-create-a-pull-request-on-github) (you have to change the base branch from `master` to `develop` at the last step). Your pull-request will be reviewed and changes could be requested. Please maintain your PR if necessary.
+The last step would be to do a pull request **from your branch to the `master` branch of the ta4j repository**. If you want to do a pull-request, the best way is to do is via Git UI:
+* [Introduction-create a pull request](https://www.digitalocean.com/community/tutorials/how-to-create-a-pull-request-on-github). Your pull-request will be reviewed and changes could be requested. Please maintain your PR if necessary.
 
 ## Coding rules and conventions
 

@@ -8,6 +8,5 @@ If you have any further ideas feel free to contribute!
 |Update/Maintenance [Javadoc]|
 |Redesign of backtesting logic (buy/sell at any index, drop 'just one open trade' concept)|
 |Remove concept of constrained TimeSeries from BaseTimeSeries|
-|[Deploy snapshot automatically]|
 
 
