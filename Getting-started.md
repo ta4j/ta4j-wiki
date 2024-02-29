@@ -1,6 +1,4 @@
 # Getting Started
-# Patata
-
 Ta4j is an open source Java library for technical analysis. It provides the basic components for creation, evaluation and execution of trading strategies.
 
 About technical analysis:
