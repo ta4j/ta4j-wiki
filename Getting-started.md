@@ -20,21 +20,21 @@ Another way could be to [clone this git repository](https://git-scm.com/book/en/
 
 ### Getting started with ta4j
 
-In this quick example we will backtest a trading strategy over a price time series.
+In this quick example we will backtest a trading strategy over a price bar series.
 
-At the beginning we just need a time series.
+At the beginning we just need a bar series.
 
 ```java
-// Creating a time series (from any provider: CSV, web service, etc.)
+// Creating a bar series (from any provider: CSV, web service, etc.)
 BarSeries series = CsvTradesLoader.loadBitstampSeries();
 ```
-After creating a `TimeSeries` we can add OHLC data and volume to the series:
+After creating a `BarSeries` we can add OHLC data and volume to the series:
 
 ```java
 // adding open, high, low, close and volume data to the series
 series.addBar(ZonedDateTime.now(), 105.42, 112.99, 104.01, 111.42, 1337);
 ```
-See the [Bar Series and Bars section](Time-series-and-bars.html) to learn about time series and to know how you can construct one.
+See the [Bar Series and Bars section](Time-series-and-bars.html) to learn about bar series and to know how you can construct one.
 
 ##### Using indicators
 

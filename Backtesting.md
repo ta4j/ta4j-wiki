@@ -11,7 +11,7 @@ Backtesting is the main use case of ta4j.
 
 ### Running your backtest
 
-Once you constructed [your time series](Time-series-and-bars.md) and [your trading strategy](Trading-strategies.md), you can backtest the strategy by just calling:
+Once you constructed [your bar series](Bar-series-and-bars.md) and [your trading strategy](Trading-strategies.md), you can backtest the strategy by just calling:
 
 ```java
 BarSeries series = ...
@@ -22,7 +22,7 @@ TradingRecord tradingRecord = seriesManager.run(myStrategy);
 ```
 
 That's it! You get a `TradingRecord` object which is the record of the resulting trading session (basically a list of trades/orders).
-By providing different strategies to the `TimeSeriesManager#run(Strategy)` methods, you get different `TradingRecord` objects and you can compare them according to analysis criteria.
+By providing different strategies to the `BarSeriesManager#run(Strategy)` methods, you get different `TradingRecord` objects and you can compare them according to analysis criteria.
 
 ### Analyzing strategies
 
