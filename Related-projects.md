@@ -20,6 +20,8 @@ This section contains other libraries which make use of ta4j:
 |trading-helper|A library to help in trading decisions integrating Yahoo YQL API|[GitHub](https://github.com/tesnick/trading-helper)|
 |ta4j-strategies|Sharing and discuss strategies based on ta4j (beta)|[GitHub](https://github.com/team172011/ta4j-strategies)|
 
+Some other examples are:
+
 | Name | Description | Link |
 | --- | --- | --- |
 |OpenFXMiner|Data Mining engine for FX and Stocks trading|[GitHub](https://github.com/algonell/OpenFXMiner)|
