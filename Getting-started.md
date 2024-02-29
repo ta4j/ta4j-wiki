@@ -29,7 +29,7 @@ At the beginning we just need a time series.
 // Creating a time series (from any provider: CSV, web service, etc.)
 BarSeries series = new BaseBarSeriesBuilder().withName("AXP_Stock").build();
 ```
-After createing a `TimeSeries` we can add OHLC data and volume to the series:
+After creating a `TimeSeries` we can add OHLC data and volume to the series:
 
 ```java
 // adding open, high, low, close and volume data to the series
