@@ -9,6 +9,7 @@ This section contains libraries which extend the functionality of ta4j, but were
 |quandl_loader|Data loader that pulls data from quandl.com|[GitHub](https://github.com/edouardswiac/ta4j/blob/f400c17a59013aba8a056626828f7cfa2d48adb1/ta4j-examples/src/main/java/ta4jexamples/loaders/QuandlTicksLoader.java)|
 |Lib_ConvertTimeSeriesObjects|Converts between different timeseries representations (JFree, TA4J, JTable) and offers a detection of the dominant frequency of tick data|[GitHub](https://github.com/ElMoe/Lib_ConvertTimeSeriesObjects)|
 |ta4j2|Simplification of ta4j. Dropping `Num` and using `double`|[GitHub](https://github.com/team172011/ta4j2)|
+
 ### Libraries using ta4j
 This section contains other libraries which make use of ta4j:
 
@@ -19,14 +20,6 @@ This section contains other libraries which make use of ta4j:
 |ta-toolbox|A collection of lesser known Indicators and tools used by Technical Analysis and Quantitative Finance|[GitHub](https://github.com/woodberry/ta-toolbox)|
 |trading-helper|A library to help in trading decisions integrating Yahoo YQL API|[GitHub](https://github.com/tesnick/trading-helper)|
 |ta4j-strategies|Sharing and discuss strategies based on ta4j (beta)|[GitHub](https://github.com/team172011/ta4j-strategies)|
-
-Some other examples are:
-
-| Name | Description | Link |
-| --- | --- | --- |
-|quandl_loader|Data loader that pulls data from quandl.com|[GitHub](https://github.com/edouardswiac/ta4j/blob/f400c17a59013aba8a056626828f7cfa2d48adb1/ta4j-examples/src/main/java/ta4jexamples/loaders/QuandlTicksLoader.java)|
-|Lib_ConvertTimeSeriesObjects|Converts between different timeseries representations (JFree, TA4J, JTable) and offers a detection of the dominant frequency of tick data|[GitHub](https://github.com/ElMoe/Lib_ConvertTimeSeriesObjects)|
-|ta4j2|Simplification of ta4j. Dropping `Num` and using `double`|[GitHub](https://github.com/team172011/ta4j2)|
 
 
 ### Applications using ta4j
