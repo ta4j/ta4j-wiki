@@ -29,7 +29,7 @@ Rule exitRule = new CrossedDownIndicatorRule(shortSma, longSma)
 
 Using ta4j, you can check if an entry/exit condition is met by calling the `Rule#isSatisfied(int, TradingRecord)` method. You just have to give:
 
-  * the tick index for which you want to check the condition
+  * the bar index for which you want to check the condition
   * the `TradingRecord` object (for rules with a complex logic, i.e. using trading history and previous results)
 
 ### Trading strategies

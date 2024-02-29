@@ -111,9 +111,9 @@ public class RSIIndicatorTest extends IndicatorTest<Indicator<Decimal>, Decimal>
 
 ### IndicatorTest
 
-An XLS indicator test class must extend (or contain) the IndicatorTest class, which provides standard methods for generating ta4j indicators.  The test class constructor calls the IndicatorTest constructor with the indicator's factory lambda function.  This allows for standard construction of the ta4j indicator via IndicatorTest#getIndicator(data, params) within the unit tests.  Note that this indicator is built from Indicator<Decimal> data because that is how the RSIIndicator class is written.  Some indicators are built from TimeSeries data (ATR) so in those cases the **extends** clause must be modified to
+An XLS indicator test class must extend (or contain) the IndicatorTest class, which provides standard methods for generating ta4j indicators.  The test class constructor calls the IndicatorTest constructor with the indicator's factory lambda function.  This allows for standard construction of the ta4j indicator via IndicatorTest#getIndicator(data, params) within the unit tests.  Note that this indicator is built from Indicator<Decimal> data because that is how the RSIIndicator class is written.  Some indicators are built from BarSeries data (ATR) so in those cases the **extends** clause must be modified to
 ```
-public class ATRIndicatorTest extends IndicatorTest<TimeSeries, Decimal>
+public class ATRIndicatorTest extends IndicatorTest<BarSeries, Decimal>
 ```
 
 ### ExternalIndicatorTest
@@ -131,9 +131,9 @@ Now that these objects are initialized, standardized unit tests may be created a
 
         indicator = getIndicator(xlsClose, 1);
         assertIndicatorEquals(xls.getIndicator(1), indicator);
-        assertEquals(100.0, indicator.getValue(indicator.getTimeSeries().getEndIndex()).doubleValue(), TATestsUtils.TA_OFFSET);
+        assertEquals(100.0, indicator.getValue(indicator.getBarSeries().getEndIndex()).doubleValue(), TATestsUtils.TA_OFFSET);
 ```
-xls.getSeries() extracts the TimeSeries data from the XLS spreadsheet file.  This TimeSeries, along with indicator parameters, is passed to IndicatorTest#getIndicator() which returns the new Indicator<Decimal> as the actual indicator.
+xls.getSeries() extracts the BarSeries data from the XLS spreadsheet file.  This BarSeries, along with indicator parameters, is passed to IndicatorTest#getIndicator() which returns the new Indicator<Decimal> as the actual indicator.
 
 xls.getIndicator(params) modifies the parameters in the XLS spreadsheet file (in memory, not on disk!), re-calculates everything, and returns the new Indicator<Decimal> from the spreadsheet as the expected indicator.  Note that there must be the same number of rows (or more) in the parameters section of the XLS file as there are parameters in the params list.  In this example, params can contain up to 11 parameters.  The twelfth parameter will overwrite cell B15 which breaks the data section header!  If this example sheet is copied, the 11 rows of the parameter section should be adequate for just about any conceivable indicator.  If not, just add more rows to the parameter section, bumping down the data section.
 
@@ -173,7 +173,7 @@ This criterion spreadsheet is very similar to the example indicator spreadsheet 
 
 ### Trading Record
 
-A criterion evaluates a trading record.  There is no linear transaction cost if there is no trading record.  To calculate() any criterion, a TimeSeries and a TradingRecord must be defined.  As with indicator testing, the TimeSeries data is contained in columns A - F.  With this criterion the TradingRecord is represented in the "state" column (G).  A value of 0 represents "no shares held" (no open trade).  A value of 1 represents "shares held" (open trade).  A transition from 0 to 1 represents a BUY order filled at the row with the 1.  A transition from 1 to 0 represents a SELL order filled at the row with the 0.  The actual distribution of 1's and 0's does not matter, and was randomly generated for this example.
+A criterion evaluates a trading record.  There is no linear transaction cost if there is no trading record.  To calculate() any criterion, a BarSeries and a TradingRecord must be defined.  As with indicator testing, the BarSeries data is contained in columns A - F.  With this criterion the TradingRecord is represented in the "state" column (G).  A value of 0 represents "no shares held" (no open trade).  A value of 1 represents "shares held" (open trade).  A transition from 0 to 1 represents a BUY order filled at the row with the 1.  A transition from 1 to 0 represents a SELL order filled at the row with the 0.  The actual distribution of 1's and 0's does not matter, and was randomly generated for this example.
 
 Above, a BUY was filled on Feb 2, and a SELL was filled on Feb 23.  Two additional columns, Buy (H) and Sell (I), have been added to aid interpretation and to simplify the formulas.  It is important that these columns accurately reflect transitions in the in column (G) or the calculated criterion values will not be consistent with the trading record.
 
@@ -232,12 +232,13 @@ public class LinearTransactionCostCriterionTest extends CriterionTest {
     public LinearTransactionCostCriterionTest() throws Exception {
         super((params) -> new LinearTransactionCostCriterion((double) params[0], (double) params[1], (double) params[2]));
         xls = new XLSCriterionTest(this.getClass(), "LTC.xls", 16, 6);
-}
+    }
+}   
 ```
 
 ### CriterionTest
 
-An XLS criterion test class must extend (or contain) the CriterionTest class, which provides standard methods for generating ta4j criteria.  The test class constructor calls the CriterionTest constructor with the criterion's factory lambda function.  This allows for standard construction of the ta4j criterion via CriterionTest#getCriterion(params) within the unit tests.  Note that the criterion is built from parameters only (no data) because ta4j criteria are constructed from only parameters.  The data is only passed to the criterion when the AnalysisCriterion#calculate(TimeSeries series, TradingRecord tradingRecord) method is called.
+An XLS criterion test class must extend (or contain) the CriterionTest class, which provides standard methods for generating ta4j criteria.  The test class constructor calls the CriterionTest constructor with the criterion's factory lambda function.  This allows for standard construction of the ta4j criterion via CriterionTest#getCriterion(params) within the unit tests.  Note that the criterion is built from parameters only (no data) because ta4j criteria are constructed from only parameters.  The data is only passed to the criterion when the AnalysisCriterion#calculate(BarSeries series, TradingRecord tradingRecord) method is called.
 
 ### ExternalCriterionTest
 
@@ -249,15 +250,16 @@ Now that these objects are initialized, standardized unit tests may be created a
 ```
     @Test
     public void externalData() throws Exception {
-        TimeSeries xlsSeries = xls.getSeries();
+        BarSeries xlsSeries = xls.getSeries();
         TradingRecord xlsTradingRecord = xls.getTradingRecord();
         double value;
 
         value = getCriterion(1000d, 0.005, 0.2).calculate(xlsSeries, xlsTradingRecord);
         assertEquals(xls.getFinalCriterionValue(1000d, 0.005, 0.2).doubleValue(), value, TATestsUtils.TA_OFFSET);
         assertEquals(843.5492, value, TATestsUtils.TA_OFFSET);
+    }
 ```
-xls.getSeries() extracts the TimeSeries data from the XLS spreadsheet file, just like indicator testing.  xls.getTradingRecord() extracts the TradingRecord from the file.  Criterion parameters are passed to CriterionTest#getCriterion(params) to get the ta4j AnalysisCriterion.  AnalysisCriterion#calculate(TimeSeries series, TradingRecord tradingRecord) then takes the XLS TimeSeries and XLS TradingRecord and returns the double final criterion value as the actual value.
+xls.getSeries() extracts the BarSeries data from the XLS spreadsheet file, just like indicator testing.  xls.getTradingRecord() extracts the TradingRecord from the file.  Criterion parameters are passed to CriterionTest#getCriterion(params) to get the ta4j AnalysisCriterion.  AnalysisCriterion#calculate(BarSeries series, TradingRecord tradingRecord) then takes the XLS BarSeries and XLS TradingRecord and returns the double final criterion value as the actual value.
 
 xls.getFinalCriterionValue(params) modifies the parameters in the XLS spreadsheet file (in memory, not on disk!), re-calculates everything, and returns the new final criterion value from the spreadsheet as a Decimal.  Note that, as for indicator spreadsheets, there must be the same number of rows (or more) in the parameters section of the XLS file as there are parameters in the params list.  In this example, params can contain up to 5 parameters.  The sixth parameter will overwrite cell B9 which breaks the data section header!  If this example sheet is copied, the 5 rows of the parameter section should be adequate for just about any conceivable criterion.  If not, just add more rows to the parameter section, bumping down the data section.
 
