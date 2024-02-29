@@ -34,7 +34,7 @@ After creating a `BarSeries` we can add OHLC data and volume to the series:
 // adding open, high, low, close and volume data to the series
 series.addBar(ZonedDateTime.now(), 105.42, 112.99, 104.01, 111.42, 1337);
 ```
-See the [Bar Series and Bars section](Time-series-and-bars.html) to learn about bar series and to know how you can construct one.
+See the [Bar Series and Bars section](Bar-series-and-bars.html) to learn about bar series and to know how you can construct one.
 
 ##### Using indicators
 
