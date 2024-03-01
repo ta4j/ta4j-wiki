@@ -5,7 +5,7 @@ These examples demonstrate different aspects of the Ta4j API. Each example can b
 
   * [Ta4j quickstart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/Quickstart.java)
 
-##### Time series and Num
+##### Bar series and Num
 
   * [How to build a bar series with differen Num implementation and more](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/barSeries/BuildBarSeries.java)
   * [How to build a bar series from trades](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/loaders/CsvTradesLoader.java)

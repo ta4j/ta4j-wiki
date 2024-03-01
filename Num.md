@@ -91,7 +91,7 @@ Bar bar = new BaseBar(ZonedDateTime.now(),1,3,1,1,1,BigDecimalNum::valueOf);
 
 Also the BarSeries needs this ``Function``. The easiest way to handle this is to use the SeriesBuilder and to add bar data directly to the BarSeries:
 ```java
-BarSeries series = new BaseBarSeries.SeriesBuilder().withName("mySeries").build(); // the builder uses BigDecimalNum as default
+BarSeries series = new BaseBarSeriesBuilder().withName("mySeries").build(); // the builder uses BigDecimalNum as default
 
 ZonedDateTime endTime = ZonedDateTime.now();
 // add bar data directly. It will be transformed automatically to Num implementation of BarSeries
@@ -103,13 +103,13 @@ series.addBar(endTime.plusDays(2), 107.90, 117.50, 107.90, 115.42, 4242);
 You can determine the ``Num`` transforming ``Function`` with the builder by using the ``withNumTypeOf(function)`` function:
 
 ```java
-BarSeries series = new BaseBarSeries.SeriesBuilder().withName("mySeries").withNumTypeOf(DoubleNum::valueOf).build();
+BarSeries series = new BaseBarSeriesBuilder().withName("mySeries").withNumTypeOf(DoubleNum::valueOf).build();
 ```
 <br>
 **Please note that once instantiating a `BarSeries` with a specific `Num` implementation you cannot add data in another `Num` implementation to the `BarSeries`.**
 
 ```java
-BarSeries series = BaseBarSeries.SeriesBuilder().build() // implicit initialize with PrecisionNum
+BarSeries series = new BaseBarSeriesBuilder().build().build(); // implicit initialize with PrecisionNum
 series.addTrade(DoubleNum.valueOf(volume), DoubleNum.valueOf(bid)); // try to add DoubleNum values
 // throws ClassCastException: org.ta4j.core.num.DoubleNum
 // cannot be cast to org.ta4j.core.num.PrecisionNum
