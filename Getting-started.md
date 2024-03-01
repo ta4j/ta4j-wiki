@@ -16,7 +16,7 @@ Ta4j is available on Maven. You can [create a Maven project](http://www.tech-rec
   <version>0.15</version>
 </dependency>
 ```
-Another way could be to [clone this git repository](https://git-scm.com/book/en/v1/Git-Basics-Getting-a-Git-Repository) or to simply download this library and add the source code to your existing eclipse project.
+Another way could be to [clone this git repository](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) or to simply download this library and add the source code to your existing eclipse project.
 
 ### Getting started with ta4j
 
