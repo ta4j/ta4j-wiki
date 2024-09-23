@@ -25,8 +25,10 @@ git checkout -b feature/name-of-your-feature-branch
 git push --set-upstream origin feature/*
 ```
 
-* _Note_: **If you have finished your work, please make sure to maintain the _CHANGELOG.md_ file if you have added, fixed or enhanced something.**
-* _Note_: **Before submitting a pull request, please make sure you run the complete test suite on your branch using `mvn test`. There are github actions checking for code format and licence header as well:**
+* _Note_: If you have finished your work, please make sure to maintain the _CHANGELOG.md_ file if you have added, fixed or enhanced something.
+* _Note_: Before submitting a pull request, please make sure you run the complete test suite on your branch using `mvn test`. There are github actions checking for code format and licence header as well.
+
+**If you miss this step your changes will fail the CI build!**
 
 ```
 // implement changes on your branch
@@ -43,15 +45,19 @@ The last step would be to do a pull request **from your branch to the `master` b
 
 ### General
 (in progress...)<br>
-First things first: Feel free to write awesome code! Do not hesitate to open an issue or a pull request just because you fear making a mistake. Others can review your code, give you tips and can correct you.
-* Be aware that your code is easily legible and transparent.
-* Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator add but you also found bugs or little enhancements on BarSeries and TradingRecord **fix them in a new pull request**.
+First things first: Feel free to get involved! Do not hesitate to raise an issue because if you are having problems with an indicator (for example) it's very likely others are too. If there's a bug in some formula calculation we want to resolve it ASAP however We can't fix what we aren't aware of. 
+Pull requests are always, always welcome. Don't worry if your code isn't "perfect", or even finished. Personally I'm a big fan of opening PRs very early on (as drafts) with the understanding that they are works-in-progress and that collaboration is welcome!
+
+Three main rules to keep in mind:
+1. Please prioritize clear & legible code over "clever" code.
+2. Unit test code should be treated as first-class citizens rather than an afterthought to production code. Having a comprehensive suite of unit tests is the defining difference maker between a codebase where anyone can contribute (successfully) and a codebase where every change is followed by a vicious cycle of regressions. I cannot emphasize this enough.
+3. Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator add but you also found bugs or little enhancements on BarSeries and TradingRecord fix them in a new pull request.
 
 ## Hints
 * use `int startIndex = BarSeries.getBeginIndex()` instead of `int startIndex = 0` to get the first valid index of a BarSeries.
 * ***Note the difference between `Decimal.min(other)` and` Decimal.minus(other)`***
 * It is not possible to store static references to ``Num`` implementations because they will be determined at runtime. If necessary store primitives and use the `numOf(Number n)` or the `numFunction` of series in the constructor. If you are using ``DoubleNum::valueOf`` or ``BigDecimalNum::valueOf`` you most probably do something wrong.
-* **Use primitive as inidcator parameters.*** For example a timeFrame parameter should be an ``int`` and a percentage value parameter should be ``double`` (avoid ``Num``). You can **convert a ``Number`` into ``Num`` using the ``numOf`` function**. This prevents that the user has to convert primitive input values to ``Num`` implementations manually.
+* **Use primitive as indicator parameters.*** For example a timeFrame parameter should be an ``int`` and a percentage value parameter should be ``double`` (avoid ``Num``). You can **convert a ``Number`` into ``Num`` using the ``numOf`` function**. This prevents that the user has to convert primitive input values to ``Num`` implementations manually.
 
 ## Indicators
 If you want to add a new indicator to this repository, please open an issue first to discuss your plans.
