@@ -38,32 +38,98 @@ Moving averages are versatile tools used in a variety of ways:
 
 ## Moving Averages in TA4J
 
-| Abbreviation | Full Name                                     | Indicator Name             |
-|--------------|-----------------------------------------------|----------------------------|
-| ATMA         | Asymmetric Triangler Moving Average           | ATMAIndicator              |
-| DEMA         | Double Exponential Moving Average             | DoubleEMAIndicator         |
-| DMA          | Displaced Moving Average                      | DMAIndicator               |
-| EDMA         | Exponential Displaced Moving Average          | EDMAIndicator              |
-| EMA          | Exponential Moving Average                    | EMAIndicator               |
-| HMA          | Hull Moving Average                           | HMAIndicator               |
-| JMA          | Jurik Moving Average                          | JMAIndicator               |
-| KAMA         | Kaufman Adaptive Moving Average               | KAMAIndicator              |
-| KiJunV2      | Kihon Moving Average                          | KiJunV2Indicator           |
-| LSMA         | Least Squares Moving Average                  | LSMAIndicator              |
-| LWMA         | Linear Weighted Moving Average                | LWMAIndicator              |
-| McGinley     | McGinleys Moving Average                      | McGinleyMAIndicator        |
-| MMA          | Modified Moving Average                       | MMAIndicator               |
-| SMA          | Simple Moving Average                         | SMAIndicator               |
-| SGMA         | Savitzky-Golay Moving Average                 | SGMAIndicator              |
-| SMMA         | Smoothed Moving Average                       | SMMAIndicator              |
-| TEMA         | Triple Exponential Moving Average             | TripleEMAIndicator         |
-| TMA          | Triangler Moving Average                      | TMAIndicator               |
-| VIDYA        | Chandes Variable Index Dynamic Moving Average | VIDYAIndicator             |
-| VMA          | Variable Moving Average                       |                            |
-| VWMA         | Volume Weighted Moving Average                |                            |
-| WilderMA     | Wilders Moving Average                        | WildersMAIndicator         |
-| WMA          | Weighted Moving Average                       | WMAIndicator               |
-| ZLEMA        | Zero Lag Exponential Moving Average           | ZLEMAIndicator             |
+| Abbreviation | Full Name                                     | Indicator Name             | Moving Average Type            |
+|--------------|-----------------------------------------------|----------------------------|--------------------------------|
+| ATMA         | Asymmetric Triangular Moving Average          | ATMAIndicator              | Specialized Moving Average     |
+| DEMA         | Double Exponential Moving Average             | DoubleEMAIndicator         | Exponential Moving Average     |
+| DMA          | Displaced Moving Average                      | DMAIndicator               | Specialized Moving Average     |
+| EDMA         | Exponential Displaced Moving Average          | EDMAIndicator              | Exponential Moving Average     |
+| EMA          | Exponential Moving Average                    | EMAIndicator               | Exponential Moving Average     |
+| HMA          | Hull Moving Average                           | HMAIndicator               | Specialized Moving Average     |
+| JMA          | Jurik Moving Average                          | JMAIndicator               | Specialized Moving Average     |
+| KAMA         | Kaufman Adaptive Moving Average               | KAMAIndicator              | Adaptive Moving Average        |
+| KiJunV2      | Kihon Moving Average                          | KiJunV2Indicator           | Specialized Moving Average     |
+| LSMA         | Least Squares Moving Average                  | LSMAIndicator              | Polynomial-Based Moving Average|
+| LWMA         | Linear Weighted Moving Average                | LWMAIndicator              | Weighted Moving Average        |
+| McGinley     | McGinleys Moving Average                      | McGinleyMAIndicator        | Adaptive Moving Average        |
+| MMA          | Modified Moving Average                       | MMAIndicator               | Exponential Moving Average     |
+| SMA          | Simple Moving Average                         | SMAIndicator               | Simple Moving Average          |
+| SGMA         | Savitzky-Golay Moving Average                 | SGMAIndicator              | Polynomial-Based Moving Average|
+| SMMA         | Smoothed Moving Average                       | SMMAIndicator              | Smoothed Moving Average        |
+| TEMA         | Triple Exponential Moving Average             | TripleEMAIndicator         | Exponential Moving Average     |
+| TMA          | Triangular Moving Average                     | TMAIndicator               | Simple Moving Average          |
+| VIDYA        | Chandes Variable Index Dynamic Moving Average | VIDYAIndicator             | Adaptive Moving Average        |
+| VMA          | Variable Moving Average                       |                            | Adaptive Moving Average        |
+| VWMA         | Volume Weighted Moving Average                |                            | Weighted Moving Average        |
+| WilderMA     | Wilders Moving Average                        | WildersMAIndicator         | Smoothed Moving Average        |
+| WMA          | Weighted Moving Average                       | WMAIndicator               | Weighted Moving Average        |
+| ZLEMA        | Zero Lag Exponential Moving Average           | ZLEMAIndicator             | Exponential Moving Average     |
+
+
+## Classification of Moving Averages
+
+### 1. Simple Moving Averages
+- These averages assign equal weight to all data points in the period.
+- **Indicators**:
+  - SMA (Simple Moving Average)
+  - TMA (Triangular Moving Average)
+
+---
+
+### 2. Weighted Moving Averages
+- These averages assign different weights to data points, typically emphasizing recent data.
+- **Indicators**:
+  - LWMA (Linear Weighted Moving Average)
+  - WMA (Weighted Moving Average)
+  - VWMA (Volume Weighted Moving Average)
+
+---
+
+### 3. Exponential Moving Averages
+- These averages assign exponentially increasing weights to recent data.
+- **Indicators**:
+  - EMA (Exponential Moving Average)
+  - ZLEMA (Zero Lag Exponential Moving Average)
+  - DEMA (Double Exponential Moving Average)
+  - TEMA (Triple Exponential Moving Average)
+  - EDMA (Exponential Displaced Moving Average)
+
+---
+
+### 4. Adaptive Moving Averages
+- These averages adjust dynamically based on market conditions such as volatility or trend strength.
+- **Indicators**:
+  - KAMA (Kaufman Adaptive Moving Average)
+  - VIDYA (Chande Variable Index Dynamic Moving Average)
+  - VMA (Variable Moving Average)
+  - McGinley (McGinley Moving Average)
+
+---
+
+### 5. Smoothed Moving Averages
+- These averages reduce short-term fluctuations to produce a smoother trendline.
+- **Indicators**:
+  - SMMA (Smoothed Moving Average)
+  - WilderMA (Wilder’s Moving Average)
+
+---
+
+### 6. Polynomial-Based Moving Averages
+- These averages use polynomial regression or curve fitting to calculate the trend.
+- **Indicators**:
+  - SGMA (Savitzky-Golay Moving Average)
+  - LSMA (Least Squares Moving Average)
+
+---
+
+### 7. Specialized Moving Averages
+- These averages use unique algorithms or methodologies for specific purposes.
+- **Indicators**:
+  - HMA (Hull Moving Average)
+  - JMA (Jurik Moving Average)
+  - ATMA (Asymmetric Triangular Moving Average)
+  - KiJunV2 (Kihon Moving Average)
+  - DMA (Displaced Moving Average)
 
 
 
