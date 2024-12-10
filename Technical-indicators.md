@@ -9,6 +9,8 @@ About technical indicators:
 
 In ta4j, all technical indicators implement the `Indicator` interface. So a list of all the indicators provided can be found [in the Javadoc](https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.11/ta4j-core-0.11-javadoc.jar/!/index.html).
 
+Ta4j list of [Moving average indicators](Moving-Average-Indicators.html)
+
 ### Backtesting indicators
 
 Technicals also need to be backtested on historic data to see how effective they would have been to predict future prices. [Some examples](Usage-examples.html) are available in this sense.
