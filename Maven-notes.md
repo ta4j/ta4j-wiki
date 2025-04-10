@@ -62,7 +62,7 @@ mvn clean deploy
 
     mvn release:perform -Psonatype-oss-release
     ```
-6. Update Wiki with CHANGELOG.md and new Javadoc
+6. Update Wiki with CHANGELOG.md and new Javadoc links (_layouts/default.html, Backtesting.md, Technical-indicators.md)
 7. Update CHANGELOG.md and README.md on develop branch
 
 ### Internal notes
