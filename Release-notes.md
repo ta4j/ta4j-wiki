@@ -1,5 +1,45 @@
 Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangelog.com/en/1.0.0/) from version 0.9 onwards.
 
+## 0.18 (released May 15, 2025)
+
+### Breaking
+- Updated project Java JDK from 11 > 21
+- Updated Github workflows to use JDK 21
+- Extracted NumFactory as source of numbers with defined precision
+- Replaced `ZonedDateTime` with `Instant`
+- Renamed `FixedDecimalIndicator` with `FixedNumIndicator`
+- Moved `BaseBarBuilder` and `BaseBarBuilderFactory` to `bars`-package and renamed to `TimeBarBuilder` and `TimeBarBuilderFactory`
+- Renamed `BaseBarConvertibleBuilderTest` to `BaseBarSeriesBuilderTest`
+- Renamed  `Indicator.getUnstableBars` to  `Indicator.getCountOfUnstableBars`
+- Moved `indicators/AbstractEMAIndicator` to `indicators/averages`-package
+- Moved `indicators/DoubleEMAIndicator` to `indicators/averages`-package
+- Moved `indicators/EMAIndicator` to `indicators/averages`-package
+- Moved `indicators/HMAIndicator` to `indicators/averages`-package
+- Moved `indicators/KAMAIndicator` to `indicators/averages`-package
+- Moved `indicators/LWMAIndicator` to `indicators/averages`-package
+- Moved `indicators/MMAIndicator` to `indicators/averages`-package
+- Moved `indicators/SMAIndicator` to `indicators/averages`-package
+- Moved `indicators/TripleEMAIndicator` to `indicators/averages`-package
+- Moved `indicators/WMAIndicator` to `indicators/averages`-package
+- Moved `indicators/ZLEMAIndicator` to `indicators/averages`-package
+- Implemented sharing of `MathContext` in `DecimalNum`. For creating numbers, `NumFactory` implementations are the preferred way.
+
+### Fixed
+- Fixed `BaseBar.toString()` to avoid `NullPointerException` if any of its property is null
+- Fixed `SMAIndicatorTest` to set the endTime of the next bar correctly
+- Fixed `SMAIndicatorMovingSeriesTest` to set the endTime of the next bar correctly
+- Use UTC TimeZone for `AroonOscillatorIndicatorTest`, `PivotPointIndicatorTest`
+- Fixed `MockBarBuilder` to use `Instant.now` for beginTime
+- Fixed `RecentSwingHighIndicatorTest` to create bars consistently
+- Fixed `LSMAIndicator` to fix lsma calculation for incorrect values
+
+### Changed
+- Updated **jfreechart** dependency in **ta4j-examples** project from 1.5.3 to 1.5.5 to resolve [CVE-2023-52070](https://ossindex.sonatype.org/vulnerability/CVE-2023-6481?component-type=maven&component-name=ch.qos.logback%2Flogback-core)
+- Updated **logback-classic** 1.4.12 > 1.5.6 to resolve [CVE-2023-6481](https://ossindex.sonatype.org/vulnerability/CVE-2023-6481?component-type=maven&component-name=ch.qos.logback%2Flogback-core)
+- Cleaned code by using new java syntax `text blocks`
+- Faster test execution by using `String.lines()` instead of `String` concatenation
+- Improve Javadoc for `DecimalNum`and `DoubleNum`
+- Allowed JUnit5 for new tests. Old remain as is.
 
 ## 0.17 (released September 9, 2024)
 
