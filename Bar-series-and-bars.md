@@ -12,19 +12,23 @@ A `Bar` contains aggregated data of a security/commodity during a time period. "
 A Bar is the basic building block of a BarSeries. Then the bar series is used for backtesting or live trading.
 
 > Since release 0.12 the BarSeries and Bars supports different data types for storing the data and calculating.
+
 > Since release 0.12 the bar creation and management has moved to the BarSeries. That means it is possible to add the data of a bar directly to the BarSeries via #addBar(...) functions
+
+> Since release 0.18 `Bar` now stores timestamp data using `Instant` instead of `ZonedDateTime`
 
 ### Bar series for backtesting
 
-In order to backtest a strategy you need to fill a bar series with past data. To do that you just have to create a BarSeries and add data to it. The following example shows how to create a `BaseBarSeries` with help of the ``SeriesBuilder`` and how to add data to the series:
+In order to backtest a strategy you need to fill a bar series with past data. To do that you just have to create a BarSeries and add data to it. The following example shows how to create a `BaseBarSeries` with help of the ``SeriesBuilder`` and how to add Bar data to the series:
 
 ```java
 BarSeries series = new BaseBarSeriesBuilder().withName("my_2017_series").build();
 
-ZonedDateTime endTime = ZonedDateTime.now();
-series.addBar(endTime, 105.42, 112.99, 104.01, 111.42, 1337);
-series.addBar(endTime.plusDays(1), 111.43, 112.83, 107.77, 107.99, 1234);
-series.addBar(endTime.plusDays(2), 107.90, 117.50, 107.90, 115.42, 4242);
+Instant endTime = Instant.now();
+series.addBar(new BaseBar(Duration.ofDays(1), null, endTime, series.numFactory().numOf(105.42), series.numFactory().numOf(112.99), series.numFactory().numOf(104.01), series.numFactory().numOf(111.42), series.numFactory().numOf(1337), series.numFactory().one(), 0));
+series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(1, ChronoUnit.DAYS), series.numFactory().numOf(111.43), series.numFactory().numOf(112.83), series.numFactory().numOf(107.77), series.numFactory().numOf(107.99), series.numFactory().numOf(1234), series.numFactory().one(), 0));
+series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(2, ChronoUnit.DAYS), series.numFactory().numOf(107.90), series.numFactory().numOf(117.50), series.numFactory().numOf(107.90), series.numFactory().numOf(115.42), series.numFactory().numOf(4242), series.numFactory().one(), 0));
+        
 //...
 
 ```
@@ -32,15 +36,15 @@ series.addBar(endTime.plusDays(2), 107.90, 117.50, 107.90, 115.42, 4242);
 You can also use a Builder for creating bars:
 
 ````java
-BaseBar bar = BaseBar.builder(DecimalNum::valueOf, Number.class)
-                .timePeriod(Duration.ofDays(1))
-                .endTime(endTime)
-                .openPrice(openPrice)
-                .highPrice(highPrice)
-                .lowPrice(lowPrice)
-                .closePrice(closePrice)
-                .volume(volume)
-                .build();
+Bar dailyBar = new TimeBarBuilder()
+            .timePeriod(Duration.ofDays(1))
+            .endTime(endTime)
+            .openPrice(open)
+            .highPrice(high)
+            .lowPrice(low)
+            .closePrice(close)
+            .volume(volume)
+            .build();
 
 series.addBar(bar);
 
@@ -58,10 +62,11 @@ Live trading involves building a bar series for current prices. In this use case
 BarSeries series = new BaseBarSeries("my_live_series");
 ```
 
-Then for each bar received from the broker/exchange you have to add it to your series:
+Then for each bar received from the broker/exchange you have to add it to your series similar to the above examples.
 
 ```java
-series.addBar(ZonedDateTime.now(), 105.42, 112.99, 104.01, 111.42, 1337);
+Bar bar = new BaseBar( //...
+series.addBar(bar);
 ```
 
 Or if you are receiving interperiodic prices and want to add it to the last bar:
