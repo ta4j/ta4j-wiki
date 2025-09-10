@@ -61,11 +61,11 @@ The last step would be to do a pull request **from your branch to the `master` b
 First things first: Feel free to get involved! Do not hesitate to raise an issue because if you are having problems with an indicator (for example) it's very likely others are too. If there's a bug in some formula calculation we want to resolve it ASAP however We can't fix what we aren't aware of. 
 Pull requests are always, always welcome. Don't worry if your code isn't "perfect", or even finished. Personally I'm a big fan of opening PRs very early on (as drafts) with the understanding that they are works-in-progress and that collaboration is welcome!
 
-Three main rules to keep in mind:
+Four main rules to keep in mind:
 1. Please prioritize clear & legible code over "clever" code.
 2. Unit test code should be treated as first-class citizens rather than an afterthought to production code. Having a comprehensive suite of unit tests is the defining difference maker between a codebase where anyone can contribute (successfully) and a codebase where every change is followed by a vicious cycle of regressions. I cannot emphasize this enough.
 3. Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator add but you also found bugs or little enhancements on BarSeries and TradingRecord fix them in a new pull request.
-4. 
+4. Any breaking changes to public APIs must include an appropriate deprecation shim to preserve binary/source compatibility. For example if you move a class to another package, create a deprecation shim class in the original package. If you change a public method's signature, keep the original method signature available as a `@Deprecated` overload. The javadoc for all new public classes and methods should be annotated with a `@since <version>`
 
 ## Hints
 * use `int startIndex = BarSeries.getBeginIndex()` instead of `int startIndex = 0` to get the first valid index of a BarSeries.
