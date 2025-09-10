@@ -36,15 +36,15 @@ series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(2, ChronoUnit.D
 You can also use a Builder for creating bars:
 
 ````java
-BaseBar bar = BaseBar.builder(DecimalNum::valueOf, Number.class)
-                .timePeriod(Duration.ofDays(1))
-                .endTime(endTime)
-                .openPrice(openPrice)
-                .highPrice(highPrice)
-                .lowPrice(lowPrice)
-                .closePrice(closePrice)
-                .volume(volume)
-                .build();
+Bar dailyBar = new TimeBarBuilder()
+            .timePeriod(Duration.ofDays(1))
+            .endTime(endTime)
+            .openPrice(open)
+            .highPrice(high)
+            .lowPrice(low)
+            .closePrice(close)
+            .volume(volume)
+            .build();
 
 series.addBar(bar);
 
