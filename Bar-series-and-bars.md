@@ -26,8 +26,8 @@ BarSeries series = new BaseBarSeriesBuilder().withName("my_2017_series").build()
 
 Instant endTime = Instant.now();
 series.addBar(new BaseBar(Duration.ofDays(1), null, endTime, series.numFactory().numOf(105.42), series.numFactory().numOf(112.99), series.numFactory().numOf(104.01), series.numFactory().numOf(111.42), series.numFactory().numOf(1337), series.numFactory().one(), 0));
-        series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(1, ChronoUnit.DAYS), series.numFactory().numOf(111.43), series.numFactory().numOf(112.83), series.numFactory().numOf(107.77), series.numFactory().numOf(107.99), series.numFactory().numOf(1234), series.numFactory().one(), 0));
-        series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(2, ChronoUnit.DAYS), series.numFactory().numOf(107.90), series.numFactory().numOf(117.50), series.numFactory().numOf(107.90), series.numFactory().numOf(115.42), series.numFactory().numOf(4242), series.numFactory().one(), 0));
+series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(1, ChronoUnit.DAYS), series.numFactory().numOf(111.43), series.numFactory().numOf(112.83), series.numFactory().numOf(107.77), series.numFactory().numOf(107.99), series.numFactory().numOf(1234), series.numFactory().one(), 0));
+series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(2, ChronoUnit.DAYS), series.numFactory().numOf(107.90), series.numFactory().numOf(117.50), series.numFactory().numOf(107.90), series.numFactory().numOf(115.42), series.numFactory().numOf(4242), series.numFactory().one(), 0));
         
 //...
 
