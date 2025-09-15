@@ -7,6 +7,19 @@ If you want to go deeper and you want to contribute test cases, e.g. for a quali
 Or you have even a nice idea, which you would like to contribute as code?
 You are always welcome. We suggest you before you contribute a bigger work to get prior permission, since we want to verify first if the contribution will bring the lib forward. We will give quickly a feedback if we will accept the contribution.
 
+## What kind of contributions are we looking for?
+While just about all contributions are welcome, some will receive higher priority than others:
+1. Contributions that directly advance the [Roadmap](Roadmap-and-Tasks.md) will receive the highest priority.
+2. Cleanly additive Indicators, Criterion, and Rules (i.e. can be incorporated without any side effects, overlap, or non-trivial impacts to existing code) will almost always be accepted.
+3. Additional test cases and/or documentation for an existing feature. Follow the prevailing conventions and it's as good as merged.
+4. Fixes to identified bugs - localized fix? 100% in. Spans multiple classes, abstraction layers, etc? Let's talk it through first.
+
+
+
+5. As a library the reliability and predictablity of our core APIs is of paramount importance. No one wants to spend hours - perhaps days - refactoring their code just because they updated a dependency. If we are going to force an unexpected refactor cycle on people, it had better be for a damn good reason. To this end, all public API breaking changes (including package re-orgs, renames, method signature changes, etc) must pass a (very) high bar for value delivered. Unsolicited PRs of this nature will also have the lowest priority.
+6. Most "code cleanup" - PRs that contain only variable renames, formatting differences, or other deck chair re-arranging changes will more than likely be rejected. 
+
+
 ## How to contribute?
 In the most cases (e.g. bug fixes and little enhancements) you can create a pull request to the `master` branch. For bigger improvements please open an issue to discuss your plans.
 * _Note_: **Pull requests with respect to items of the [Roadmap](Roadmap-and-Tasks.md) are very welcome!**
@@ -48,10 +61,11 @@ The last step would be to do a pull request **from your branch to the `master` b
 First things first: Feel free to get involved! Do not hesitate to raise an issue because if you are having problems with an indicator (for example) it's very likely others are too. If there's a bug in some formula calculation we want to resolve it ASAP however We can't fix what we aren't aware of. 
 Pull requests are always, always welcome. Don't worry if your code isn't "perfect", or even finished. Personally I'm a big fan of opening PRs very early on (as drafts) with the understanding that they are works-in-progress and that collaboration is welcome!
 
-Three main rules to keep in mind:
+Four main rules to keep in mind:
 1. Please prioritize clear & legible code over "clever" code.
 2. Unit test code should be treated as first-class citizens rather than an afterthought to production code. Having a comprehensive suite of unit tests is the defining difference maker between a codebase where anyone can contribute (successfully) and a codebase where every change is followed by a vicious cycle of regressions. I cannot emphasize this enough.
 3. Stay in scope of your pull request. Do not make changes all over the project in one pull request. For example if you want to add a new indicator add but you also found bugs or little enhancements on BarSeries and TradingRecord fix them in a new pull request.
+4. Any breaking changes to public APIs must include an appropriate deprecation shim to preserve binary/source compatibility. For example if you move a class to another package, create a deprecation shim class in the original package. If you change a public method's signature, keep the original method signature available as a `@Deprecated` overload. The javadoc for all new public classes and methods should be annotated with a `@since <version>`
 
 ## Hints
 * use `int startIndex = BarSeries.getBeginIndex()` instead of `int startIndex = 0` to get the first valid index of a BarSeries.
