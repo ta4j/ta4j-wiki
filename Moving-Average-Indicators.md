@@ -59,8 +59,8 @@ Moving averages are versatile tools used in a variety of ways:
 | TEMA         | Triple Exponential Moving Average             | TripleEMAIndicator         | Exponential Moving Average     |
 | TMA          | Triangular Moving Average                     | TMAIndicator               | Simple Moving Average          |
 | VIDYA        | Chandes Variable Index Dynamic Moving Average | VIDYAIndicator             | Adaptive Moving Average        |
-| VMA          | Variable Moving Average                       |                            | Adaptive Moving Average        |
-| VWMA         | Volume Weighted Moving Average                |                            | Weighted Moving Average        |
+| VMA          | Variable Moving Average                       | VMAIndicator               | Adaptive Moving Average        |
+| VWMA         | Volume Weighted Moving Average                | VWMAIndicator              | Weighted Moving Average        |
 | WilderMA     | Wilders Moving Average                        | WildersMAIndicator         | Smoothed Moving Average        |
 | WMA          | Weighted Moving Average                       | WMAIndicator               | Weighted Moving Average        |
 | ZLEMA        | Zero Lag Exponential Moving Average           | ZLEMAIndicator             | Exponential Moving Average     |

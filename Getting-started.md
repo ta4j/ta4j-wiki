@@ -6,9 +6,11 @@ About technical analysis:
   * [Wikipedia's article on Technical analysis](http://en.wikipedia.org/wiki/Technical_analysis)
   * [Basics of Technical Analysis](http://www.investopedia.com/university/technical/) (from [Investopedia](http://www.investopedia.com/))
 
-### Eclipse setup
+### Install via Maven/Gradle
 
-Ta4j is available on Maven. You can [create a Maven project](http://www.tech-recipes.com/rx/39279/create-a-new-maven-project-in-eclipse/) in eclipse and add the ta4j dependency to the pom.xml file.
+Ta4j is available on Maven Central.
+
+Maven (in your `pom.xml`):
 ```
 <dependency>
   <groupId>org.ta4j</groupId>
@@ -16,7 +18,13 @@ Ta4j is available on Maven. You can [create a Maven project](http://www.tech-rec
   <version>0.18</version>
 </dependency>
 ```
-Another way could be to [clone this git repository](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) or to simply download this library and add the source code to your existing eclipse project.
+
+Gradle (Groovy DSL):
+```
+implementation 'org.ta4j:ta4j-core:0.18'
+```
+
+You can also [clone this repository](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) or download the sources and add the module to your project.
 
 ### Getting started with ta4j
 
@@ -28,13 +36,23 @@ At the beginning we just need a bar series.
 // Creating a bar series (from any provider: CSV, web service, etc.)
 BarSeries series = CsvTradesLoader.loadBitstampSeries();
 ```
-After creating a `BarSeries` we can add OHLC data and volume to the series:
+Or build one manually and add bars with the series' bar builder:
 
 ```java
-// adding open, high, low, close and volume data to the series
-series.addBar(ZonedDateTime.now(), 105.42, 112.99, 104.01, 111.42, 1337);
+// Build an empty series and add bars
+BarSeries series = new BaseBarSeriesBuilder().withName("mySeries").build();
+Instant endTime = Instant.now();
+series.addBar(series.barBuilder()
+    .timePeriod(Duration.ofDays(1))
+    .endTime(endTime)
+    .openPrice(105.42)
+    .highPrice(112.99)
+    .lowPrice(104.01)
+    .closePrice(111.42)
+    .volume(1337)
+    .build());
 ```
-See the [Bar Series and Bars section](Bar-series-and-bars.html) to learn about bar series and to know how you can construct one.
+See the [Bar Series and Bars section](Bar-series-and-bars.md) to learn about bar series and to know how you can construct one.
 
 ##### Using indicators
 
@@ -57,7 +75,7 @@ System.out.println("5-bars-SMA value at the 42nd index: " + shortSma.getValue(42
 // Getting a longer SMA (e.g. over the 30 last bars)
 SMAIndicator longSma = new SMAIndicator(closePrice, 30);
 ```
-Ta4j includes more than 130 [technical indicators](Technical-indicators.html).
+Ta4j includes more than 130 [technical indicators](Technical-indicators.md).
 
 ##### Building a trading strategy
 
@@ -77,14 +95,14 @@ Rule buyingRule = new CrossedUpIndicatorRule(shortSma, longSma)
 //  - or if the price loses more than 3%
 //  - or if the price earns more than 2%
 Rule sellingRule = new CrossedDownIndicatorRule(shortSma, longSma)
-        .or(new StopLossRule(closePrice, series.numOf(3)))
-        .or(new StopGainRule(closePrice, series.numOf(2)));
+        .or(new StopLossRule(closePrice, series.numFactory().numOf(3)))
+        .or(new StopGainRule(closePrice, series.numFactory().numOf(2)));
 
 // Create the strategy
 Strategy strategy = new BaseStrategy(buyingRule, sellingRule);
 ```
 
-Ta4j comes with a set of basic [trading rules/strategies](Trading-strategies.html) which can be combined using boolean operators.
+Ta4j comes with a set of basic [trading rules/strategies](Trading-strategies.md) which can be combined using boolean operators.
 
 ##### Backtesting/running our juicy strategy
 
@@ -110,13 +128,13 @@ System.out.println("Winning positions ratio: " + winningPositionsRatio.calculate
 AnalysisCriterion romad = new ReturnOverMaxDrawdownCriterion();
 System.out.println("Return over Max Drawdown: " + romad.calculate(series, tradingRecord));
 
-// Total return of our strategy vs total return of a buy-and-hold strategy
-AnalysisCriterion vsBuyAndHold = new VersusEnterAndHoldCriterion(new ReturnCriterion());
-System.out.println("Our return vs buy-and-hold return: " + vsBuyAndHold.calculate(series, tradingRecord));
+// Net return of our strategy vs net return of a buy-and-hold strategy
+AnalysisCriterion vsBuyAndHold = new VersusEnterAndHoldCriterion(new NetReturnCriterion());
+System.out.println("Our net return vs buy-and-hold net return: " + vsBuyAndHold.calculate(series, tradingRecord));
 ```
 
-Trading strategies can be easily compared according to [a set of analysis criteria](Backtesting.html).
+Trading strategies can be easily compared according to [a set of analysis criteria](Backtesting.md).
 
 ### Going further
 
-Ta4j can also be used for [live trading](Live-trading.html) with more complicated [strategies](Trading-strategies.html). Check out the rest of the documentation and [the examples](Usage-examples.html).
+Ta4j can also be used for [live trading](Live-trading.md) with more complicated [strategies](Trading-strategies.md). Check out the rest of the documentation and [the examples](Usage-examples.md).
