@@ -2,7 +2,7 @@
 
 ## What is a contribution?
 
-In our terms a contribution is already to share a good analysed bug report [Found a bug?](Found-a-bug.html)
+In our terms a contribution is already to share a good analysed bug report [Found a bug?](Found-a-bug.md)
 If you want to go deeper and you want to contribute test cases, e.g. for a quality contribution (identify a bug) or to help us to keep the lib clean and stable.
 Or you have even a nice idea, which you would like to contribute as code?
 You are always welcome. We suggest you before you contribute a bigger work to get prior permission, since we want to verify first if the contribution will bring the lib forward. We will give quickly a feedback if we will accept the contribution.
@@ -68,10 +68,10 @@ Four main rules to keep in mind:
 4. Any breaking changes to public APIs must include an appropriate deprecation shim to preserve binary/source compatibility. For example if you move a class to another package, create a deprecation shim class in the original package. If you change a public method's signature, keep the original method signature available as a `@Deprecated` overload. The javadoc for all new public classes and methods should be annotated with a `@since <version>`
 
 ## Hints
-* use `int startIndex = BarSeries.getBeginIndex()` instead of `int startIndex = 0` to get the first valid index of a BarSeries.
+* use `int startIndex = series.getBeginIndex()` instead of `int startIndex = 0` to get the first valid index of a `BarSeries`.
 * ***Note the difference between `Decimal.min(other)` and` Decimal.minus(other)`***
-* It is not possible to store static references to ``Num`` implementations because they will be determined at runtime. If necessary store primitives and use the `numOf(Number n)` or the `numFunction` of series in the constructor. If you are using ``DoubleNum::valueOf`` or ``BigDecimalNum::valueOf`` you most probably do something wrong.
-* **Use primitive as indicator parameters.*** For example a timeFrame parameter should be an ``int`` and a percentage value parameter should be ``double`` (avoid ``Num``). You can **convert a ``Number`` into ``Num`` using the ``numOf`` function**. This prevents that the user has to convert primitive input values to ``Num`` implementations manually.
+* Use `series.numFactory()` to create values matching a series' numeric type. Do not store static references to `Num` implementations.
+* **Use primitives as indicator parameters.** For example a timeFrame parameter should be an `int` and a percentage value parameter should be `double` (avoid `Num`). You can convert a `Number` into `Num` using `series.numFactory().numOf(...)`. This prevents that the user has to convert primitive input values to `Num` implementations manually.
 
 ## Indicators
 If you want to add a new indicator to this repository, please open an issue first to discuss your plans.

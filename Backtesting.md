@@ -31,9 +31,9 @@ Let's assume you backtested `strategy1` and `strategy2` over a `series`. You get
 In order to get the profitability ratio of each strategy you have to give those records to an analysis criterion:
 
 ```java
-AnalysisCriterion criterion = new TotalProfitCriterion();
-criterion.calculate(series, record1); // Returns the result for strategy1
-criterion.calculate(series, record2); // Returns the result for strategy2
+AnalysisCriterion criterion = new NetReturnCriterion();
+criterion.calculate(series, record1); // Result for strategy1
+criterion.calculate(series, record2); // Result for strategy2
 ```
 
 If you just want to get the best strategy according to an analysis criterion you just have to call:
@@ -43,7 +43,7 @@ BarSeriesManager seriesManager = new BarSeriesManager(series);
 Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strategy1, strategy2));
 ```
 
-Ta4j comes with several analysis criteria which are all listed [in the Javadoc](https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.17/ta4j-core-0.17-javadoc.jar/!/org/ta4j/core/criteria/package-summary.html).
+Ta4j comes with several analysis criteria; see the `org.ta4j.core.criteria` package in the project sources.
 ### Walk-forward optimization
 
 Ta4j allows you to perform a well-known *Walk-forward* optimization. An example can be found [here](Usage-examples.md).

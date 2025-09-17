@@ -10,7 +10,7 @@ In order to build an automated trading system (a.k.a. trading bot) you have to t
 
 ### Initialization phase
 
-In the same way than for [backtesting](Backtesting), you have to initialize the system before running it. It involves having [[created your bar series|Bar Series and bars]] and [[built your trading strategy|Trading strategies]] before.
+In the same way than for [backtesting](Backtesting.md), you have to initialize the system before running it. It involves having created your [bar series](Bar-series-and-bars.md) and [trading strategy](Trading-strategies.md) first.
 
 Even if you will keep your series constantly updated with new bars, you should initialize it with the most recent bars the exchange can give you. Thus your strategy will have a more predictable/relevant behavior during the first steps of the trading phase. For instance, let's assume:
 
@@ -35,13 +35,29 @@ You just have to call the `BarSeries#setMaximumBarCount(int)` method.
 The trading phase itself can be designed as a simple infinite loop in which you wait for a new bar from the broker/exchange before interrogating your strategy.
 
 ```java
-Bar newBar = // Get the exchange new bar here...;
+Bar newBar = series.barBuilder()
+    .timePeriod(Duration.ofMinutes(1))
+    .endTime(Instant.now())
+    .openPrice(...)
+    .highPrice(...)
+    .lowPrice(...)
+    .closePrice(...)
+    .volume(...)
+    .build();
 series.addBar(newBar);
 ```
 
-**Since release 0.12 you can also add the bar data directly to your BarSeries with the addBar(data...) functions. This is the recommended way:**
+You can also add bar data directly to your `BarSeries` using the builder pattern:
 ```java
-series.addBar(ZonedDateTime.now(),5,10,1,9); // add data directly to the series
+series.addBar(series.barBuilder()
+    .timePeriod(Duration.ofMinutes(1))
+    .endTime(Instant.now())
+    .openPrice(5)
+    .highPrice(10)
+    .lowPrice(1)
+    .closePrice(9)
+    .volume(100)
+    .build());
 ```
 
 If you are receiving intertemporal price and/or trade information, you can also update the last bar of the series:
@@ -50,19 +66,19 @@ series.addPrice(5)      // updates the close price of the last bar (and min/max 
 series.addTrade(7, 10)  // updates amount and price of the last bar
 ```
 
-Since you use a moving (see above) bar series, you run your strategy on this new bar: the bar index is always `series.getEndIndex()`. (Take a look at the [Num article](Num.html) to understand why `DoubleNum::valueOf` functions are needed)
+Since you use a moving (see above) bar series, you run your strategy on this new bar: the bar index is always `series.getEndIndex()`.
 
 ```java
 int endIndex = series.getEndIndex();
-if (strategy.shouldEnter(endIndex)) {
+if (strategy.shouldEnter(endIndex, tradingRecord)) {
     // Entering...
-    tradingRecord.enter(endIndex, newBar.getClosePrice(), DoubleNum.valueOf(10));
-} else if (strategy.shouldExit(endIndex)) {
+    tradingRecord.enter(endIndex, newBar.getClosePrice(), series.numFactory().numOf(10));
+} else if (strategy.shouldExit(endIndex, tradingRecord)) {
     // Exiting...
-    tradingRecord.exit(endIndex, newBar.getClosePrice(), DoubleNum.valueOf(10));
+    tradingRecord.exit(endIndex, newBar.getClosePrice(), series.numFactory().numOf(10));
 }
 ```
 
 Note that the strategy gives you a *you-should-enter* information, then it's up to you to call the `TradingRecord#enter()`/`TradingRecord#exit()` methods with the price you'll really spend. It's justified by the fact that you may not follow your strategy on any signal; this way you can take external events into account.
 
-This documentation has also [live trading engine examples](Usage-examples.html).
+This documentation has also [live trading engine examples](Usage-examples.md).

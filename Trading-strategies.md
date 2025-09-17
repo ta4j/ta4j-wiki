@@ -14,15 +14,15 @@ Trading rules are designed according to the [specification pattern](http://en.wi
 
 ```java
 Rule entryRule = new CrossedUpIndicatorRule(shortSma, longSma)
-    .or(new CrossedDownIndicatorRule(closePrice, Decimal.valueOf("800")));
+    .or(new CrossedDownIndicatorRule(closePrice, 800));
 ```
 
 Ta4j provides a set of basic rules. They are all implementations of the Rule interface and they can be used to build both entry and exit rules.
 
 ```java
 Rule exitRule = new CrossedDownIndicatorRule(shortSma, longSma)
-    .or(new StopLossRule(closePrice, Decimal.valueOf("3")))
-    .or(new StopGainRule(closePrice, Decimal.valueOf("2")));
+    .or(new StopLossRule(closePrice, series.numFactory().numOf(3)))
+    .or(new StopGainRule(closePrice, series.numFactory().numOf(2)));
 ```
 
 ##### Checking rule condition
@@ -40,7 +40,7 @@ A trading strategy is just a pair of rules designed to achieve a profitable retu
 Strategy myStrategy = new BaseStrategy(entryRule, exitRule);
 ```
 
-It can be [backtested](Backtesting) over a bar series:
+It can be [backtested](Backtesting.md) over a bar series:
 
 ```java
 BarSeries series = ...
@@ -49,4 +49,4 @@ BarSeriesManager seriesManager = new BarSeriesManager(series);
 TradingRecord tradingRecord = seriesManager.run(myStrategy);
 ```
 
-Or used for [live trading](./Live%20trading), as it's done in [the bot examples](./Usage-examples#trading-bots).
+Or used for [live trading](Live-trading.md), as it's done in [the bot examples](Usage-examples.md#trading-bots).

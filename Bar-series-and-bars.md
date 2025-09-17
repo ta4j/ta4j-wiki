@@ -19,36 +19,58 @@ A Bar is the basic building block of a BarSeries. Then the bar series is used fo
 
 ### Bar series for backtesting
 
-In order to backtest a strategy you need to fill a bar series with past data. To do that you just have to create a BarSeries and add data to it. The following example shows how to create a `BaseBarSeries` with help of the ``SeriesBuilder`` and how to add Bar data to the series:
+In order to backtest a strategy you need to fill a bar series with past data. To do that you just have to create a `BarSeries` and add data to it. The following example shows how to create a `BaseBarSeries` with `BaseBarSeriesBuilder` and how to add `Bar` data using the series' `barBuilder()`:
 
 ```java
 BarSeries series = new BaseBarSeriesBuilder().withName("my_2017_series").build();
 
 Instant endTime = Instant.now();
-series.addBar(new BaseBar(Duration.ofDays(1), null, endTime, series.numFactory().numOf(105.42), series.numFactory().numOf(112.99), series.numFactory().numOf(104.01), series.numFactory().numOf(111.42), series.numFactory().numOf(1337), series.numFactory().one(), 0));
-series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(1, ChronoUnit.DAYS), series.numFactory().numOf(111.43), series.numFactory().numOf(112.83), series.numFactory().numOf(107.77), series.numFactory().numOf(107.99), series.numFactory().numOf(1234), series.numFactory().one(), 0));
-series.addBar(new BaseBar(Duration.ofDays(1), null, endTime.plus(2, ChronoUnit.DAYS), series.numFactory().numOf(107.90), series.numFactory().numOf(117.50), series.numFactory().numOf(107.90), series.numFactory().numOf(115.42), series.numFactory().numOf(4242), series.numFactory().one(), 0));
-        
-//...
+series.addBar(series.barBuilder()
+    .timePeriod(Duration.ofDays(1))
+    .endTime(endTime)
+    .openPrice(105.42)
+    .highPrice(112.99)
+    .lowPrice(104.01)
+    .closePrice(111.42)
+    .volume(1337)
+    .build());
+series.addBar(series.barBuilder()
+    .timePeriod(Duration.ofDays(1))
+    .endTime(endTime.plus(1, ChronoUnit.DAYS))
+    .openPrice(111.43)
+    .highPrice(112.83)
+    .lowPrice(107.77)
+    .closePrice(107.99)
+    .volume(1234)
+    .build());
+series.addBar(series.barBuilder()
+    .timePeriod(Duration.ofDays(1))
+    .endTime(endTime.plus(2, ChronoUnit.DAYS))
+    .openPrice(107.90)
+    .highPrice(117.50)
+    .lowPrice(107.90)
+    .closePrice(115.42)
+    .volume(4242)
+    .build());
 
+// ...
 ```
 
-You can also use a Builder for creating bars:
+You can also create a `Bar` first and add it to the series:
 
-````java
-Bar dailyBar = new TimeBarBuilder()
-            .timePeriod(Duration.ofDays(1))
-            .endTime(endTime)
-            .openPrice(open)
-            .highPrice(high)
-            .lowPrice(low)
-            .closePrice(close)
-            .volume(volume)
-            .build();
+```java
+Bar dailyBar = series.barBuilder()
+    .timePeriod(Duration.ofDays(1))
+    .endTime(endTime)
+    .openPrice(open)
+    .highPrice(high)
+    .lowPrice(low)
+    .closePrice(close)
+    .volume(volume)
+    .build();
 
-series.addBar(bar);
-
-````
+series.addBar(dailyBar);
+```
 
 [Those examples](Usage-examples.html) show how to load bar series in order to backtest strategies over them.
 
@@ -59,13 +81,21 @@ For this use case, the BarSeries class provides helper methods to split the seri
 Live trading involves building a bar series for current prices. In this use case you just have to initialize your series.
 
 ```java
-BarSeries series = new BaseBarSeries("my_live_series");
+BarSeries series = new BaseBarSeriesBuilder().withName("my_live_series").build();
 ```
 
 Then for each bar received from the broker/exchange you have to add it to your series similar to the above examples.
 
 ```java
-Bar bar = new BaseBar( //...
+Bar bar = series.barBuilder()
+    .timePeriod(Duration.ofMinutes(1))
+    .endTime(Instant.now())
+    .openPrice(100.0)
+    .highPrice(101.0)
+    .lowPrice(99.5)
+    .closePrice(100.7)
+    .volume(42)
+    .build();
 series.addBar(bar);
 ```
 
