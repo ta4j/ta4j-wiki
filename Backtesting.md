@@ -78,6 +78,23 @@ BacktestExecutionResult batch = executor.executeWithRuntimeReport(
 List<TradingStatement> topFive = batch.getTopStrategies(5, romad, net);
 ```
 
+## Visualize your backtests
+
+After you have a `TradingRecord`, you can render candlesticks, trades, and indicator overlays using the experimental `ChartMaker` helper that lives in the `ta4j-examples` module (it may graduate into core in the future).
+
+```java
+TradingRecord record = manager.run(strategy);
+ChartMaker charts = new ChartMaker("target/charts"); // optional directory for JPEG snapshots
+charts.displayTradingRecordChart(
+        series,
+        strategy.getName(),
+        record,
+        new SMAIndicator(new ClosePriceIndicator(series), 50),
+        new EMAIndicator(new ClosePriceIndicator(series), 200));
+```
+
+Saved images are JPEGs (see `FileSystemChartStorage`), so the directory you pass to the constructor ends up with files like `mySeries_2023-01-01_to_2024-05-01_timestamp.jpg`. `ChartMaker` composes JFreeChart visualizations through pluggable display and storage backends, so you can pop up Swing windows, stream bytes, or save those JPEGs after each backtest. Explore [`ta4jexamples.charting.ChartMaker`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/charting/ChartMaker.java) and the [`ta4jexamples.strategies.NetMomentumStrategy`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java) sample, which loads data, runs a strategy, and drops charts into `ta4j-examples/log/charts`.
+
 ## Avoid common pitfalls
 
 - **Look-ahead bias** – Ensure your indicator windows do not peek at future bars. Ta4j indicators automatically cap their lookbacks, but custom logic must do the same.
