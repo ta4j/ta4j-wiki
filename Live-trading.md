@@ -1,5 +1,7 @@
 # Live Trading
 
+> ⚠️ **Early days:** ta4j’s live-trading story is still evolving. The APIs below are intentionally bare bones and require custom glue (data ingestion, order routing, resilience) on your side. Treat this as a starting point rather than a fully featured framework.
+
 ta4j is not just for backtests—its abstractions map directly onto production trading bots. This page outlines how to bootstrap a live engine, keep your `BarSeries` synchronized with the exchange, and execute trades responsibly.
 
 ## Architecture overview
