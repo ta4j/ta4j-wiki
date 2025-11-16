@@ -22,8 +22,8 @@ SMAIndicator slow = new SMAIndicator(close, 50);
 MACDVIndicator macdv = new MACDVIndicator(series, 12, 26, 9);
 NetMomentumIndicator netMomentum = new NetMomentumIndicator(series, 14);
 
-Indicator<Num> trendBias = BinaryOperation.division(fast, slow);
-Indicator<Num> blendedMomentum = BinaryOperation.add(macdv.getMacd(), netMomentum);
+Indicator<Num> trendBias = BinaryOperationIndicator.division(fast, slow);
+Indicator<Num> blendedMomentum = BinaryOperationIndicator.add(macdv.getMacd(), netMomentum);
 ```
 
 - `BinaryOperationIndicator` / `UnaryOperationIndicator` replace the older `TransformIndicator`/`CombineIndicator` classes (removed in 0.19).
