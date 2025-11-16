@@ -7,6 +7,11 @@ A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This s
 Rules implement the [Specification pattern](https://en.wikipedia.org/wiki/Specification_pattern). They answer a single question: *“Is the condition satisfied at index `i` given the current trading record?”*
 
 ```java
+BarSeries series = new BaseBarSeriesBuilder().withName("sample").build();
+ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+Num resistanceLevel = series.numFactory().numOf(120);
+Num supportLevel = series.numFactory().numOf(100);
+
 Rule breakout = new CrossedUpIndicatorRule(closePrice, resistanceLevel);
 Rule pullback = new CrossedDownIndicatorRule(closePrice, supportLevel);
 
@@ -14,6 +19,8 @@ if (breakout.isSatisfied(index, tradingRecord)) {
     // do something with the signal
 }
 ```
+
+`breakout` fires on the exact bar where price closes above the resistance factor, whereas `pullback` reacts when price slips beneath support. Because every call receives the latest `TradingRecord`, you can extend these primitives into stateful policies (skip long signals when a position is already open, enforce cooling-off periods, etc.).
 
 Key points:
 
@@ -37,13 +44,21 @@ Rule exitRule = new CrossedDownIndicatorRule(macd, signalLine)
         .or(new StopGainRule(closePrice, numOf(5)));
 ```
 
-Use indicator operations (`BinaryOperation`, `UnaryOperation`) to create on-the-fly transforms without writing bespoke indicators. Caching ensures repeated evaluations stay efficient.
+This configuration fires an **entry** when at least two of the following hold on the same bar:
+1. `sma200 > sma400` (trend filter says the long-term trend is up),
+2. MACD crosses above its signal line (momentum confirmation), or
+3. The Renko brick detector sees an upside breakout.
+
+On top of that vote, the Net Momentum indicator must be above zero so entries only happen when breadth is positive.  
+The **exit** rule triggers if MACD crosses below its signal line, price falls 3% from the entry (`StopLossRule`), or price rallies 5% (`StopGainRule`).
+
+Use numeric indicator helpers like `BinaryOperationIndicator` and `UnaryOperationIndicator` when you need on-the-fly math (ratios, differences, powers) without writing custom indicator classes—each helper still benefits from caching.
 
 ## Build a strategy
 
 ```java
 Strategy strategy = new BaseStrategy("SMA + MACDV hybrid", entryRule, exitRule);
-strategy.setUnstableBars(30); // ignore initialization noise
+strategy.setUnstableBars(30); // optional: indicators already report their own unstable window
 ```
 
 Running it is identical regardless of complexity:
@@ -52,6 +67,8 @@ Running it is identical regardless of complexity:
 BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);
 ```
+
+`BarSeriesManager` wires your entry/exit rules to simulated orders, applies the configured cost/execution models, and returns a `TradingRecord` containing every trade so you can plug it into analysis criteria or ChartMaker visualizations.
 
 The same strategy class can be used in [backtests](Backtesting.md) and [live trading](Live-trading.md) contexts.
 
@@ -74,6 +91,8 @@ NamedStrategy.initializeRegistry(SmaCrossNamedStrategy.class.getPackageName());
 Strategy preset = NamedStrategy.lookup("SmaCrossNamedStrategy_fast14_slow50").instantiate(series);
 ```
 
+In practice the registry maps friendly identifiers (like `fast14_slow50`) back to indicator wiring, so front-ends, parameter sweeps, or config files can request a preset without touching the Java source.
+
 This is ideal for:
 
 - Sharing strategies between teammates or environments.
@@ -89,6 +108,8 @@ String json = StrategySerialization.toJson(strategy);
 Strategy restored = StrategySerialization.fromJson(series, json);
 ```
 
+That JSON payload captures the full rule graph, making it safe to persist strategies between runs, transmit them over an API, or archive the configuration used for a specific backtest run.
+
 `NamedStrategy` variants generate compact IDs (`ToggleNamedStrategy_true_false_u3`) that you can store alongside backtest results or in configuration files.
 
 ## Execution context tips
@@ -100,7 +121,7 @@ Strategy restored = StrategySerialization.fromJson(series, json);
 ## Best practices
 
 - Normalize indicator scales when combining oscillators with price-based rules.
-- Use `strategy.setUnstableBars(...)` and/or `Indicator.isStable()` to avoid acting before indicators warm up.
+- Use `strategy.setUnstableBars(...)` (optional now that indicators track `getCountOfUnstableBars()`) and/or `Indicator.isStable()` to avoid acting before indicators warm up.
 - Encapsulate repeated rule snippets into helper methods or custom `Rule` implementations—readability matters when strategies grow complex.
 - Keep entry/exit rules symmetric when building short strategies, or wrap separate long/short strategies via `CombinedBuySellStrategy`.
 - When mixing timeframes or data sources, align them into the same `BarSeries` (or into multiple series managed by your own coordinator) to avoid implicit look-ahead.
