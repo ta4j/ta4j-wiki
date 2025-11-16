@@ -23,8 +23,6 @@ A good example IndicatorTest subclass that takes TimeFrame data is ATRIndicatorT
 A good example CriterionTest subclass is LinearTransactionCostCriterion.
 These are all found in ta4j-core/src/test/java/org/ta4j/core subfolders.  The XLS files are found in ta4j-core/src/test/resources/org/ta4j subfolders.
 
-Here is the RSI example, with highlights on edits required in the three steps above
-[[img/RSIIndicatorTest.jpg]]
 
 ## Why XLS Testing (and when not to use it)
 
