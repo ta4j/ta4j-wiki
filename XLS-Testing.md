@@ -28,13 +28,13 @@ These are all found in ta4j-core/src/test/java/org/ta4j/core subfolders.  The XL
 
 Historically, spreadsheets were a convenient way to “show your work” when validating new indicators—formulas were spelled out, reviewers could audit intermediate values, and the XLS loader made it easy to wire those expectations into a JUnit test.
 
-Today we prefer **self-contained tests** that construct the minimal bars inline. That keeps the entire dataset in the test file, avoids hunting through large CSV/XLS files for a single bar, and allows IDE refactors to catch schema changes. Use XLS/CSV fixtures only when:
+Today we prefer **self-contained tests** that construct the minimal bars inline. That keeps the entire dataset in the test file, avoids hunting through large CSV/XLS files for a single bar, and allows IDE refactors to catch schema changes. Use XLS/CSV (or JSON) fixtures only when:
 
 - You need to validate many hundreds/thousands of bars (e.g., regression tests covering decades of data).
 - You’re performing integration testing (data-loading pipeline + indicator + criterion).
 - The math is easier to audit in a spreadsheet and you plan to attach the XLS to the PR for reviewers.
 
-For day-to-day unit tests, create the `BarSeries` in code and assert against explicit values there.
+For day-to-day unit tests, create the `BarSeries` in code and assert against explicit values there. When you do need large datasets, consider JSON feeds (many exchanges expose OHLC data in JSON) paired with loaders such as `AdaptiveJsonBarsSerializer`—they’re easier to diff and script than spreadsheets, and still let you pipe real-world data into your tests.
 
 ## Indicator Spreadsheet
 
