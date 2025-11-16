@@ -51,7 +51,7 @@ Moving averages are versatile tools used in a variety of ways:
 | KiJunV2      | Kihon Moving Average                          | KiJunV2Indicator           | Specialized Moving Average     |
 | LSMA         | Least Squares Moving Average                  | LSMAIndicator              | Polynomial-Based Moving Average|
 | LWMA         | Linear Weighted Moving Average                | LWMAIndicator              | Weighted Moving Average        |
-| McGinley     | McGinleys Moving Average                      | McGinleyMAIndicator        | Adaptive Moving Average        |
+| MCGinley     | McGinley Moving Average                       | MCGinleyMAIndicator        | Adaptive Moving Average        |
 | MMA          | Modified Moving Average                       | MMAIndicator               | Exponential Moving Average     |
 | SMA          | Simple Moving Average                         | SMAIndicator               | Simple Moving Average          |
 | SGMA         | Savitzky-Golay Moving Average                 | SGMAIndicator              | Polynomial-Based Moving Average|
@@ -59,7 +59,6 @@ Moving averages are versatile tools used in a variety of ways:
 | TEMA         | Triple Exponential Moving Average             | TripleEMAIndicator         | Exponential Moving Average     |
 | TMA          | Triangular Moving Average                     | TMAIndicator               | Simple Moving Average          |
 | VIDYA        | Chandes Variable Index Dynamic Moving Average | VIDYAIndicator             | Adaptive Moving Average        |
-| VMA          | Variable Moving Average                       | VMAIndicator               | Adaptive Moving Average        |
 | VWMA         | Volume Weighted Moving Average                | VWMAIndicator              | Weighted Moving Average        |
 | WilderMA     | Wilders Moving Average                        | WildersMAIndicator         | Smoothed Moving Average        |
 | WMA          | Weighted Moving Average                       | WMAIndicator               | Weighted Moving Average        |
@@ -101,7 +100,6 @@ Moving averages are versatile tools used in a variety of ways:
 - **Indicators**:
   - KAMA (Kaufman Adaptive Moving Average)
   - VIDYA (Chande Variable Index Dynamic Moving Average)
-  - VMA (Variable Moving Average)
   - McGinley (McGinley Moving Average)
 
 ---
