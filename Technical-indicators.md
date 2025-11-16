@@ -9,7 +9,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Volume spikes. | Indicators package |
 | Candle/Pattern | Hammer, Shooting Star, Three White Soldiers, DownTrend/UpTrend. | `indicators.candles` |
-| Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperation`/`UnaryOperation` transforms. | `indicators.renko` |
+| Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator` transforms. | `indicators.renko` |
 
 Browse `org.ta4j.core.indicators` in your IDE for the full list—packages mirror the table above.
 
@@ -26,7 +26,7 @@ Indicator<Num> trendBias = BinaryOperation.division(fast, slow);
 Indicator<Num> blendedMomentum = BinaryOperation.add(macdv.getMacd(), netMomentum);
 ```
 
-- `BinaryOperation` / `UnaryOperation` replace the older `TransformIndicator`/`CombineIndicator` classes (removed in 0.19).
+- `BinaryOperationIndicator` / `UnaryOperationIndicator` replace the older `TransformIndicator`/`CombineIndicator` classes (removed in 0.19).
 - Output indicators can feed directly into rules (`new OverIndicatorRule(trendBias, numOf(1.0))`) or become inputs to other indicators.
 
 ## Backtesting indicators
