@@ -1,84 +1,96 @@
 # Live Trading
-Ta4j can also be used to build automated trading systems.
 
-About automated trading:
+ta4j is not just for backtests—its abstractions map directly onto production trading bots. This page outlines how to bootstrap a live engine, keep your `BarSeries` synchronized with the exchange, and execute trades responsibly.
 
-  * [Wikipedia's article on Automated trading system](http://en.wikipedia.org/wiki/Automated_trading_system) and [Investopedia's definition](http://www.investopedia.com/articles/trading/11/automated-trading-systems.asp)
-  * [Wikipedia's article on Algorithmic trading](http://en.wikipedia.org/wiki/Algorithmic_trading) and [Investopedia's definition](http://www.investopedia.com/terms/a/algorithmictrading.asp)
+## Architecture overview
 
-In order to build an automated trading system (a.k.a. trading bot) you have to think about two states of your program: the initialization phase and the trading phase.
+1. **Initialization** – load recent history to warm up indicators, build your [bar series](Bar-series-and-bars.md), and instantiate the [strategy](Trading-strategies.md).
+2. **Event loop** – append/update bars, evaluate entry/exit rules at `series.getEndIndex()`, and send orders to your broker.
+3. **State persistence** – serialize strategies, parameters, and trading records so the bot can restart without losing context.
 
-### Initialization phase
+## Initialization checklist
 
-In the same way than for [backtesting](Backtesting.md), you have to initialize the system before running it. It involves having created your [bar series](Bar-series-and-bars.md) and [trading strategy](Trading-strategies.md) first.
-
-Even if you will keep your series constantly updated with new bars, you should initialize it with the most recent bars the exchange can give you. Thus your strategy will have a more predictable/relevant behavior during the first steps of the trading phase. For instance, let's assume:
-
-  * We have 3 bars: `5, 10, 30` (close prices)
-  * Your strategy computes a `SMA(3)`
-
-If you start your trading phase on the 3rd bar:
-
-  * Without initialization: `SMA(3) --> 30 / 1 = 30`
-  * After your series have been initialized with last bars: `SMA(3) --> (5 + 10 + 30) / 3 = 15`
-
-##### Maximum bar count
-
-Since you will continuously feed your bar series with new bars during the trading phase, it will grow infinitely and you will encounter memory issues soon. To avoid that you have to set a maximum bar count to your series. It represents the maximum number of bars your trading strategy needs to be run.
-
-For instance: if your strategy relies on a SMA(200) and a RSI(2), then your maximum bar count should be 200. You may want to set it to 400 (it's more an order of magnitude than a strict value, but it has to be larger than the maximum bar count you need); it will ensure that your series will never be more than 400-bars long (i.e. adding a new bar will be preceded with the deletion of the oldest bar).
-
-You just have to call the `BarSeries#setMaximumBarCount(int)` method.
-
-### Trading phase
-
-The trading phase itself can be designed as a simple infinite loop in which you wait for a new bar from the broker/exchange before interrogating your strategy.
+- **Fetch historical bars** (at least as many as the highest indicator lookback). Without this, the first signals may be garbage.
+- **Choose a `Num` implementation** consistent with your broker’s precision (decimal for FX/crypto, double for faster equity bots).
+- **Set `setMaximumBarCount(n)`** to cap memory while keeping enough bars to cover every indicator period.
+- **Wire costs** – configure `TransactionCostModel` and `HoldingCostModel` on your `BarSeriesManager` or strategy runner so live metrics align with backtest assumptions.
 
 ```java
-Bar newBar = series.barBuilder()
-    .timePeriod(Duration.ofMinutes(1))
-    .endTime(Instant.now())
-    .openPrice(...)
-    .highPrice(...)
-    .lowPrice(...)
-    .closePrice(...)
-    .volume(...)
-    .build();
-series.addBar(newBar);
+BarSeries liveSeries = new BaseBarSeriesBuilder()
+        .withName("binance_eth_usd_live")
+        .withNumFactory(DecimalNumFactory.getInstance())
+        .build();
+
+liveSeries.setMaximumBarCount(500);
+bootstrapWithRecentBars(liveSeries, exchangeClient);
+
+Strategy strategy = strategyFactory.apply(liveSeries);
+TradingRecord tradingRecord = new BaseTradingRecord();
 ```
 
-You can also add bar data directly to your `BarSeries` using the builder pattern:
+## Feeding the series
+
+Most exchanges stream trades or candles you can convert into ta4j bars:
+
 ```java
-series.addBar(series.barBuilder()
-    .timePeriod(Duration.ofMinutes(1))
-    .endTime(Instant.now())
-    .openPrice(5)
-    .highPrice(10)
-    .lowPrice(1)
-    .closePrice(9)
-    .volume(100)
-    .build());
+Bar bar = liveSeries.barBuilder()
+        .timePeriod(Duration.ofMinutes(1))
+        .endTime(candle.closeTime())
+        .openPrice(candle.open())
+        .highPrice(candle.high())
+        .lowPrice(candle.low())
+        .closePrice(candle.close())
+        .volume(candle.volume())
+        .build();
+
+liveSeries.addBar(bar);
 ```
 
-If you are receiving intertemporal price and/or trade information, you can also update the last bar of the series:
+When updates arrive before the bar closes:
+
 ```java
-series.addPrice(5)      // updates the close price of the last bar (and min/max price if necessary)
-series.addTrade(7, 10)  // updates amount and price of the last bar
+liveSeries.addTrade(liveSeries.numFactory().numOf(trade.volume()),
+        liveSeries.numFactory().numOf(trade.price()));
+
+// Or replace the last bar entirely if the exchange sends a revised candle
+liveSeries.addBar(replacementBar, true);
 ```
 
-Since you use a moving (see above) bar series, you run your strategy on this new bar: the bar index is always `series.getEndIndex()`.
+## Evaluating and executing
 
 ```java
-int endIndex = series.getEndIndex();
+int endIndex = liveSeries.getEndIndex();
+Num price = liveSeries.getBar(endIndex).getClosePrice();
+
 if (strategy.shouldEnter(endIndex, tradingRecord)) {
-    // Entering...
-    tradingRecord.enter(endIndex, newBar.getClosePrice(), series.numFactory().numOf(10));
+    orderService.submitBuy(price, desiredQuantity());
+    tradingRecord.enter(endIndex, price, desiredQuantity());
 } else if (strategy.shouldExit(endIndex, tradingRecord)) {
-    // Exiting...
-    tradingRecord.exit(endIndex, newBar.getClosePrice(), series.numFactory().numOf(10));
+    orderService.submitSell(price, openQuantity());
+    tradingRecord.exit(endIndex, price, openQuantity());
 }
 ```
 
-Note that the strategy gives you a *you-should-enter* information, then it's up to you to call the `TradingRecord#enter()`/`TradingRecord#exit()` methods with the price you'll really spend. It's justified by the fact that you may not follow your strategy on any signal; this way you can take external events into account.
+Guidelines:
 
-This documentation has also [live trading engine examples](Usage-examples.md).
+- Always check that `tradingRecord.isOpened()`/`isClosed()` lines up with your broker state. If an order is partially filled, delay updating the record until the fill completes.
+- Consider using ta4j’s `TradeExecutionModel` implementations to simulate your broker’s order semantics before going live.
+- Wrap the evaluation + execution block in robust error handling to avoid missing bars while recovering from exchange hiccups.
+
+## Persistence & recovery
+
+- **Strategy state** – Serialize strategies via `StrategySerialization.toJson(strategy)` or keep `NamedStrategy` descriptors in configuration. This ensures bots can reload the exact same logic after restarts.
+- **Trading record** – Persist open positions, last processed bar timestamp, and PnL so you can resume without double-counting trades.
+- **Bar snapshots** – If your infrastructure allows, periodically snapshot the latest `BarSeries` to disk or cache so warm restarts skip the backfill step.
+
+## Monitoring & alerting
+
+- Pipe trade events and key indicators to your logging/metrics stack—`StrategyExecutionLogging` from `ta4j-examples` is a good starting point.
+- Track runtime stats (latency per bar, frequency of signals) to detect stalls early.
+- Consider running a parallel backtest (e.g., via `BacktestExecutor`) on the most recent data to ensure live behavior matches expectations.
+
+## Examples & references
+
+- **[TradingBotOnMovingBarSeries](Usage-examples.md#bots--live-trading)** – minimal bot loop using a moving bar series.
+- [Backtesting](Backtesting.md) – explains how to test cost models and execution assumptions before deploying.
+- [Bar Series & Bars](Bar-series-and-bars.md) – details data ingestion, moving windows, and live updates.

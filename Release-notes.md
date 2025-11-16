@@ -1,5 +1,29 @@
 Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangelog.com/en/1.0.0/) from version 0.9 onwards.
 
+## 0.19 (planned November 2025)
+
+### Breaking
+- **`TradingStatement` became an interface** implemented by `BaseTradingStatement`. If you previously instantiated `TradingStatement` directly update your code to use the new class.
+- **PnL and return criteria split into net/gross variants**. Use the explicit version (`NetProfitCriterion`, `GrossReturnCriterion`, etc.) that matches your evaluation workflow.
+- **Indicator operation classes consolidated** (`BinaryOperation`, `UnaryOperation`) replacing `TransformIndicator`/`CombineIndicator`. Update imports accordingly.
+- **Drawdown criteria moved** to the `criteria.drawdown` sub-package; fix imports when upgrading.
+
+### Highlights
+- **Backtest at scale** – `BacktestExecutor`, `BacktestExecutionResult`, and `BacktestRuntimeReport` add runtime telemetry, streaming top-K selection, and progress callbacks. See [Backtesting](Backtesting.md) and `TopStrategiesExample`.
+- **Strategy serialization + presets** – `StrategySerialization`, JSON round-trips, and compact `NamedStrategy` descriptors make it easy to persist, share, and reload strategies. Registry helpers support lazy classpath scanning.
+- **Renko + vote-based rules** – New `RenkoUpIndicator`, `RenkoDownIndicator`, and `RenkoXIndicator` pair nicely with **`VoteRule`**, enabling ensemble logic across pattern detectors.
+- **Expanded analytics** – Drawdown Monte Carlo simulations, position streak criteria, commission impact metrics, capital utilization (`InPositionPercentageCriterion`), and cumulative PnL helpers provide richer risk reporting.
+- **New indicators** – `MACDVIndicator`, `NetMomentumIndicator`, `AmountBarBuilder`, begin-time bar building, and JSON bar serializers broaden the data/indicator coverage.
+- **Serialization-ready statements** – `TradingStatement` now exposes the underlying `Strategy` and `TradingRecord`, simplifying custom report generation.
+
+### Quality-of-life improvements
+- `AmountBarBuilder` plus begin-time support for bar builders provide flexible aggregation for exchanges that timestamp trade opens instead of closes.
+- Commission + holding cost criteria now have dedicated helpers (`CommissionsCriterion`, `CommissionsImpactPercentageCriterion`).
+- New streak/position criteria such as `MaxConsecutiveLossCriterion`, `MaxPositionNetProfitCriterion`, and `InPositionPercentageCriterion`.
+- Vote-based rule composition ensures multi-signal strategies stay readable.
+- Adaptive JSON bar loaders support both Coinbase and Binance payload formats.
+- Strategy serialization APIs integrate with `NamedStrategy`, so descriptors remain compact even when parameters change.
+
 ## 0.18 (released May 15, 2025)
 
 ### Breaking
