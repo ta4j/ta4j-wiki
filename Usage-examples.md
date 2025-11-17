@@ -28,8 +28,8 @@ The `ChartMaker` class provides a fluent builder API for creating trading charts
 ChartMaker chartMaker = new ChartMaker();
 chartMaker.builder()
     .withTradingRecord(series, strategyName, tradingRecord)
-    .withIndicators(rsi, macd)
-    .addAnalysis(AnalysisType.MOVING_AVERAGE_20)
+    .addIndicators(rsi, macd)
+    .withAnalysisCriterion(series, tradingRecord, new MaximumDrawdownCriterion())
     .build()
     .display()
     .save("target/charts", "my-strategy");

@@ -96,8 +96,8 @@ EMAIndicator ema = new EMAIndicator(closePrice, 200);
 
 chartMaker.builder()
     .withTradingRecord(series, strategy.getName(), record)
-    .withIndicators(sma, ema)
-    .addAnalysis(AnalysisType.MOVING_AVERAGE_20)
+    .addIndicators(sma, ema)
+    .withAnalysisCriterion(series, record, new MaximumDrawdownCriterion())
     .build()
     .display()
     .save("my-strategy");
