@@ -14,6 +14,7 @@
 ## Build Strategies
 - [Trading Strategies](Trading-strategies.md)
 - [Backtesting](Backtesting.md)
+- [Charting](Charting.md)
 - [Usage Examples](Usage-examples.md)
 
 ## Deploy & Operate

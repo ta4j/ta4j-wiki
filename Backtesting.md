@@ -80,11 +80,37 @@ List<TradingStatement> topFive = batch.getTopStrategies(5, romad, net);
 
 ## Visualize your backtests
 
-After you have a `TradingRecord`, you can render candlesticks, trades, and indicator overlays using the experimental `ChartMaker` helper that lives in the `ta4j-examples` module (it may graduate into core in the future).
+After you have a `TradingRecord`, you can render candlesticks, trades, and indicator overlays using the `ChartMaker` helper that lives in the `ta4j-examples` module.
+
+### Using the Fluent Builder API (Recommended)
+
+The builder API provides a clean, composable way to create and display charts:
 
 ```java
 TradingRecord record = manager.run(strategy);
-ChartMaker charts = new ChartMaker("target/charts"); // optional directory for JPEG snapshots
+ChartMaker chartMaker = new ChartMaker("target/charts");
+
+ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+SMAIndicator sma = new SMAIndicator(closePrice, 50);
+EMAIndicator ema = new EMAIndicator(closePrice, 200);
+
+chartMaker.builder()
+    .withTradingRecord(series, strategy.getName(), record)
+    .withIndicators(sma, ema)
+    .addAnalysis(AnalysisType.MOVING_AVERAGE_20)
+    .build()
+    .display()
+    .save("my-strategy");
+```
+
+See the [Charting](Charting.md) guide for comprehensive documentation and more examples.
+
+### Legacy API
+
+The original methods remain available for backward compatibility:
+
+```java
+ChartMaker charts = new ChartMaker("target/charts");
 charts.displayTradingRecordChart(
         series,
         strategy.getName(),

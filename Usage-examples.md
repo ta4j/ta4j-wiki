@@ -20,6 +20,26 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 - **[IndicatorsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java)** – plot price plus indicator overlays.
 - **[CandlestickChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java)** and **[CandlestickChartWithChopIndicator](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChartWithChopIndicator.java)** – visualize entry/exit markers alongside candlestick data.
 
+### Charting with ChartMaker
+
+The `ChartMaker` class provides a fluent builder API for creating trading charts. See the [Charting](Charting.md) guide for comprehensive documentation. Quick example:
+
+```java
+ChartMaker chartMaker = new ChartMaker();
+chartMaker.builder()
+    .withTradingRecord(series, strategyName, tradingRecord)
+    .withIndicators(rsi, macd)
+    .addAnalysis(AnalysisType.MOVING_AVERAGE_20)
+    .build()
+    .display()
+    .save("target/charts", "my-strategy");
+```
+
+Strategy examples that use charting:
+- **[RSI2Strategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/RSI2Strategy.java)**
+- **[NetMomentumStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java)**
+- **[ADXStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/ADXStrategy.java)**
+
 ## Strategy patterns
 
 - **[CCICorrectionStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/CCICorrectionStrategy.java)**, **[MovingMomentumStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/MovingMomentumStrategy.java)**, **[RSI2Strategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/RSI2Strategy.java)** – foundational strategies referenced throughout [Trading Strategies](Trading-strategies.md).
