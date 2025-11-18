@@ -17,6 +17,15 @@ These examples demonstrate different aspects of the Ta4j API. Each example can b
   * [How to display bar series and indicators with JFreeChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java)
   * [How to produce the traditional candlestick chart with JFreeChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java)
 
+##### Charting
+
+  * [Charting Guide](Charting.md) - Comprehensive guide to the ChartBuilder API
+  * [How to display the buy/sell signals of a strategy with JFreeChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/BuyAndSellSignalsToChart.java)
+  * [How to display the cash flow of a strategy with JFreeChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/CashFlowToChart.java)
+  * Strategy examples with advanced charting:
+    * [ADX Strategy with overlays and sub-charts](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/ADXStrategy.java)
+    * [Net Momentum Strategy with analysis criterion overlay](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java)
+
 ##### Trading strategies
 
   * How to build and run a trading strategy
@@ -35,6 +44,4 @@ These examples demonstrate different aspects of the Ta4j API. Each example can b
 
 ##### Analysis
 
-  * [How to display the cash flow of a strategy with JFreeChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/CashFlowToChart.java)
   * [Overall trading strategy analysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/StrategyAnalysis.java)
-  * [How to display the buy/sell signals of a strategy with JFreeChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/BuyAndSellSignalsToChart.java)

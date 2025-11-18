@@ -135,6 +135,36 @@ System.out.println("Our net return vs buy-and-hold net return: " + vsBuyAndHold.
 
 Trading strategies can be easily compared according to [a set of analysis criteria](Backtesting.md).
 
+##### Visualizing your results
+
+Ta4j provides powerful charting capabilities to visualize your trading strategies. You can create charts with price data, indicators, trading signals, and performance metrics.
+
+```java
+// Create a chart with trading record overlay
+ChartMaker chartMaker = new ChartMaker();
+chartMaker.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
+    .display();
+```
+
+For more advanced charting, you can add indicator overlays and sub-charts:
+
+```java
+ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+SMAIndicator sma = new SMAIndicator(closePrice, 50);
+
+chartMaker.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
+    .withIndicatorOverlay(sma)
+    .withLineColor(Color.ORANGE)
+    .withSubChart(new NetProfitCriterion(), tradingRecord)
+    .display();
+```
+
+See the [Charting Guide](Charting.md) for comprehensive documentation on creating sophisticated trading charts.
+
 ### Going further
 
 Ta4j can also be used for [live trading](Live-trading.md) with more complicated [strategies](Trading-strategies.md). Check out the rest of the documentation and [the examples](Usage-examples.md).

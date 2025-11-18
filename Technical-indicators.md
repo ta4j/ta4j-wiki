@@ -15,6 +15,22 @@ See the list of [Moving average indicators](Moving-Average-Indicators.md).
 
 Technicals also need to be backtested on historic data to see how effective they would have been to predict future prices. [Some examples](Usage-examples.html) are available in this sense.
 
+### Visualizing indicators
+
+You can visualize indicators on charts using the [ChartBuilder API](Charting.md). Indicators can be displayed as overlays on price charts or as separate sub-charts:
+
+```java
+ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+SMAIndicator sma = new SMAIndicator(closePrice, 50);
+
+ChartMaker chartMaker = new ChartMaker();
+chartMaker.builder()
+    .withSeries(series)
+    .withIndicatorOverlay(sma)
+    .withLineColor(Color.ORANGE)
+    .display();
+```
+
 ### Caching mechanism
 
 Some indicators need recursive calls and/or values from the previous bars in order to calculate their last value. For that reason, a caching mechanism has been implemented for all the indicators provided by ta4j. This system avoids calculating the same value twice. Therefore, if a value has been already calculated it is retrieved from cache the next time it is requested. **Values for the last Bar will not be cached**. This allows you to modify the last bar of the BarSeries by adding price/trades to it and to recalculate results with indicators.

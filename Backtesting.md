@@ -44,6 +44,32 @@ Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strate
 ```
 
 Ta4j comes with several analysis criteria; see the `org.ta4j.core.criteria` package in the project sources.
+
+### Visualizing backtest results
+
+After running a backtest, you can visualize the results using ta4j's charting capabilities. Charts can display price data, trading signals, indicators, and performance metrics:
+
+```java
+// Create a chart showing the trading record
+ChartMaker chartMaker = new ChartMaker();
+chartMaker.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
+    .display();
+```
+
+You can also visualize analysis criteria over time:
+
+```java
+chartMaker.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
+    .withAnalysisCriterionOverlay(new NetProfitCriterion(), tradingRecord)
+    .display();
+```
+
+See the [Charting Guide](Charting.md) for comprehensive documentation on creating trading charts.
+
 ### Walk-forward optimization
 
 Ta4j allows you to perform a well-known *Walk-forward* optimization. An example can be found [here](Usage-examples.md).
