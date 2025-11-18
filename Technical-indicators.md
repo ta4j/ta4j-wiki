@@ -23,8 +23,8 @@ You can visualize indicators on charts using the [ChartBuilder API](Charting.md)
 ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
 SMAIndicator sma = new SMAIndicator(closePrice, 50);
 
-ChartMaker chartMaker = new ChartMaker();
-chartMaker.builder()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+chartWorkflow.builder()
     .withSeries(series)
     .withIndicatorOverlay(sma)
     .withLineColor(Color.ORANGE)

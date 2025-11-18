@@ -1,6 +1,6 @@
 # Charting
 
-Ta4j provides powerful charting capabilities through the `ChartMaker` class and its fluent `ChartBuilder` API. You can create sophisticated trading charts with candlestick data, indicators, trading records, and analysis criteria overlays.
+Ta4j provides powerful charting capabilities through the `ChartWorkflow` class and its fluent `ChartBuilder` API. You can create sophisticated trading charts with candlestick data, indicators, trading records, and analysis criteria overlays.
 
 ## Overview
 
@@ -28,8 +28,8 @@ To use charting in your project, you'll need to include the `ta4j-examples` modu
 The simplest way to create a chart is using the `ChartBuilder` fluent API:
 
 ```java
-ChartMaker chartMaker = new ChartMaker();
-chartMaker.builder()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+chartWorkflow.builder()
     .withSeries(series)
     .display();
 ```
@@ -45,8 +45,8 @@ The `ChartBuilder` provides a fluent, stream-like API for constructing charts. I
 Start with a candlestick chart using `withSeries()`:
 
 ```java
-ChartMaker chartMaker = new ChartMaker();
-JFreeChart chart = chartMaker.builder()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .toChart();
 ```
@@ -57,7 +57,7 @@ Start with an indicator as the base:
 
 ```java
 ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withIndicator(closePrice)
     .toChart();
 ```
@@ -72,7 +72,7 @@ Add indicator overlays to visualize technical indicators on your price chart:
 
 ```java
 SMAIndicator sma = new SMAIndicator(closePrice, 50);
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withIndicatorOverlay(sma)
     .toChart();
@@ -81,7 +81,7 @@ JFreeChart chart = chartMaker.builder()
 You can style indicator overlays with custom colors and line widths:
 
 ```java
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withIndicatorOverlay(sma)
     .withLineColor(Color.CYAN)
@@ -97,7 +97,7 @@ Display buy/sell signals and position markers:
 BarSeriesManager seriesManager = new BarSeriesManager(series);
 TradingRecord tradingRecord = seriesManager.run(strategy);
 
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .toChart();
@@ -115,7 +115,7 @@ Visualize analysis criteria (like net profit, return, etc.) over time on a secon
 
 ```java
 NetProfitCriterion netProfit = new NetProfitCriterion();
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .withAnalysisCriterionOverlay(netProfit, tradingRecord)
@@ -132,7 +132,7 @@ Sub-charts create separate panels below the main chart, each with its own Y-axis
 
 ```java
 RSIIndicator rsi = new RSIIndicator(closePrice, 14);
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withSubChart(rsi)
     .toChart();
@@ -143,7 +143,7 @@ JFreeChart chart = chartMaker.builder()
 Create a dedicated panel for trading visualization:
 
 ```java
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withSubChart(tradingRecord)
     .toChart();
@@ -153,7 +153,7 @@ JFreeChart chart = chartMaker.builder()
 
 ```java
 GrossReturnCriterion grossReturn = new GrossReturnCriterion();
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withSubChart(grossReturn, tradingRecord)
     .toChart();
@@ -169,7 +169,7 @@ SMAIndicator sma = new SMAIndicator(closePrice, 50);
 RSIIndicator rsi = new RSIIndicator(closePrice, 14);
 ADXIndicator adx = new ADXIndicator(series, 14);
 
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .withIndicatorOverlay(sma)
@@ -185,7 +185,7 @@ JFreeChart chart = chartMaker.builder()
 Set a custom title for your chart:
 
 ```java
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withTitle("My Trading Strategy Analysis")
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
@@ -195,7 +195,7 @@ JFreeChart chart = chartMaker.builder()
 Or set the title after configuring the base chart:
 
 ```java
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withTitle("Custom Title")
     .withTradingRecordOverlay(tradingRecord)
@@ -211,7 +211,7 @@ The builder supports three terminal operations that consume the builder (prevent
 Display the chart in a Swing window:
 
 ```java
-chartMaker.builder()
+chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .display();
@@ -220,7 +220,7 @@ chartMaker.builder()
 With a custom window title:
 
 ```java
-chartMaker.builder()
+chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .display("My Strategy Chart");
@@ -231,7 +231,7 @@ chartMaker.builder()
 Save the chart as a PNG image:
 
 ```java
-Optional<Path> savedPath = chartMaker.builder()
+Optional<Path> savedPath = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .save("my-strategy-chart");
@@ -240,7 +240,7 @@ Optional<Path> savedPath = chartMaker.builder()
 Save to a specific directory:
 
 ```java
-Optional<Path> savedPath = chartMaker.builder()
+Optional<Path> savedPath = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .save("charts", "my-strategy-chart");
@@ -250,7 +250,7 @@ Or use a `Path` object:
 
 ```java
 Path chartsDir = Paths.get("output", "charts");
-Optional<Path> savedPath = chartMaker.builder()
+Optional<Path> savedPath = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .save(chartsDir, "my-strategy-chart");
@@ -261,14 +261,14 @@ Optional<Path> savedPath = chartMaker.builder()
 Get the `JFreeChart` object for further customization:
 
 ```java
-JFreeChart chart = chartMaker.builder()
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .toChart();
 
 // Further customize the chart if needed
 chart.setTitle("Custom Title");
-chartMaker.displayChart(chart);
+chartWorkflow.displayChart(chart);
 ```
 
 ## Automatic Axis Management
@@ -300,8 +300,8 @@ PlusDIIndicator plusDI = new PlusDIIndicator(series, 14);
 MinusDIIndicator minusDI = new MinusDIIndicator(series, 14);
 
 // Build and display chart
-ChartMaker chartMaker = new ChartMaker();
-JFreeChart chart = chartMaker.builder()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+JFreeChart chart = chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .withIndicatorOverlay(sma)
@@ -310,49 +310,62 @@ JFreeChart chart = chartMaker.builder()
     .withIndicatorOverlay(minusDI)
     .withSubChart(new GrossReturnCriterion(), tradingRecord)
     .toChart();
-chartMaker.displayChart(chart);
-chartMaker.saveChartImage(chart, series, "adx-strategy", "ta4j-examples/log/charts");
+chartWorkflow.displayChart(chart);
+chartWorkflow.saveChartImage(chart, series, "adx-strategy", "ta4j-examples/log/charts");
 ```
 
 ## Legacy API
 
-The `ChartMaker` class also provides convenience methods for common use cases. These methods are still available but the `ChartBuilder` API is recommended for new code:
+The `ChartWorkflow` class also provides convenience methods for common use cases. These methods are still available but the `ChartBuilder` API is recommended for new code:
 
 ```java
 // Display a trading record chart
-chartMaker.displayTradingRecordChart(series, "Strategy Name", tradingRecord);
+chartWorkflow.displayTradingRecordChart(series, "Strategy Name", tradingRecord);
 
 // Create an indicator chart
-JFreeChart chart = chartMaker.createIndicatorChart(series, indicator1, indicator2);
-chartMaker.displayChart(chart);
+JFreeChart chart = chartWorkflow.createIndicatorChart(series, indicator1, indicator2);
+chartWorkflow.displayChart(chart);
 
 // Create a dual-axis chart
-JFreeChart chart = chartMaker.createDualAxisChart(
+JFreeChart chart = chartWorkflow.createDualAxisChart(
     series, 
     primaryIndicator, "Price (USD)",
     secondaryIndicator, "RSI"
 );
 ```
 
-## ChartMaker Configuration
+## ChartWorkflow Configuration
 
 ### With File Persistence
 
-Create a `ChartMaker` that automatically saves charts to a directory:
+Create a `ChartWorkflow` that automatically saves charts to a directory:
 
 ```java
-ChartMaker chartMaker = new ChartMaker("output/charts");
+ChartWorkflow chartWorkflow = new ChartWorkflow("output/charts");
 // Charts will be saved to output/charts when using save() methods
 ```
 
 ### Without File Persistence
 
-The default constructor creates a `ChartMaker` without file persistence:
+The default constructor creates a `ChartWorkflow` without file persistence:
 
 ```java
-ChartMaker chartMaker = new ChartMaker();
+ChartWorkflow chartWorkflow = new ChartWorkflow();
 // Use save() methods with explicit paths, or display only
 ```
+
+## Package Structure
+
+The charting system is organized into several packages for better maintainability:
+
+- `ta4jexamples.charting.builder` - `ChartBuilder` and `ChartPlan` for fluent chart construction
+- `ta4jexamples.charting.compose` - `TradingChartFactory` for rendering charts
+- `ta4jexamples.charting.display` - `ChartDisplayer` interface and `SwingChartDisplayer` implementation
+- `ta4jexamples.charting.storage` - `ChartStorage` interface and `FileSystemChartStorage` implementation
+- `ta4jexamples.charting.workflow` - `ChartWorkflow` facade class
+- `ta4jexamples.charting.renderer` - Custom renderers like `BaseCandleStickRenderer`
+
+For most users, only `ChartWorkflow` and `ChartBuilder` need to be imported directly.
 
 ## Best Practices
 

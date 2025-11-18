@@ -141,8 +141,8 @@ Ta4j provides powerful charting capabilities to visualize your trading strategie
 
 ```java
 // Create a chart with trading record overlay
-ChartMaker chartMaker = new ChartMaker();
-chartMaker.builder()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .display();
@@ -154,7 +154,7 @@ For more advanced charting, you can add indicator overlays and sub-charts:
 ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
 SMAIndicator sma = new SMAIndicator(closePrice, 50);
 
-chartMaker.builder()
+chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .withIndicatorOverlay(sma)

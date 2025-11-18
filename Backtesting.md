@@ -51,8 +51,8 @@ After running a backtest, you can visualize the results using ta4j's charting ca
 
 ```java
 // Create a chart showing the trading record
-ChartMaker chartMaker = new ChartMaker();
-chartMaker.builder()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .display();
@@ -61,7 +61,7 @@ chartMaker.builder()
 You can also visualize analysis criteria over time:
 
 ```java
-chartMaker.builder()
+chartWorkflow.builder()
     .withSeries(series)
     .withTradingRecordOverlay(tradingRecord)
     .withAnalysisCriterionOverlay(new NetProfitCriterion(), tradingRecord)
