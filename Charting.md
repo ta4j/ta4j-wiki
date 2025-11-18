@@ -30,7 +30,7 @@ To use charting in your project, you'll need to include the `ta4j-examples` modu
 <dependency>
   <groupId>org.ta4j</groupId>
   <artifactId>ta4j-examples</artifactId>
-  <version>0.19-SNAPSHOT</version>
+  <version>${USE_LATEST_VERSION}</version>
 </dependency>
 ```
 
