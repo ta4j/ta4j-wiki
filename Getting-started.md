@@ -179,7 +179,9 @@ Trading strategies can be easily compared according to [a set of analysis criter
 
 ##### Visualizing your results
 
-Ta4j provides powerful charting capabilities to visualize your trading strategies. You can create charts with price data, indicators, trading signals, and performance metrics.
+Ta4j provides powerful charting capabilities through the `ChartWorkflow` class and its fluent `ChartBuilder` API. You can create charts with price data, indicators, trading signals, and performance metrics.
+
+**Basic chart with trading signals**:
 
 ```java
 // Create a chart with trading record overlay
@@ -190,7 +192,7 @@ chartWorkflow.builder()
     .display();
 ```
 
-For more advanced charting, you can add indicator overlays and sub-charts:
+**Advanced chart with indicators and performance metrics**:
 
 ```java
 ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
@@ -201,11 +203,19 @@ chartWorkflow.builder()
     .withTradingRecordOverlay(tradingRecord)
     .withIndicatorOverlay(sma)
     .withLineColor(Color.ORANGE)
-    .withSubChart(new NetProfitCriterion(), tradingRecord)
+    // Visualize net profit over time using AnalysisCriterionIndicator
+    .withAnalysisCriterionOverlay(new NetProfitCriterion(), tradingRecord)
+    .withLineColor(Color.GREEN)
     .display();
 ```
 
-See the [Charting Guide](Charting.md) for comprehensive documentation on creating sophisticated trading charts.
+**Key features**:
+- **Automatic axis management**: The builder intelligently assigns overlays to primary or secondary axes based on value ranges
+- **Analysis criterion visualization**: Use `AnalysisCriterionIndicator` to track performance metrics (profit, return, drawdown) over time
+- **Interactive mouseover**: Hover over chart elements to see detailed OHLC data and indicator values
+- **Flexible styling**: Customize colors, line widths, and chart titles
+
+See the [Charting Guide](Charting.md) for comprehensive documentation on creating sophisticated trading charts, including sub-charts, custom styling, and advanced examples.
 
 ### Going further
 

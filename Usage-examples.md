@@ -20,18 +20,24 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 - **[IndicatorsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java)** – plot price plus indicator overlays.
 - **[CandlestickChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java)** and **[CandlestickChartWithChopIndicator](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChartWithChopIndicator.java)** – visualize entry/exit markers alongside candlestick data.
 
-### Charting with ChartMaker
+### Charting with ChartWorkflow
 
-The `ChartMaker` class provides a fluent builder API for creating trading charts. See the [Charting](Charting.md) guide for comprehensive documentation. Quick example:
+The `ChartWorkflow` class provides a fluent `ChartBuilder` API for creating trading charts. See the [Charting](Charting.md) guide for comprehensive documentation. Quick example:
 
 ```java
-ChartMaker chartMaker = new ChartMaker();
-chartMaker.builder()
-    .withTradingRecord(series, strategyName, tradingRecord)
-    .addIndicators(rsi, macd)
-    .withAnalysisCriterion(series, tradingRecord, new MaximumDrawdownCriterion())
-    .build()
-    .display()
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+chartWorkflow.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
+    .withIndicatorOverlay(rsi)
+    .withIndicatorOverlay(macd)
+    .withAnalysisCriterionOverlay(new MaximumDrawdownCriterion(), tradingRecord)
+    .display();
+    
+// Or save to a file
+chartWorkflow.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
     .save("target/charts", "my-strategy");
 ```
 
