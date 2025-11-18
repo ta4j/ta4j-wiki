@@ -1,8 +1,10 @@
-# XLS Testing
+# XLS Testing (legacy workflow)
+
+> **Heads-up:** ta4j still supports XLS/CSV-driven tests, but they are no longer the preferred approach for unit tests. Keep them for large integration-style checks where loading a big dataset is unavoidable. For routine unit tests, build the minimal data inline so the entire scenario is visible in code—it’s easier to reason about, debug, and review.
 
 ## What is XLS Testing?
 
-XLS testing is a method of creating JUnit test cases for indicators and criteria.  XLS testing reads an XLS spreadsheet of bar data columns (date, open, high, low, close, and volume) and formula columns (intermediate calculations and final calculations) and uses the final calculations as the expected results in a JUnit test case.  As a special case, a criterion spreadsheet also has a column representing an arbitrary trading record (see Criteria Spreadsheet below).  The ta4j indicator or criterion uses the same bar data to calculate the actual results.  Then, in standard JUnit style, the actual results are compared to the expected results.
+XLS testing is a method of creating JUnit test cases for indicators and criteria. It reads an XLS spreadsheet of bar data columns (date, open, high, low, close, and volume) plus formula columns (intermediate calculations and final calculations) and uses the final calculations as the expected results in a JUnit test case. Criteria spreadsheets also include a column representing an arbitrary trading record (see “Criterion Spreadsheet” below). The ta4j indicator or criterion consumes the bar data to calculate actual results, then compares them against the spreadsheet expectations.
 
 ## Copy-Paste-Edit Quickstart
 
@@ -21,19 +23,18 @@ A good example IndicatorTest subclass that takes TimeFrame data is ATRIndicatorT
 A good example CriterionTest subclass is LinearTransactionCostCriterion.
 These are all found in ta4j-core/src/test/java/org/ta4j/core subfolders.  The XLS files are found in ta4j-core/src/test/resources/org/ta4j subfolders.
 
-Here is the RSI example, with highlights on edits required in the three steps above
-[[img/RSIIndicatorTest.jpg]]
 
-## Why XLS Testing?
+## Why XLS Testing (and when not to use it)
 
-A contributor who develops a new indicator might be tempted to write a unit test with an obviously wrong expected value of -1000.0, run the unit test which fails, then copy the actual value from the JUnit output into the unit test as the expected value.  This is circular logic as the expected value is defined as the actual value of the indicator.  A JUnit test case written in this manner might appear like
-```
-RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(data), 14); // the ta4j indicator
-assertDecimalEquals(rsi.getValue(15), 62.7451);                         // actual value compared to expected "magic number"
-```
-There is no indication of how 62.7451 was calculated as the expected value.  One would have to copy the data and perform the RSI calculation on paper or in a spreadsheet in order to validate this "magic value" as correct or incorrect.  This is problematic when the initial implementation of the indicator is flawed, as the flawed result is used as the expected result, which obviously matches the actual result.  So, the test passes when the implementation is incorrect.
+Historically, spreadsheets were a convenient way to “show your work” when validating new indicators—formulas were spelled out, reviewers could audit intermediate values, and the XLS loader made it easy to wire those expectations into a JUnit test.
 
-XLS testing forces the contributor to provide an alternate implementation of their calculations in an XLS spreadsheet that may be inspected and validated.  It allows the contributor to "show their work" in a way that may be confirmed.
+Today we prefer **self-contained tests** that construct the minimal bars inline. That keeps the entire dataset in the test file, avoids hunting through large CSV/XLS files for a single bar, and allows IDE refactors to catch schema changes. Use XLS/CSV (or JSON) fixtures only when:
+
+- You need to validate many hundreds/thousands of bars (e.g., regression tests covering decades of data).
+- You’re performing integration testing (data-loading pipeline + indicator + criterion).
+- The math is easier to audit in a spreadsheet and you plan to attach the XLS to the PR for reviewers.
+
+For day-to-day unit tests, create the `BarSeries` in code and assert against explicit values there. When you do need large datasets, consider JSON feeds (many exchanges expose OHLC data in JSON) paired with loaders such as `AdaptiveJsonBarsSerializer`—they’re easier to diff and script than spreadsheets, and still let you pipe real-world data into your tests.
 
 ## Indicator Spreadsheet
 
@@ -266,4 +267,3 @@ xls.getFinalCriterionValue(params) modifies the parameters in the XLS spreadshee
 assertEquals(expected, actual) simply compares two criteria final values to ensure that they are the same.
 
 For good measure, a "magic value" is also included as a fail-safe catch against accidental comparison of a criterion to itself or other misconstructed test case or class.
-

@@ -1,131 +1,173 @@
 # Getting Started
-Ta4j is an open source Java library for technical analysis. It provides the basic components for creation, evaluation and execution of trading strategies.
 
-About technical analysis:
+Welcome! This guide walks you from “What is ta4j?” to running a validated backtest and knowing what to explore next. It assumes you are new to both the project and systematic technical-analysis trading.
 
-  * [Wikipedia's article on Technical analysis](http://en.wikipedia.org/wiki/Technical_analysis)
-  * [Basics of Technical Analysis](http://www.investopedia.com/university/technical/) (from [Investopedia](http://www.investopedia.com/))
+## Prerequisites
 
-### Install via Maven/Gradle
+- **JDK 21+** (ta4j 0.19 targets modern JVMs).
+- A build tool such as Maven, Gradle, or your preferred IDE.
+- Basic familiarity with Java syntax. No prior quant experience is required—we explain each concept as it shows up.
 
-Ta4j is available on Maven Central.
+If technical analysis is brand new to you, skim [Wikipedia](https://en.wikipedia.org/wiki/Technical_analysis) or [Investopedia](https://www.investopedia.com/university/technical/) for the vocabulary we use throughout this guide.
 
-Maven (in your `pom.xml`):
-```
+## Install ta4j
+
+ta4j is published on Maven Central as `org.ta4j:ta4j-core`.
+
+<details>
+<summary>Maven</summary>
+
+```xml
 <dependency>
   <groupId>org.ta4j</groupId>
   <artifactId>ta4j-core</artifactId>
-  <version>0.18</version>
+  <version>0.19</version>
 </dependency>
 ```
+</details>
 
-Gradle (Groovy DSL):
+<details>
+<summary>Gradle (Groovy DSL)</summary>
+
+```groovy
+implementation 'org.ta4j:ta4j-core:0.19'
 ```
-implementation 'org.ta4j:ta4j-core:0.18'
-```
+</details>
 
-You can also [clone this repository](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository) or download the sources and add the module to your project.
+Prefer to inspect the code? Clone [ta4j](https://github.com/ta4j/ta4j) and import the root Maven project—`ta4j-core` and `ta4j-examples` live side-by-side.
 
-### Getting started with ta4j
+### Verify your environment
 
-In this quick example we will backtest a trading strategy over a price bar series.
+1. Run `mvn -pl ta4j-examples test` (or `./mvnw` if you pulled the repo).  
+2. Launch `ta4jexamples.Quickstart` from your IDE.  
+3. You should see backtest output in the console along with a chart window.
 
-At the beginning we just need a bar series.
+Now you know your toolchain, ta4j dependency, and plotting libraries are wired correctly.
+
+## Understand the building blocks
+
+| Concept | Description | Where to learn more |
+| --- | --- | --- |
+| [`BarSeries`](https://github.com/ta4j/ta4j/blob/master/ta4j-core/src/main/java/org/ta4j/core/BarSeries.java) | Ordered collection of bars (OHLCV data) used for all calculations. | [Bar Series & Bars](Bar-series-and-bars.md) |
+| `Num` | Precision-safe numeric abstraction (Decimal, Double, custom). | [Num](Num.md) |
+| `Indicator<T extends Num>` | Lazily evaluated time series derived from bars or other indicators. | [Technical Indicators](Technical-indicators.md) |
+| `Rule` / `Strategy` | Boolean conditions that generate entry/exit signals; strategies pair entry + exit rules. | [Trading Strategies](Trading-strategies.md) |
+| `BarSeriesManager` & `BacktestExecutor` | Drivers that run strategies against data and return a `TradingRecord`. | [Backtesting](Backtesting.md) |
+
+Why this matters: each component is composable. Bars feed indicators; indicators feed rules; rules feed strategies; strategies feed backtests. Once you understand one layer, the next is just another combination.
+
+## Walkthrough: build your first strategy
+
+We will:
+
+1. Load historic data.
+2. Create indicators.
+3. Compose entry/exit rules.
+4. Run a backtest and inspect the metrics.
+
+### 1. Load a bar series
 
 ```java
-// Creating a bar series (from any provider: CSV, web service, etc.)
-BarSeries series = CsvTradesLoader.loadBitstampSeries();
-```
-Or build one manually and add bars with the series' bar builder:
+BarSeries series = new BaseBarSeriesBuilder()
+        .withName("bitstamp_btc")
+        .build();
 
-```java
-// Build an empty series and add bars
-BarSeries series = new BaseBarSeriesBuilder().withName("mySeries").build();
-Instant endTime = Instant.now();
-series.addBar(series.barBuilder()
-    .timePeriod(Duration.ofDays(1))
-    .endTime(endTime)
-    .openPrice(105.42)
-    .highPrice(112.99)
-    .lowPrice(104.01)
-    .closePrice(111.42)
-    .volume(1337)
-    .build());
-```
-See the [Bar Series and Bars section](Bar-series-and-bars.md) to learn about bar series and to know how you can construct one.
-
-##### Using indicators
-
-We can calculate indicator over this bar series, in order to forecast the direction of prices through the study of past market data.
-
-```java
-// Getting the close price of the bars
-Num firstClosePrice = series.getBar(0).getClosePrice();
-System.out.println("First close price: " + firstClosePrice.doubleValue());
-// Or within an indicator:
-ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-// Here is the same close price:
-System.out.println(firstClosePrice.isEqual(closePrice.getValue(0))); // equal to firstClosePrice
-
-// Getting the simple moving average (SMA) of the close price over the last 5 bars
-SMAIndicator shortSma = new SMAIndicator(closePrice, 5);
-// Here is the 5-bars-SMA value at the 42nd index
-System.out.println("5-bars-SMA value at the 42nd index: " + shortSma.getValue(42).doubleValue());
-
-// Getting a longer SMA (e.g. over the 30 last bars)
-SMAIndicator longSma = new SMAIndicator(closePrice, 30);
-```
-Ta4j includes more than 130 [technical indicators](Technical-indicators.md).
-
-##### Building a trading strategy
-
-Then we have to build our trading strategy. Strategies are made of two trading rules: one for entry (buying), the other for exit (selling).
-
-```java
-// Buying rules
-// We want to buy:
-//  - if the 5-bars SMA crosses over 30-bars SMA
-//  - or if the price goes below a defined price (e.g $800.00)
-Rule buyingRule = new CrossedUpIndicatorRule(shortSma, longSma)
-        .or(new CrossedDownIndicatorRule(closePrice, 800));
-
-// Selling rules
-// We want to sell:
-//  - if the 5-bars SMA crosses under 30-bars SMA
-//  - or if the price loses more than 3%
-//  - or if the price earns more than 2%
-Rule sellingRule = new CrossedDownIndicatorRule(shortSma, longSma)
-        .or(new StopLossRule(closePrice, series.numFactory().numOf(3)))
-        .or(new StopGainRule(closePrice, series.numFactory().numOf(2)));
-
-// Create the strategy
-Strategy strategy = new BaseStrategy(buyingRule, sellingRule);
+try (InputStream csv = Files.newInputStream(Path.of("data/bitstamp_btc.csv"))) {
+    new CsvTradesLoader().load(csv, series); // see ta4j-examples/loaders
+}
 ```
 
-Ta4j comes with a set of basic [trading rules/strategies](Trading-strategies.md) which can be combined using boolean operators.
+Other options:
 
-##### Backtesting/running our juicy strategy
+- Use builders such as `TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, or the new `AmountBarBuilder` when aggregating streaming trades.
+- If your data already contains bars, call `series.addBar(...)` directly—`barBuilder()` lets you specify `beginTime` or `endTime` depending on how the exchange reports timestamps.
 
-The backtest step is pretty simple:
+### 2. Create indicators
 
 ```java
-// Running our juicy trading strategy...
-BarSeriesManager seriesManager = new BarSeriesManager(series);
-TradingRecord tradingRecord = seriesManager.run(strategy);
-System.out.println("Number of positions (trades) for our strategy: " + tradingRecord.getPositionCount());
+ClosePriceIndicator close = new ClosePriceIndicator(series);
+SMAIndicator fastSma = new SMAIndicator(close, 5);
+SMAIndicator slowSma = new SMAIndicator(close, 30);
+MACDVIndicator macdv = new MACDVIndicator(series, 12, 26, 9); // uses volume weighting
 ```
 
-##### Analyzing our results
+Indicators are cached automatically. If you mutate the most recent bar (typical in live trading), ta4j recalculates the final value on demand.
 
-Here is how we can analyze the results of our backtest:
+### 3. Compose rules and a strategy
 
 ```java
-// Getting the winning positions ratio
-AnalysisCriterion winningPositionsRatio = new PositionsRatioCriterion(PositionFilter.PROFIT);
-System.out.println("Winning positions ratio: " + winningPositionsRatio.calculate(series, tradingRecord));
+Rule entryRule = new CrossedUpIndicatorRule(fastSma, slowSma)
+        .and(new OverIndicatorRule(macdv.getMacd(), series.numFactory().numOf(0)));
 
-// Getting a risk-reward ratio
+Rule exitRule = new CrossedDownIndicatorRule(fastSma, slowSma)
+        .or(new StopLossRule(close, series.numFactory().numOf(2.5)))
+        .or(new StopGainRule(close, series.numFactory().numOf(4.0)));
+
+Strategy strategy = new BaseStrategy("SMA + MACDV swing", entryRule, exitRule);
+strategy.setUnstableBars(30); // ignore early warm-up signals
+```
+
+Prefer reusable presets? Explore `NamedStrategy` implementations under `org.ta4j.core.strategy.named`. They can be serialized/deserialized, parameterized, and discovered at runtime via `NamedStrategy.initializeRegistry(...)`.
+
+### 4. Backtest
+
+```java
+BarSeriesManager manager = new BarSeriesManager(series);
+TradingRecord record = manager.run(strategy);
+System.out.printf("Trades: %d%n", record.getPositionCount());
+```
+
+For large strategy grids or long histories, switch to the new `BacktestExecutor`:
+
+```java
+BacktestExecutor executor = new BacktestExecutor(series);
+BacktestExecutionResult batch = executor.executeWithRuntimeReport(
+        strategies,
+        series.numFactory().numOf(1),
+        Trade.TradeType.BUY,
+        ProgressCompletion.logging("getting-started"));
+
+List<TradingStatement> topRuns = batch.getTopStrategies(10, new NetReturnCriterion());
+```
+
+`executeWithRuntimeReport` collects trading statements plus runtime analytics, while `getTopStrategies` helps you home in on the best parameter sets without hand-rolling a sorter. The snippet wires everything up manually; if you prefer a full working example, inspect [`ta4jexamples.backtesting.TopStrategiesExampleBacktest`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TopStrategiesExampleBacktest.java).
+
+### 5. Inspect metrics
+
+```java
+AnalysisCriterion netReturn = new NetReturnCriterion();
 AnalysisCriterion romad = new ReturnOverMaxDrawdownCriterion();
+AnalysisCriterion commissions = new CommissionsImpactPercentageCriterion();
+
+System.out.printf("Net return: %s%n", netReturn.calculate(series, record));
+System.out.printf("Return / Max Drawdown: %s%n", romad.calculate(series, record));
+System.out.printf("Commission drag: %s%n", commissions.calculate(series, record));
+```
+
+Need deeper insight?
+
+- Drawdown distribution: `MonteCarloMaximumDrawdownCriterion`.
+- Time invested: `InPositionPercentageCriterion`.
+- Streaks: `MaxConsecutiveLossCriterion` and `MaxConsecutiveProfitCriterion`.
+- Full statement: `new BaseTradingStatement(strategy, record)` exposes trades, exposure, and commission totals.
+
+## Standard Next Steps
+
+| Goal | Where to go |
+| --- | --- |
+| Load better data | [Bar Series & Bars](Bar-series-and-bars.md) covers CSV loaders, bar builders, and moving series. |
+| Explore indicator coverage | [Technical Indicators](Technical-indicators.md) + [Moving Averages](Moving-Average-Indicators.md) list every indicator family, including Renko helpers and Net Momentum. |
+| Compare many parameter sets | See [Trading Strategies](Trading-strategies.md#parameterizing-and-named-strategies) for best practices plus `VoteRule` tips for ensembles. |
+| Persist and share strategies | Use `StrategySerialization` / `Strategy.fromJson(...)` (documented in [Trading Strategies](Trading-strategies.md#serializing-strategies)). |
+| Prepare for live trading | Read [Live Trading](Live-trading.md) for architecture patterns, bar updates, and trade execution models. |
+
+## Keep Going
+
+- Browse the curated [Usage Examples](Usage-examples.md) page—each example links to runnable code in `ta4j-examples`.
+- Join the [ta4j Discord](https://discord.gg/HX9MbWZ) to compare notes with other builders.
+- Dive into the [Backtesting](Backtesting.md) guide for profiling slow runs, avoiding look-ahead bias, and extracting reports.
+- Track ongoing work via the [Roadmap and Tasks](Roadmap-and-Tasks.md); contributions are welcome!
+
 System.out.println("Return over Max Drawdown: " + romad.calculate(series, tradingRecord));
 
 // Net return of our strategy vs net return of a buy-and-hold strategy

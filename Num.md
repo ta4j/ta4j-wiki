@@ -1,75 +1,78 @@
 # The Num Interface
 
 ## What is Num?
-Ta4j supports different numeric backends for calculations in `Indicator` and `BarSeries`. You can choose an existing implementation or provide your own.
+`Num` is ta4j’s numeric abstraction. Every indicator, criterion, and `BarSeries` uses it so you can swap numeric backends without rewriting trading logic. A `NumFactory` is tied to each `BarSeries`; it produces instances of the chosen implementation and guarantees consistent arithmetic throughout the series.
 
-Current built-in implementations:
+Built-in implementations:
 
-- `DecimalNum` (default): uses `BigDecimal` for precision
-- `DoubleNum`: uses primitive `double` for performance
+- `DecimalNum` (default): backed by `BigDecimal`, configurable precision and rounding.
+- `DoubleNum`: thin wrapper around `double` for maximum throughput.
 
-Both implement `Num` and are selected via a `NumFactory` on your `BarSeries`.
+Take a look at the [usage examples](Usage-examples.md) to see `Num` and `BaseBarSeries` in action.
 
+## Choosing the right `Num`
+Every calculation faces the precision vs. speed trade-off:
 
-Take a look at the [usage examples](Usage-examples.html) to see `Num` and `BaseBarSeries` in action.
+- **DecimalNum** stores values as `BigDecimal`. You can configure the default precision/rounding via `DecimalNum.configureDefaultMathContext(...)` or request a factory with a specific precision/rounding mode (`DecimalNumFactory.getInstance(new MathContext(34, RoundingMode.HALF_EVEN))`). Higher precision reduces rounding error but increases CPU cost, GC pressure, and memory footprint because BigDecimal allocates new objects for every arithmetic call.
+- **DoubleNum** uses binary floating point. It’s fast and allocation-free but inherits IEEE-754 quirks. For example:
 
-## Choosing the right `Num` implementation
-The main purpose of supporting different data types for arithmetic operations are opposing goals in technical analysis. On the one hand performance is a critical  factor in high frequency trading or big data analysis, on the other hand crypto currencies and the general [handling of monetary values](link-to-source) require arithmetic that is **not** based on [*binary floating-point*](https://en.wikipedia.org/wiki/IEEE_754) types like `double` or `float`. For example the following simple code fragment using `double` will print an unexpected result:
-```java
-System.out.println(1.0 - 9*0.1)
-```
-The output will be `0.0999999999999999998` witch is not equal to 0.1. This is no bug, but the result of trying to represent decimal values in a binary number system. It is not possible to represent 0.1 (or any  other negative power of ten) [exactly in double or float](http://www.lahey.com/float.htm). With those data types you can only approximate such kind of decimal values. In many cases this representation may be sufficient and you would say "rounding to the last cent will give me the correct value",  but please [note that .9999 trillion dollars is approximately equal to 1 trillion dollars. Could you please deposit the difference in my bank account?](https://softwareengineering.stackexchange.com/questions/62948/what-can-be-done-to-programming-languages-to-avoid-floating-point-pitfalls)
+  ```java
+  System.out.println(1.0 - 9 * 0.1); // prints 0.09999999999999998
+  ```
 
-The [right way](https://stackoverflow.com/questions/8148684/what-is-the-best-data-type-to-use-for-money-in-java-app) to solve this problem is to use `BigDecimal`, `int` or `long` for monetary calculations. **It doesn't mean though that doubles can never be used for that purpose.** Based of the fact that indicator just use monetary values as input but further calculations and results do not have a monetary dimension, Double's 53 significant bits (~16 decimal digits) are usually good enough for things that merely require accuracy.
-**You have to know your application and you should study your goals and inform yourself about which kind of data type implementation works best for you.**
+  That error comes from representing 0.1 in base-2. For many indicators (ratios, normalized oscillators) the approximation is acceptable; for money-like calculations it usually isn’t.
 
-### DecimalNum
-`DecimalNum` uses [BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) for high precision calculations. It is the default when creating a `BaseBarSeries`.
+Pick DecimalNum when you care about exact decimals (crypto pairs, high-value assets, long test runs). Pick DoubleNum when latency matters more than an ulp of precision. You can also add your own implementation by extending `Num` and providing a `NumFactory`.
 
 ```java
-// Default (DecimalNum)
-BarSeries s1 = new BaseBarSeriesBuilder().withName("series").build();
-
-// Explicit (DecimalNum)
-BarSeries s2 = new BaseBarSeriesBuilder()
-    .withNumFactory(DecimalNumFactory.getInstance())
-    .build();
+BarSeries lightningFast = new BaseBarSeriesBuilder()
+        .withName("fast_series")
+        .withNumFactory(DoubleNumFactory.getInstance())
+        .build();
 ```
 
-
-### DoubleNum
-
-`DoubleNum` favors speed over precision. Use it when approximate decimal arithmetic is sufficient.
+### Configuring Decimal precision
 
 ```java
-BarSeries s3 = new BaseBarSeriesBuilder()
-    .withNumFactory(DoubleNumFactory.getInstance())
-    .build();
+// Use 32-digit precision globally (default is 16, HALF_UP)
+DecimalNum.configureDefaultPrecision(32);
+
+// or supply a custom factory for one series with custom rounding
+BarSeries highPrecisionSeries = new BaseBarSeriesBuilder()
+        .withName("btc_usdt")
+        .withNumFactory(DecimalNumFactory.getInstance(new MathContext(40, RoundingMode.HALF_EVEN)))
+        .build();
+
+// reset to library defaults later if needed
+DecimalNum.resetDefaultPrecision();
 ```
-<br>
 
-## Design and other possible implementations
-If you want to write your own implementation of `Num`, implement the `Num` interface and provide a corresponding `NumFactory` so a `BarSeries` can create numbers and bars consistently.
+Increasing precision protects against rounding errors when you chain many indicators, but every arithmetic call becomes more expensive. Benchmark both settings if you’re pushing millions of bars or large strategy grids.
 
-### Handling Num
-`BarSeries` exposes its factory via `series.numFactory()`. Use it to create values that match the series' numeric type:
+## Handling Num from your code
+Every `BarSeries` exposes its factory via `series.numFactory()`. Use it whenever you need a literal so the value matches the series’ numeric type:
+
 ```java
 Num three = series.numFactory().numOf(3);
-series.addTrade(100, 10.5); // accepts Number and converts via numFactory()
+series.addTrade(three, series.numFactory().numOf(10.5)); // accepts Number and converts internally
 ```
 
-Create bars with the series' `barBuilder()`; numeric inputs are converted using the same factory:
+Create bars with the series’ `barBuilder()`; all numeric inputs are converted using the same factory:
+
 ```java
 Bar bar = series.barBuilder()
-    .timePeriod(Duration.ofMinutes(1))
-    .endTime(Instant.now())
-    .openPrice(100.0)
-    .highPrice(101.0)
-    .lowPrice(99.5)
-    .closePrice(100.7)
-    .volume(42)
-    .build();
+        .timePeriod(Duration.ofMinutes(1))
+        .endTime(Instant.now())
+        .openPrice(100.0)
+        .highPrice(101.0)
+        .lowPrice(99.5)
+        .closePrice(100.7)
+        .volume(42)
+        .build();
 series.addBar(bar);
 ```
-<br>
-**Note:** A `BarSeries` has a fixed numeric type. Do not mix different `Num` types on the same series.
+
+**Important:** A `BarSeries` has a fixed numeric backend. Mixing different `Num` types on the same series (e.g., creating a `DoubleNum` literal and feeding it into a `DecimalNum` series) will throw or produce undefined behavior—always go through `numFactory()`.
+
+## Implementing your own Num
+If you need a custom numeric type (decimal128, fixed-point integers, GPU-backed tensors, etc.), implement the `Num` interface plus a matching `NumFactory`. As long as the factory can produce `zero()`, `one()`, and `numOf(...)`, the rest of ta4j will treat it like any other `Num`.
