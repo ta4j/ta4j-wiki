@@ -73,7 +73,7 @@ BarSeries series = new BaseBarSeriesBuilder()
         .build();
 
 try (InputStream csv = Files.newInputStream(Path.of("data/bitstamp_btc.csv"))) {
-    new CsvTradesLoader().load(csv, series); // see ta4j-examples/loaders
+    new BitstampCsvTradesDataSource().load(csv, series); // see ta4j-examples/datasources
 }
 ```
 
@@ -155,7 +155,7 @@ Need deeper insight?
 
 | Goal | Where to go |
 | --- | --- |
-| Load better data | [Bar Series & Bars](Bar-series-and-bars.md) covers CSV loaders, bar builders, and moving series. |
+| Load better data | [Bar Series & Bars](Bar-series-and-bars.md) covers CSV datasources, bar builders, and moving series. |
 | Explore indicator coverage | [Technical Indicators](Technical-indicators.md) + [Moving Averages](Moving-Average-Indicators.md) list every indicator family, including Renko helpers and Net Momentum. |
 | Compare many parameter sets | See [Trading Strategies](Trading-strategies.md#parameterizing-and-named-strategies) for best practices plus `VoteRule` tips for ensembles. |
 | Persist and share strategies | Use `StrategySerialization` / `Strategy.fromJson(...)` (documented in [Trading Strategies](Trading-strategies.md#serializing-strategies)). |

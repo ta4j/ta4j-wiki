@@ -34,7 +34,7 @@ Today we prefer **self-contained tests** that construct the minimal bars inline.
 - You’re performing integration testing (data-loading pipeline + indicator + criterion).
 - The math is easier to audit in a spreadsheet and you plan to attach the XLS to the PR for reviewers.
 
-For day-to-day unit tests, create the `BarSeries` in code and assert against explicit values there. When you do need large datasets, consider JSON feeds (many exchanges expose OHLC data in JSON) paired with loaders such as `AdaptiveJsonBarsSerializer`—they’re easier to diff and script than spreadsheets, and still let you pipe real-world data into your tests.
+For day-to-day unit tests, create the `BarSeries` in code and assert against explicit values there. When you do need large datasets, consider JSON feeds (many exchanges expose OHLC data in JSON) paired with datasources such as `AdaptiveJsonBarsSerializer`—they're easier to diff and script than spreadsheets, and still let you pipe real-world data into your tests.
 
 ## Indicator Spreadsheet
 

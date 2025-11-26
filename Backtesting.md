@@ -149,7 +149,7 @@ See the [Walk Forward example](Usage-examples.md#strategy-patterns) for a turnke
 
 - Instrument rule evaluation with `ta4jexamples.logging.StrategyExecutionLogging` to print which rules triggered on each bar.
 - Use `BacktestRuntimeReport` to spot strategies that repeatedly trigger cost-heavy operations.
-- When bar data is inconsistent (missing timestamps, zero volumes), preprocess it with the JSON/CSV loaders or aggregator builders described in [Bar Series & Bars](Bar-series-and-bars.md).
+- When bar data is inconsistent (missing timestamps, zero volumes), preprocess it with the JSON/CSV datasources or aggregator builders described in [Bar Series & Bars](Bar-series-and-bars.md).
 BarSeriesManager seriesManager = new BarSeriesManager(series);
 Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strategy1, strategy2));
 ```

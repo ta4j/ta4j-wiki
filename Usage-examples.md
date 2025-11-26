@@ -10,8 +10,8 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 ## Bar series & `Num`
 
 - **[BuildBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/barSeries/BuildBarSeries.java)** – demonstrates bar builders, sub-series, and moving windows.
-- **[CsvBarsLoader](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/loaders/CsvBarsLoader.java)** / **[CsvTradesLoader](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/loaders/CsvTradesLoader.java)** – ingest historical OHLCV data.
-- **[AdaptiveJsonBarsSerializer](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/loaders/AdaptiveJsonBarsSerializer.java)** – parse Coinbase/Binance OHLC JSON payloads (new in 0.19).
+- **[CsvBarsDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/CsvBarsDataSource.java)** / **[BitstampCsvTradesDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/BitstampCsvTradesDataSource.java)** – ingest historical OHLCV data.
+- **[AdaptiveJsonBarsSerializer](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/AdaptiveJsonBarsSerializer.java)** – parse Coinbase/Binance OHLC JSON payloads (new in 0.19).
 - **[CompareNumTypes](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/CompareNumTypes.java)** and **[DecimalNumPrecisionPerformanceTest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/DecimalNumPrecisionPerformanceTest.java)** – choose the right `Num` implementation for your workload.
 
 ## Indicators & visualization
