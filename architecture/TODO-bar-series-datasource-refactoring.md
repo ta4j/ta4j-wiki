@@ -265,9 +265,9 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 │       ├── CsvMapper.java (new)
 │       └── BitstampCsvMapper.java (new)
 ├── YahooFinanceBarSeriesDataSource.java (refactored - composes client + mapper)
-├── CsvBarSeriesDataSource.java (refactored - composes client + mapper)
-├── JsonBarSeriesDataSource.java (refactored - composes client + mapper)
-└── BitStampCSVTradesBarSeriesDataSource.java (refactored - composes client + mapper)
+├── CsvFileBarSeriesDataSource.java (refactored - composes client + mapper)
+├── JsonFileBarSeriesDataSource.java (refactored - composes client + mapper)
+└── BitStampCsvTradesFileBarSeriesDataSource.java (refactored - composes client + mapper)
 ```
 
 ### Component Responsibilities
@@ -323,7 +323,7 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 4. **AdaptiveJsonMapper**
    - Wraps multiple JSON mappers
    - Detects format and delegates to appropriate mapper
-   - Used by JsonBarSeriesDataSource
+   - Used by JsonFileBarSeriesDataSource
 
 5. **CsvMapper**
    - Generic CSV parser
@@ -435,17 +435,17 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 **Steps:**
 1. Create `FileSearchStrategy` interface
 2. Create `FileSearchStrategy` implementations:
-   - `StandardPatternFileSearchStrategy` (for CsvBarSeriesDataSource)
-   - `SourcePrefixFileSearchStrategy` (for BitStampCSVTradesBarSeriesDataSource)
-   - `ExchangePrefixFileSearchStrategy` (for JsonBarSeriesDataSource)
+   - `StandardPatternFileSearchStrategy` (for CsvFileBarSeriesDataSource)
+   - `SourcePrefixFileSearchStrategy` (for BitStampCsvTradesFileBarSeriesDataSource)
+   - `ExchangePrefixFileSearchStrategy` (for JsonFileBarSeriesDataSource)
 3. Create `FileDataRetrievalClient` class
    - Handles file reading from classpath and file system
    - Uses `FileSearchStrategy` to find files
    - Handles file not found scenarios
 4. Update file-based data sources to use `FileDataRetrievalClient`
-   - `CsvBarSeriesDataSource`: Use `FileDataRetrievalClient` + `StandardPatternFileSearchStrategy`
-   - `BitStampCSVTradesBarSeriesDataSource`: Use `FileDataRetrievalClient` + `SourcePrefixFileSearchStrategy`
-   - `JsonBarSeriesDataSource`: Use `FileDataRetrievalClient` + `ExchangePrefixFileSearchStrategy`
+   - `CsvFileBarSeriesDataSource`: Use `FileDataRetrievalClient` + `StandardPatternFileSearchStrategy`
+   - `BitStampCsvTradesFileBarSeriesDataSource`: Use `FileDataRetrievalClient` + `SourcePrefixFileSearchStrategy`
+   - `JsonFileBarSeriesDataSource`: Use `FileDataRetrievalClient` + `ExchangePrefixFileSearchStrategy`
 5. Update tests
 6. Run full build and verify all file-based sources work
 
@@ -457,9 +457,9 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 - `client/file/ExchangePrefixFileSearchStrategy.java`
 
 **Files to Modify:**
-- `CsvBarSeriesDataSource.java`
-- `BitStampCSVTradesBarSeriesDataSource.java`
-- `JsonBarSeriesDataSource.java`
+- `CsvFileBarSeriesDataSource.java`
+- `BitStampCsvTradesFileBarSeriesDataSource.java`
+- `JsonFileBarSeriesDataSource.java`
 - All corresponding test files
 
 **Testing:**
@@ -473,16 +473,16 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 
 **Steps:**
 1. Create CSV mapper implementations:
-   - `CsvMapper`: Generic CSV parser (for CsvBarSeriesDataSource)
+   - `CsvMapper`: Generic CSV parser (for CsvFileBarSeriesDataSource)
    - `BitstampCsvMapper`: Bitstamp-specific CSV parser with trade aggregation
 2. Create JSON mapper implementations:
    - `BinanceJsonMapper`: Binance JSON format
    - `CoinbaseJsonMapper`: Coinbase JSON format
    - `AdaptiveJsonMapper`: Wraps Binance/Coinbase mappers, auto-detects format
 3. Update file-based data sources to use mappers:
-   - `CsvBarSeriesDataSource`: Use `CsvMapper`
-   - `BitStampCSVTradesBarSeriesDataSource`: Use `BitstampCsvMapper`
-   - `JsonBarSeriesDataSource`: Use `AdaptiveJsonMapper`
+   - `CsvFileBarSeriesDataSource`: Use `CsvMapper`
+   - `BitStampCsvTradesFileBarSeriesDataSource`: Use `BitstampCsvMapper`
+   - `JsonFileBarSeriesDataSource`: Use `AdaptiveJsonMapper`
 4. Update tests
 5. Run full build and verify all sources work
 
@@ -494,9 +494,9 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 - `mapper/json/AdaptiveJsonMapper.java`
 
 **Files to Modify:**
-- `CsvBarSeriesDataSource.java`
-- `BitStampCSVTradesBarSeriesDataSource.java`
-- `JsonBarSeriesDataSource.java`
+- `CsvFileBarSeriesDataSource.java`
+- `BitStampCsvTradesFileBarSeriesDataSource.java`
+- `JsonFileBarSeriesDataSource.java`
 - All corresponding test files
 
 **Testing:**
@@ -537,7 +537,7 @@ FileDataRetrievalClient fileClient = new FileDataRetrievalClient(searchStrategy)
 CsvMapper csvMapper = new CsvMapper();
 
 // Compose data source
-CsvBarSeriesDataSource csv = new CsvBarSeriesDataSource(fileClient, csvMapper);
+CsvFileBarSeriesDataSource csv = new CsvFileBarSeriesDataSource(fileClient, csvMapper);
 
 // Use as before
 BarSeries series = csv.loadSeries("AAPL", Duration.ofDays(1), start, end);
@@ -558,7 +558,7 @@ AdaptiveJsonMapper adaptiveMapper = new AdaptiveJsonMapper(
 );
 
 // Compose data source
-JsonBarSeriesDataSource json = new JsonBarSeriesDataSource(fileClient, adaptiveMapper);
+JsonFileBarSeriesDataSource json = new JsonFileBarSeriesDataSource(fileClient, adaptiveMapper);
 
 // Use as before
 BarSeries series = json.loadSeries("ETH-USD", Duration.ofDays(1), start, end);

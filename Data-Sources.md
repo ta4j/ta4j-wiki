@@ -9,8 +9,8 @@ The `BarSeriesDataSource` interface abstracts away implementation details (files
 ```java
 // All data sources share the same interface
 BarSeriesDataSource yahoo = new YahooFinanceBarSeriesDataSource(true); // With caching
-BarSeriesDataSource csv = new CsvBarSeriesDataSource();
-BarSeriesDataSource json = new JsonBarSeriesDataSource();
+BarSeriesDataSource csv = new CsvFileBarSeriesDataSource();
+BarSeriesDataSource json = new JsonFileBarSeriesDataSource();
 
 // Same interface, different implementations
 
@@ -280,7 +280,7 @@ File-based data sources load data from local files. They search for files matchi
 
 ### CSV Data Source
 
-`CsvBarSeriesDataSource` loads OHLCV data from CSV files. It searches for CSV files matching the specified criteria in the classpath.
+`CsvFileBarSeriesDataSource` loads OHLCV data from CSV files. It searches for CSV files matching the specified criteria in the classpath.
 
 #### File Format
 
@@ -309,10 +309,10 @@ Where:
 
 ```java
 // Load from a specific file
-BarSeries series = CsvBarSeriesDataSource.loadSeriesFromFile("AAPL-PT1D-20130102_20131231.csv");
+BarSeries series = CsvFileBarSeriesDataSource.loadSeriesFromFile("AAPL-PT1D-20130102_20131231.csv");
 
 // Load using domain-driven interface (searches for matching file)
-BarSeriesDataSource csv = new CsvBarSeriesDataSource();
+BarSeriesDataSource csv = new CsvFileBarSeriesDataSource();
 Instant start = Instant.parse("2023-01-01T00:00:00Z");
 Instant end = Instant.parse("2023-12-31T23:59:59Z");
 BarSeries series = csv.loadSeries("AAPL", Duration.ofDays(1), start, end);
@@ -332,7 +332,7 @@ date,open,high,low,close,volume
 
 ### JSON Data Source
 
-`JsonBarSeriesDataSource` loads OHLCV data from JSON files. It supports multiple exchange formats including Binance and Coinbase formats using an adaptive type adapter.
+`JsonFileBarSeriesDataSource` loads OHLCV data from JSON files. It supports multiple exchange formats including Binance and Coinbase formats using an adaptive type adapter.
 
 #### Supported Formats
 
@@ -358,7 +358,7 @@ Where:
 
 ```java
 // Load from a specific file
-BarSeriesDataSource json = new JsonBarSeriesDataSource();
+BarSeriesDataSource json = new JsonFileBarSeriesDataSource();
 BarSeries series = json.loadSeries("Coinbase-BTC-USD-PT1D-20230101_20231231.json");
 
 // Load using domain-driven interface (searches for matching file)
@@ -399,7 +399,7 @@ try (InputStream is = Files.newInputStream(Paths.get("data.json"))) {
 
 ### Bitstamp Trades CSV Data Source
 
-`BitStampCSVTradesBarSeriesDataSource` loads trade-level data from Bitstamp CSV files and aggregates them into OHLCV bars. This is different from other data sources as it reads trade data (timestamp, price, volume) and aggregates it into bars.
+`BitStampCsvTradesFileBarSeriesDataSource` loads trade-level data from Bitstamp CSV files and aggregates them into OHLCV bars. This is different from other data sources as it reads trade data (timestamp, price, volume) and aggregates it into bars.
 
 #### File Format
 
@@ -419,11 +419,11 @@ The data source searches for files matching these patterns:
 
 ```java
 // Load from a specific file
-BarSeries series = BitStampCSVTradesBarSeriesDataSource.loadBitstampSeries(
+BarSeries series = BitStampCsvTradesFileBarSeriesDataSource.loadBitstampSeries(
     "Bitstamp-BTC-USD-PT5M-20131125_20131201.csv");
 
 // Load using domain-driven interface (searches for matching file)
-BarSeriesDataSource bitstamp = new BitStampCSVTradesBarSeriesDataSource();
+BarSeriesDataSource bitstamp = new BitStampCsvTradesFileBarSeriesDataSource();
 Instant start = Instant.parse("2023-01-01T00:00:00Z");
 Instant end = Instant.parse("2023-12-31T23:59:59Z");
 BarSeries series = bitstamp.loadSeries("BTC-USD", Duration.ofMinutes(5), start, end);
