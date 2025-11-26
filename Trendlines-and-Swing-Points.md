@@ -29,7 +29,7 @@ TrendLineSupportIndicator support = new TrendLineSupportIndicator(series, 5, 200
 TrendLineResistanceIndicator resistance = new TrendLineResistanceIndicator(series, 5, 200);
 
 ChartWorkflow charts = new ChartWorkflow("temp/charts");
-charts.builder()
+ChartPlan plan = charts.builder()
     .withTitle("Trendlines with fractal swing markers")
     .withSeries(series)
     .withIndicatorOverlay(support).withLineColor(Color.GREEN).withOpacity(0.6f)
@@ -37,6 +37,7 @@ charts.builder()
     .withIndicatorOverlay(swingLowMarkers).withLineColor(Color.GREEN).withLineWidth(3f).withConnectAcrossNaN(true)
     .withIndicatorOverlay(swingHighMarkers).withLineColor(Color.RED).withLineWidth(3f).withConnectAcrossNaN(true)
     .toPlan();
+charts.display(plan);
 ```
 
 ## Swing point detectors
