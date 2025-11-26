@@ -9,6 +9,7 @@
 - [Num](Num.md)
 - [Technical Indicators](Technical-indicators.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
+- [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
 - [Maven Notes](Maven-notes.md)
 
 ## Build Strategies
