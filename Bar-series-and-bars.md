@@ -37,7 +37,7 @@ Options to consider:
 - **Builders** – `TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, and the new `AmountBarBuilder` aggregate trades into bars by elapsed time, tick count, volume, or quote currency size respectively.
 - **Begin vs. end timestamps** – Since 0.18 you can build bars anchored on begin time (`timePeriod` + `beginTime`) or end time. Use whichever matches your data source.
 - **Split series** – `series.getSubSeries(start, end)` and `series.split(...)` are handy for walk-forward tests or training/testing splits.
-- **Json/CSV datasources** – The `ta4j-examples` module includes ready-made datasources such as `BitstampCsvTradesDataSource` and `AdaptiveJsonBarsSerializer` (handles Coinbase/Binance JSON).
+- **Data Sources** – The `ta4j-examples` module includes ready-made data sources for loading historical data from APIs (Yahoo Finance, Coinbase) and files (CSV, JSON). See [Data Sources](Data-Sources.md) for comprehensive documentation.
 
 ## Working with live data
 
