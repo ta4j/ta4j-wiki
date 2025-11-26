@@ -6,6 +6,7 @@
 
 ## Core Concepts
 - [Bar Series & Bars](Bar-series-and-bars.md)
+- [Data Sources](Data-Sources.md)
 - [Num](Num.md)
 - [Technical Indicators](Technical-indicators.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
