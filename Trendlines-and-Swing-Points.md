@@ -12,7 +12,7 @@ Trendlines and swing points are the core building blocks behind support/resistan
 ## Quick start: plot swings and lines
 
 ```java
-BarSeries series = CsvBarsLoader.loadSeriesFromFile(); // daily AAPL sample
+BarSeries series = CsvBarSeriesDataSource.loadSeriesFromFile(); // daily AAPL sample
 
 // 5–bar fractal swings (symmetric window, no equal lows/highs allowed)
 LowPriceIndicator low = new LowPriceIndicator(series);
