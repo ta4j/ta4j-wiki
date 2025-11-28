@@ -264,7 +264,7 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 │   └── csv/
 │       ├── CsvMapper.java (new)
 │       └── BitstampCsvMapper.java (new)
-├── YahooFinanceBarSeriesDataSource.java (refactored - composes client + mapper)
+├── YahooFinanceHttpBarSeriesDataSource.java (refactored - composes client + mapper)
 ├── CsvFileBarSeriesDataSource.java (refactored - composes client + mapper)
 ├── JsonFileBarSeriesDataSource.java (refactored - composes client + mapper)
 └── BitStampCsvTradesFileBarSeriesDataSource.java (refactored - composes client + mapper)
@@ -338,16 +338,16 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 
 ### Phase 1: Extract HTTP Client (Low Risk)
 
-**Goal:** Extract HTTP retrieval logic from YahooFinanceBarSeriesDataSource
+**Goal:** Extract HTTP retrieval logic from YahooFinanceHttpBarSeriesDataSource
 
 **Steps:**
 1. Create `DataRetrievalClient` interface
 2. Create `DataRetrievalException` class
 3. Create `HttpDataRetrievalClient` class
-   - Move HTTP request logic from `YahooFinanceBarSeriesDataSource.loadSeriesSingleRequest()`
+   - Move HTTP request logic from `YahooFinanceHttpBarSeriesDataSource.loadSeriesSingleRequest()`
    - Move URL construction logic
    - Keep HttpClientWrapper dependency injection
-4. Update `YahooFinanceBarSeriesDataSource` to use `HttpDataRetrievalClient`
+4. Update `YahooFinanceHttpBarSeriesDataSource` to use `HttpDataRetrievalClient`
    - Inject `HttpDataRetrievalClient` via constructor
    - Replace HTTP calls with `client.retrieveData(url)`
 5. Update tests to mock `HttpDataRetrievalClient` instead of `HttpClientWrapper`
@@ -359,8 +359,8 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 - `client/http/HttpDataRetrievalClient.java`
 
 **Files to Modify:**
-- `YahooFinanceBarSeriesDataSource.java`
-- `YahooFinanceBarSeriesDataSourceTest.java`
+- `YahooFinanceHttpBarSeriesDataSource.java`
+- `YahooFinanceHttpBarSeriesDataSourceTest.java`
 
 **Testing:**
 - All existing Yahoo Finance tests should pass
@@ -368,7 +368,7 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 
 ### Phase 2: Extract JSON Mapper (Low Risk)
 
-**Goal:** Extract JSON parsing logic from YahooFinanceBarSeriesDataSource
+**Goal:** Extract JSON parsing logic from YahooFinanceHttpBarSeriesDataSource
 
 **Steps:**
 1. Create `DataFormatMapper` interface
@@ -376,7 +376,7 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 3. Create `YahooFinanceJsonMapper` class
    - Move `parseYahooFinanceResponse()` logic
    - Keep Gson/JsonParser dependencies
-4. Update `YahooFinanceBarSeriesDataSource` to use `YahooFinanceJsonMapper`
+4. Update `YahooFinanceHttpBarSeriesDataSource` to use `YahooFinanceJsonMapper`
    - Inject `YahooFinanceJsonMapper` via constructor
    - Replace parsing calls with `mapper.mapToBarSeries(rawData, ticker, interval)`
 5. Update tests to test mapper independently
@@ -388,8 +388,8 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 - `mapper/json/YahooFinanceJsonMapper.java`
 
 **Files to Modify:**
-- `YahooFinanceBarSeriesDataSource.java`
-- `YahooFinanceBarSeriesDataSourceTest.java`
+- `YahooFinanceHttpBarSeriesDataSource.java`
+- `YahooFinanceHttpBarSeriesDataSourceTest.java`
 
 **Testing:**
 - All existing Yahoo Finance tests should pass
@@ -403,11 +403,11 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 1. Create `CacheableDataRetrievalClient` interface
 2. Create `CachedHttpDataRetrievalClient` class (decorator)
    - Wraps `HttpDataRetrievalClient`
-   - Moves caching logic from `YahooFinanceBarSeriesDataSource`
+   - Moves caching logic from `YahooFinanceHttpBarSeriesDataSource`
    - Handles cache file path generation
    - Handles cache validation/expiration
    - Handles cache reading/writing
-3. Update `YahooFinanceBarSeriesDataSource` to use `CachedHttpDataRetrievalClient`
+3. Update `YahooFinanceHttpBarSeriesDataSource` to use `CachedHttpDataRetrievalClient`
    - Remove caching logic from data source
    - Use cached client when caching is enabled
    - Use regular client when caching is disabled
@@ -419,8 +419,8 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 - `client/http/CachedHttpDataRetrievalClient.java`
 
 **Files to Modify:**
-- `YahooFinanceBarSeriesDataSource.java`
-- `YahooFinanceBarSeriesDataSourceTest.java`
+- `YahooFinanceHttpBarSeriesDataSource.java`
+- `YahooFinanceHttpBarSeriesDataSourceTest.java`
 
 **Testing:**
 - All existing caching tests should pass
@@ -519,7 +519,7 @@ CachedHttpDataRetrievalClient cachedClient = new CachedHttpDataRetrievalClient(
 YahooFinanceJsonMapper mapper = new YahooFinanceJsonMapper();
 
 // Compose data source
-YahooFinanceBarSeriesDataSource yahoo = new YahooFinanceBarSeriesDataSource(
+YahooFinanceHttpBarSeriesDataSource yahoo = new YahooFinanceHttpBarSeriesDataSource(
     cachedClient, 
     mapper
 );
@@ -601,7 +601,7 @@ public void testYahooFinanceWithMockedComponents() {
     when(mockMapper.mapToBarSeries(anyString(), anyString(), any()))
         .thenReturn(mockBarSeries);
     
-    YahooFinanceBarSeriesDataSource source = new YahooFinanceBarSeriesDataSource(
+    YahooFinanceHttpBarSeriesDataSource source = new YahooFinanceHttpBarSeriesDataSource(
         mockClient, mockMapper);
     BarSeries series = source.loadSeries("AAPL", Duration.ofDays(1), start, end);
     assertNotNull(series);
@@ -617,7 +617,7 @@ All existing `BarSeriesDataSource` implementations should maintain their current
 **Example:**
 ```java
 // Existing constructor should still work
-YahooFinanceBarSeriesDataSource yahoo = new YahooFinanceBarSeriesDataSource(true);
+YahooFinanceHttpBarSeriesDataSource yahoo = new YahooFinanceHttpBarSeriesDataSource(true);
 
 // Internally, this creates:
 // - HttpDataRetrievalClient

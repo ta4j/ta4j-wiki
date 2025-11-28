@@ -8,7 +8,7 @@ The `BarSeriesDataSource` interface abstracts away implementation details (files
 
 ```java
 // All data sources share the same interface
-BarSeriesDataSource yahoo = new YahooFinanceBarSeriesDataSource(true); // With caching
+BarSeriesDataSource yahoo = new YahooFinanceHttpBarSeriesDataSource(true); // With caching
 BarSeriesDataSource csv = new CsvFileBarSeriesDataSource();
 BarSeriesDataSource json = new JsonFileBarSeriesDataSource();
 
@@ -77,7 +77,7 @@ HTTP-based data sources fetch data from remote APIs. They extend `AbstractHttpBa
 
 ### Yahoo Finance Data Source
 
-`YahooFinanceBarSeriesDataSource` loads historical price data from Yahoo Finance's public API without requiring an API key. It supports stocks, ETFs, and cryptocurrencies.
+`YahooFinanceHttpBarSeriesDataSource` loads historical price data from Yahoo Finance's public API without requiring an API key. It supports stocks, ETFs, and cryptocurrencies.
 
 #### Features
 
@@ -107,16 +107,16 @@ The `YahooFinanceInterval` enum provides the following intervals:
 
 ```java
 // Load 1 year of daily data for Apple stock (using days)
-BarSeries series = YahooFinanceBarSeriesDataSource.loadSeries("AAPL", 365);
+BarSeries series = YahooFinanceHttpBarSeriesDataSource.loadSeries("AAPL", 365);
 
 // Load 500 bars of hourly data for Bitcoin (using bar count)
-BarSeries btcSeries = YahooFinanceBarSeriesDataSource.loadSeries("BTC-USD", 
+BarSeries btcSeries = YahooFinanceHttpBarSeriesDataSource.loadSeries("BTC-USD", 
     YahooFinanceInterval.HOUR_1, 500);
 
 // Load data for a specific date range
 Instant start = Instant.parse("2023-01-01T00:00:00Z");
 Instant end = Instant.parse("2023-12-31T23:59:59Z");
-BarSeries msftSeries = YahooFinanceBarSeriesDataSource.loadSeries("MSFT", 
+BarSeries msftSeries = YahooFinanceHttpBarSeriesDataSource.loadSeries("MSFT", 
     YahooFinanceInterval.DAY_1, start, end);
 ```
 
@@ -124,11 +124,11 @@ BarSeries msftSeries = YahooFinanceBarSeriesDataSource.loadSeries("MSFT",
 
 ```java
 // Create an instance with caching enabled
-YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource(true);
+YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource(true);
 BarSeries series = loader.loadSeriesInstance("AAPL", YahooFinanceInterval.DAY_1, start, end);
 
 // Or with custom cache directory (caching automatically enabled)
-YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource("/my/cache/dir");
+YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource("/my/cache/dir");
 BarSeries series = loader.loadSeriesInstance("AAPL", YahooFinanceInterval.DAY_1, start, end);
 ```
 
@@ -136,7 +136,7 @@ BarSeries series = loader.loadSeriesInstance("AAPL", YahooFinanceInterval.DAY_1,
 
 ```java
 // Using the BarSeriesDataSource interface
-BarSeriesDataSource yahoo = new YahooFinanceBarSeriesDataSource();
+BarSeriesDataSource yahoo = new YahooFinanceHttpBarSeriesDataSource();
 BarSeries series = yahoo.loadSeries("AAPL", Duration.ofDays(1), start, end);
 ```
 
@@ -154,7 +154,7 @@ HTTP-based data sources provide two ways to load data:
 - **Example:**
   ```java
   // Quick one-off load - no caching
-  BarSeries series = YahooFinanceBarSeriesDataSource.loadSeries("AAPL", 365);
+  BarSeries series = YahooFinanceHttpBarSeriesDataSource.loadSeries("AAPL", 365);
   ```
 
 **Instance `loadSeriesInstance` Methods:**
@@ -168,19 +168,19 @@ HTTP-based data sources provide two ways to load data:
 - **Example:**
   ```java
   // Create instance with caching
-  YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource(true);
+  YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource(true);
   
   // Multiple loads using the same cached instance
   BarSeries aapl = loader.loadSeriesInstance("AAPL", YahooFinanceInterval.DAY_1, start1, end1);
   BarSeries msft = loader.loadSeriesInstance("MSFT", YahooFinanceInterval.DAY_1, start2, end2);
   
   // Or with custom cache directory (caching automatically enabled)
-  YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource("/my/cache");
+  YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource("/my/cache");
   BarSeries series = loader.loadSeriesInstance("AAPL", YahooFinanceInterval.DAY_1, start, end);
   
   // For unit testing with mock HTTP client
   HttpClientWrapper mockClient = mock(HttpClientWrapper.class);
-  YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource(mockClient);
+  YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource(mockClient);
   BarSeries series = loader.loadSeriesInstance("AAPL", YahooFinanceInterval.DAY_1, start, end);
   ```
 
@@ -205,7 +205,7 @@ Pagination is automatic - you don't need to do anything special. See [Automatic 
 
 ### Coinbase Data Source
 
-`CoinbaseBarSeriesDataSource` loads historical price data from Coinbase's Advanced Trade API. It supports all Coinbase trading pairs (e.g., BTC-USD, ETH-USD).
+`CoinbaseHttpBarSeriesDataSource` loads historical price data from Coinbase's Advanced Trade API. It supports all Coinbase trading pairs (e.g., BTC-USD, ETH-USD).
 
 #### Features
 
@@ -235,16 +235,16 @@ The `CoinbaseInterval` enum provides the following intervals:
 
 ```java
 // Load 1 year of daily data for Bitcoin (using days)
-BarSeries series = CoinbaseBarSeriesDataSource.loadSeries("BTC-USD", 365);
+BarSeries series = CoinbaseHttpBarSeriesDataSource.loadSeries("BTC-USD", 365);
 
 // Load 500 bars of hourly data for Ethereum (using bar count)
-BarSeries ethSeries = CoinbaseBarSeriesDataSource.loadSeries("ETH-USD", 
+BarSeries ethSeries = CoinbaseHttpBarSeriesDataSource.loadSeries("ETH-USD", 
     CoinbaseInterval.ONE_HOUR, 500);
 
 // Load data for a specific date range
 Instant start = Instant.parse("2023-01-01T00:00:00Z");
 Instant end = Instant.parse("2023-12-31T23:59:59Z");
-BarSeries btcSeries = CoinbaseBarSeriesDataSource.loadSeries("BTC-USD", 
+BarSeries btcSeries = CoinbaseHttpBarSeriesDataSource.loadSeries("BTC-USD", 
     CoinbaseInterval.ONE_DAY, start, end);
 ```
 
@@ -252,11 +252,11 @@ BarSeries btcSeries = CoinbaseBarSeriesDataSource.loadSeries("BTC-USD",
 
 ```java
 // Create an instance with caching enabled
-CoinbaseBarSeriesDataSource loader = new CoinbaseBarSeriesDataSource(true);
+CoinbaseHttpBarSeriesDataSource loader = new CoinbaseHttpBarSeriesDataSource(true);
 BarSeries series = loader.loadSeriesInstance("BTC-USD", CoinbaseInterval.ONE_DAY, start, end);
 
 // Or with custom cache directory (caching automatically enabled)
-CoinbaseBarSeriesDataSource loader = new CoinbaseBarSeriesDataSource("/my/cache/dir");
+CoinbaseHttpBarSeriesDataSource loader = new CoinbaseHttpBarSeriesDataSource("/my/cache/dir");
 BarSeries series = loader.loadSeriesInstance("BTC-USD", CoinbaseInterval.ONE_DAY, start, end);
 ```
 
@@ -264,7 +264,7 @@ BarSeries series = loader.loadSeriesInstance("BTC-USD", CoinbaseInterval.ONE_DAY
 
 ```java
 // Using the BarSeriesDataSource interface
-BarSeriesDataSource coinbase = new CoinbaseBarSeriesDataSource();
+BarSeriesDataSource coinbase = new CoinbaseHttpBarSeriesDataSource();
 BarSeries series = coinbase.loadSeries("BTC-USD", Duration.ofDays(1), start, end);
 ```
 
@@ -461,10 +461,10 @@ HTTP-based data sources support optional response caching to disk. When enabled:
 
 ```java
 // Yahoo Finance with caching (using default cache directory)
-YahooFinanceBarSeriesDataSource yahoo = new YahooFinanceBarSeriesDataSource(true);
+YahooFinanceHttpBarSeriesDataSource yahoo = new YahooFinanceHttpBarSeriesDataSource(true);
 
 // Coinbase with caching and custom directory (caching automatically enabled when directory is specified)
-CoinbaseBarSeriesDataSource coinbase = new CoinbaseBarSeriesDataSource("/my/cache/dir");
+CoinbaseHttpBarSeriesDataSource coinbase = new CoinbaseHttpBarSeriesDataSource("/my/cache/dir");
 ```
 
 #### Cache Management
@@ -488,11 +488,11 @@ int deleted = loader.deleteStaleCacheFiles(Duration.ofDays(14));
 **Example:**
 ```java
 // With caching enabled using default directory
-YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource(true);
+YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource(true);
 int deleted = loader.deleteStaleCacheFiles(); // Deletes files older than 30 days
 
 // With custom cache directory (caching automatically enabled)
-CoinbaseBarSeriesDataSource loader = new CoinbaseBarSeriesDataSource("/my/cache/dir");
+CoinbaseHttpBarSeriesDataSource loader = new CoinbaseHttpBarSeriesDataSource("/my/cache/dir");
 int deleted = loader.deleteStaleCacheFiles(); // Deletes files older than 30 days
 ```
 
@@ -512,7 +512,7 @@ Pagination is transparent - you don't need to do anything special:
 // This will automatically paginate if needed
 Instant start = Instant.parse("2020-01-01T00:00:00Z");
 Instant end = Instant.parse("2024-12-31T23:59:59Z");
-BarSeries series = YahooFinanceBarSeriesDataSource.loadSeries("AAPL", 
+BarSeries series = YahooFinanceHttpBarSeriesDataSource.loadSeries("AAPL", 
     YahooFinanceInterval.DAY_1, start, end);
 ```
 
@@ -529,9 +529,9 @@ All HTTP-based data sources support dependency injection for unit testing. You c
 HttpClientWrapper mockHttpClient = mock(HttpClientWrapper.class);
 
 // Inject into data source (caching disabled by default)
-YahooFinanceBarSeriesDataSource loader = new YahooFinanceBarSeriesDataSource(mockHttpClient);
+YahooFinanceHttpBarSeriesDataSource loader = new YahooFinanceHttpBarSeriesDataSource(mockHttpClient);
 // or
-CoinbaseBarSeriesDataSource loader = new CoinbaseBarSeriesDataSource(mockHttpClient);
+CoinbaseHttpBarSeriesDataSource loader = new CoinbaseHttpBarSeriesDataSource(mockHttpClient);
 
 // Configure mock behavior
 when(mockHttpClient.send(any(), any())).thenReturn(mockResponse);
