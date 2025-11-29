@@ -122,15 +122,15 @@ TrendLineResistanceIndicator resistance = new TrendLineResistanceIndicator(
 );
 ```
 
-### Scoring weights (pick the “best” line)
-Weights must sum to 1.0; defaults are **0.40 touch count / 0.15 extreme / 0.15 outside penalty / 0.15 proximity / 0.15 recency**.
+### Scoring weights (pick the "best" line)
+Weights must sum to 1.0;
 
 Each lever tilts the search toward a different style of line:
 - **Touch count**: maximizes the number of swing points that sit on the line. Prioritize when you want high “market memory” or range-trading confluence; deprioritize in fresh breakouts where many touches may mean the level is already fatigued. Theory: the more times price tests a level without breaking, the more orders accumulate there (self-fulfilling support/resistance).
 - **Touches extreme swing**: forces the line through the highest high (resistance) or lowest low (support). Prioritize for textbook diagonal trendlines and for enforcing HH/LL structure; deprioritize when the extreme is a news wick/outlier and you prefer to anchor to closes or secondary swings. Theory: extremes mark the point of maximum imbalance between supply and demand, so anchoring them keeps the line tied to the pivotal pivot.
 - **Outside count penalty**: discourages swings that pierce the line. Prioritize when you only trust untouched levels (e.g., for breakout systems); deprioritize in markets with frequent stop-hunts/wicks where minor breaches are acceptable. Theory: every violation weakens a barrier—more breaches imply the line has already “broken” and should be discounted.
 - **Average deviation**: rewards lines that stay close to all swings, not just the anchors. Prioritize in choppy structures to avoid lines that bisect noise; deprioritize when you deliberately allow wide channels and care more about the exact anchor choices. Theory: akin to minimizing regression residuals so the line reflects the overall swing cloud rather than two arbitrary points.
-- **Anchor recency**: favors anchors drawn from the latest swings. Prioritize for intraday or regime-shifting markets where old pivots lose relevance; deprioritize for multi-year macro trendlines where early anchors still define the structure. Theory: markets are non-stationary, so fresher swings often carry more predictive power than distant history.
+- **Anchor recency**: favors anchors drawn from the latest swings. Prioritize for intraday or regime-shifting markets where old pivots lose relevance; deprioritize for multi-year macro trendlines where early anchors still define the structure. Theory: markets are non-stationary, so fresher swings often carry more predictive power than distant history. Default weight is 5% (reduced from 15% in earlier versions) to place less emphasis on recency and more on touch count and extreme point inclusion.
 
 ```java
 TrendLineSupportIndicator.ScoringWeights customWeights =
@@ -139,7 +139,7 @@ TrendLineSupportIndicator.ScoringWeights customWeights =
         .weightForTouchingExtremeSwing(0.20)
         .weightForKeepingSwingsInsideLine(0.10)
         .weightForStayingCloseToSwings(0.10)
-        .weightForRecentAnchorPoints(0.05)
+        .weightForRecentAnchorPoints(0.05)  // Default is now 0.05 (5%)
         .build();
 
 TrendLineSupportIndicator adaptiveSupport = new TrendLineSupportIndicator(series, 4, 180, customWeights);
