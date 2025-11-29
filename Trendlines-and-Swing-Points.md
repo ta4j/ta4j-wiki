@@ -125,6 +125,13 @@ TrendLineResistanceIndicator resistance = new TrendLineResistanceIndicator(
 ### Scoring weights (pick the “best” line)
 Weights must sum to 1.0; defaults are **0.40 touch count / 0.15 extreme / 0.15 outside penalty / 0.15 proximity / 0.15 recency**.
 
+Each lever tilts the search toward a different style of line:
+- **Touch count**: maximizes the number of swing points that sit on the line. Prioritize when you want high “market memory” or range-trading confluence; deprioritize in fresh breakouts where many touches may mean the level is already fatigued. Theory: the more times price tests a level without breaking, the more orders accumulate there (self-fulfilling support/resistance).
+- **Touches extreme swing**: forces the line through the highest high (resistance) or lowest low (support). Prioritize for textbook diagonal trendlines and for enforcing HH/LL structure; deprioritize when the extreme is a news wick/outlier and you prefer to anchor to closes or secondary swings. Theory: extremes mark the point of maximum imbalance between supply and demand, so anchoring them keeps the line tied to the pivotal pivot.
+- **Outside count penalty**: discourages swings that pierce the line. Prioritize when you only trust untouched levels (e.g., for breakout systems); deprioritize in markets with frequent stop-hunts/wicks where minor breaches are acceptable. Theory: every violation weakens a barrier—more breaches imply the line has already “broken” and should be discounted.
+- **Average deviation**: rewards lines that stay close to all swings, not just the anchors. Prioritize in choppy structures to avoid lines that bisect noise; deprioritize when you deliberately allow wide channels and care more about the exact anchor choices. Theory: akin to minimizing regression residuals so the line reflects the overall swing cloud rather than two arbitrary points.
+- **Anchor recency**: favors anchors drawn from the latest swings. Prioritize for intraday or regime-shifting markets where old pivots lose relevance; deprioritize for multi-year macro trendlines where early anchors still define the structure. Theory: markets are non-stationary, so fresher swings often carry more predictive power than distant history.
+
 ```java
 TrendLineSupportIndicator.ScoringWeights customWeights =
     TrendLineSupportIndicator.ScoringWeights.builder()
@@ -143,9 +150,10 @@ Presets: `touchCountBiasPreset()` (connect as many swings as possible) and `extr
 ### Touch tolerance (what counts as “on the line”)
 Tolerance is applied per swing to count a touch:
 
-- `ToleranceSettings.percentage(fraction, minimumAbsolute)` (default 2% of swing range, min 1e-9).
-- `ToleranceSettings.absolute(absolutePrice)`.
-- `ToleranceSettings.tickSize(tickSize)` for fixed-increment markets.
+- **Percentage of swing range** (`ToleranceSettings.percentage(fraction, minimumAbsolute)`, default 2% with a 1e-9 floor): scales with volatility so low-vol markets get tighter lines while wide ranges relax the band. Prioritize for cross-asset backtests and adaptive setups; deprioritize when a single massive bar would bloat tolerance. Theory: proportional error bands keep significance tied to recent price dispersion.
+- **Absolute price** (`ToleranceSettings.absolute(absolutePrice)`): fixed currency/points band. Prioritize when you think in ticks/pips or the instrument’s price is range-bound; deprioritize if price can double/halve, because the tolerance will become too loose or too strict. Theory: mirrors how discretionary traders eyeball “about X dollars” of breathing room.
+- **Tick size** (`ToleranceSettings.tickSize(tickSize)`): integer multiples of the exchange’s minimum price increment. Prioritize for futures/FX where microstructure enforces tick steps; deprioritize on assets with fractional pricing or fragmented liquidity. Theory: snaps tolerance to the smallest executable move, reducing false misses from rounding.
+- **Minimum absolute floor** (`minimumAbsolute` in percentage mode): guards against vanishingly small bands when the range compresses. Prioritize on low-priced or low-volatility products so minor rounding differences still count as touches; set conservatively if you want the band to shrink meaningfully in quiet markets. Theory: a floor avoids numerical precision artifacts masquerading as breaks.
 
 ```java
 TrendLineResistanceIndicator tightResistance = new TrendLineResistanceIndicator(
