@@ -11,6 +11,7 @@
 - [Technical Indicators](Technical-indicators.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
+- [Elliott Wave Indicators](Elliott-Wave-Indicators.md)
 - [Maven Notes](Maven-notes.md)
 
 ## Build Strategies
