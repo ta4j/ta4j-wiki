@@ -27,3 +27,4 @@ Browse the [Release Notes](Release-notes.md) for the full annotated list.
 - Join the [community Discord](https://discord.gg/HX9MbWZ) to discuss trading ideas, ask questions, or showcase projects.
 - Explore the [ta4j-examples](https://github.com/ta4j/ta4j/tree/master/ta4j-examples) module for runnable samples referenced throughout the wiki.
 - Open issues or PRs in the [main ta4j repository](https://github.com/ta4j/ta4j) when you spot bugs or have improvements in mind.
+
