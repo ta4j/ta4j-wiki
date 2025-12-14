@@ -12,7 +12,8 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 - **[BuildBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/barSeries/BuildBarSeries.java)** – demonstrates bar builders, sub-series, and moving windows.
 - **[CsvBarsDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/CsvBarsDataSource.java)** / **[BitstampCsvTradesDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/BitstampCsvTradesDataSource.java)** – ingest historical OHLCV data.
 - **[AdaptiveJsonBarsSerializer](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/AdaptiveJsonBarsSerializer.java)** – parse Coinbase/Binance OHLC JSON payloads (introduced in 0.19).
-- **[CompareNumTypes](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/CompareNumTypes.java)** and **[DecimalNumPrecisionPerformanceTest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/DecimalNumPrecisionPerformanceTest.java)** – choose the right `Num` implementation for your workload.
+- **[CompareNumTypes](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/CompareNumTypes.java)** – compare `DecimalNum` vs `DoubleNum` implementations
+- **[DecimalNumPrecisionPerformanceTest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/DecimalNumPrecisionPerformanceTest.java)** – benchmark precision vs. performance trade-offs for `DecimalNum` (see [Num](Num.md#performance-characteristics) for details)
 
 ## Indicators & visualization
 

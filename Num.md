@@ -67,6 +67,60 @@ MathContext currentContext = DecimalNum.getDefaultMathContext();
 
 Increasing precision protects against rounding errors when you chain many indicators, but every arithmetic call becomes more expensive. Benchmark both settings if you're pushing millions of bars or large strategy grids. The default 16 digits provides sufficient accuracy for most trading calculations while maintaining good performance.
 
+## Performance characteristics
+
+The `ta4j-examples` module includes a benchmark (`DecimalNumPrecisionPerformanceTest`) that quantifies the precision vs. performance trade-off. The benchmark measures execution time for common indicator calculations (EMA, mean, variance, volatility) across different precision settings.
+
+### General performance patterns
+
+**Precision vs. speed trade-off:**
+- **Lower precision (8-12 digits)**: Fastest execution, suitable for high-frequency calculations where speed matters more than extreme precision
+- **Default precision (16 digits)**: Balanced performance and accuracy, optimal for most trading scenarios
+- **Higher precision (24-32 digits)**: Slower execution but better accuracy for long indicator chains or high-value assets
+- **Very high precision (48-64 digits)**: Significant performance penalty, only needed for specialized use cases requiring extreme precision
+
+**Performance scaling:**
+- Execution time increases roughly linearly to quadratically with precision
+- Each arithmetic operation (`plus`, `minus`, `multipliedBy`, `dividedBy`) becomes more expensive as precision increases
+- Memory usage also increases with precision (BigDecimal allocates more memory for higher-precision values)
+- GC pressure increases with higher precision due to more object allocations
+
+**Accuracy considerations:**
+- Lower precision introduces rounding errors that accumulate over long indicator chains
+- The benchmark compares results against a 64-digit baseline to measure maximum absolute error
+- For most trading calculations, 16 digits provides sufficient accuracy (errors typically remain negligible)
+- Higher precision becomes important when:
+  - Chaining many indicators together (error accumulation)
+  - Working with very large or very small numbers
+  - Performing many divisions or square roots
+  - Requiring exact decimal representation for financial calculations
+
+### Benchmarking your workload
+
+To measure precision impact on your specific use case, run the benchmark:
+
+```java
+// Run the precision performance benchmark
+ta4jexamples.num.DecimalNumPrecisionPerformanceTest.main(new String[0]);
+```
+
+The benchmark outputs CSV data showing:
+- **MedianMillis**: Median execution time (most representative)
+- **AvgMillis**: Average execution time
+- **RelativeDuration**: Performance relative to 64-digit baseline
+- **MaxAbsoluteError**: Maximum error compared to high-precision baseline
+
+**Interpreting results:**
+- If relative duration < 0.5x for lower precision with acceptable error (< 0.0001), consider reducing precision
+- If relative duration > 2x for higher precision with negligible accuracy gain, consider reducing precision
+- For most workloads, 16 digits provides the best balance
+
+**Real-world guidance:**
+- **High-frequency trading**: Use 8-12 digits for maximum speed
+- **Standard backtesting**: Use default 16 digits (optimal balance)
+- **Long indicator chains**: Consider 24-32 digits to prevent error accumulation
+- **Financial reporting**: Use 32+ digits for exact decimal representation
+
 ## Handling Num from your code
 Every `BarSeries` exposes its factory via `series.numFactory()`. Use it whenever you need a literal so the value matches the series’ numeric type:
 
