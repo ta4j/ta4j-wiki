@@ -13,7 +13,7 @@ Take a look at the [usage examples](Usage-examples.md) to see `Num` and `BaseBar
 ## Choosing the right `Num`
 Every calculation faces the precision vs. speed trade-off:
 
-- **DecimalNum** stores values as `BigDecimal`. You can configure the default precision/rounding via `DecimalNum.configureDefaultMathContext(...)` or request a factory with a specific precision/rounding mode (`DecimalNumFactory.getInstance(new MathContext(34, RoundingMode.HALF_EVEN))`). Higher precision reduces rounding error but increases CPU cost, GC pressure, and memory footprint because BigDecimal allocates new objects for every arithmetic call.
+- **DecimalNum** stores values as `BigDecimal` with a **default precision of 16 digits** and **default rounding mode of HALF_UP** (changed from 32 digits in 0.19 for better performance). You can configure the default precision/rounding globally via `DecimalNum.configureDefaultPrecision(int)` or `DecimalNum.configureDefaultMathContext(MathContext)`, or request a factory with a specific precision/rounding mode (`DecimalNumFactory.getInstance(new MathContext(34, RoundingMode.HALF_EVEN))`). Higher precision reduces rounding error but increases CPU cost, GC pressure, and memory footprint because BigDecimal allocates new objects for every arithmetic call.
 - **DoubleNum** uses binary floating point. It’s fast and allocation-free but inherits IEEE-754 quirks. For example:
 
   ```java
@@ -31,23 +31,41 @@ BarSeries lightningFast = new BaseBarSeriesBuilder()
         .build();
 ```
 
-### Configuring Decimal precision
+### Configuring DecimalNum precision
+
+`DecimalNum` uses **16 digits of precision** with **HALF_UP rounding** by default (reduced from 32 digits in 0.19 for improved performance). You can configure precision in several ways:
+
+**Configure global default precision** (affects all new `DecimalNum` instances):
 
 ```java
-// Use 32-digit precision globally (default is 16, HALF_UP)
+// Set global default to 32-digit precision (preserves HALF_UP rounding)
 DecimalNum.configureDefaultPrecision(32);
 
-// or supply a custom factory for one series with custom rounding
+// Or configure both precision and rounding mode globally
+DecimalNum.configureDefaultMathContext(new MathContext(32, RoundingMode.HALF_EVEN));
+
+// Reset to library defaults (16 digits, HALF_UP)
+DecimalNum.resetDefaultPrecision();
+```
+
+**Use a custom factory for a specific series** (doesn't affect global defaults):
+
+```java
+// Create a series with custom precision/rounding for this series only
 BarSeries highPrecisionSeries = new BaseBarSeriesBuilder()
         .withName("btc_usdt")
         .withNumFactory(DecimalNumFactory.getInstance(new MathContext(40, RoundingMode.HALF_EVEN)))
         .build();
-
-// reset to library defaults later if needed
-DecimalNum.resetDefaultPrecision();
 ```
 
-Increasing precision protects against rounding errors when you chain many indicators, but every arithmetic call becomes more expensive. Benchmark both settings if you’re pushing millions of bars or large strategy grids.
+**Check current default precision**:
+
+```java
+int currentPrecision = DecimalNum.getDefaultPrecision(); // returns 16 by default
+MathContext currentContext = DecimalNum.getDefaultMathContext();
+```
+
+Increasing precision protects against rounding errors when you chain many indicators, but every arithmetic call becomes more expensive. Benchmark both settings if you're pushing millions of bars or large strategy grids. The default 16 digits provides sufficient accuracy for most trading calculations while maintaining good performance.
 
 ## Handling Num from your code
 Every `BarSeries` exposes its factory via `series.numFactory()`. Use it whenever you need a literal so the value matches the series’ numeric type:
