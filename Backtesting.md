@@ -150,37 +150,180 @@ See the [Walk Forward example](Usage-examples.md#strategy-patterns) for a turnke
 - Instrument rule evaluation with `ta4jexamples.logging.StrategyExecutionLogging` to print which rules triggered on each bar.
 - Use `BacktestRuntimeReport` to spot strategies that repeatedly trigger cost-heavy operations.
 - When bar data is inconsistent (missing timestamps, zero volumes), preprocess it with the JSON/CSV datasources or aggregator builders described in [Bar Series & Bars](Bar-series-and-bars.md).
-BarSeriesManager seriesManager = new BarSeriesManager(series);
-Strategy bestStrategy = criterion.chooseBest(seriesManager, Arrays.asList(strategy1, strategy2));
+
+## Performance Tuning with BacktestPerformanceTuningHarness
+
+When running large-scale backtests with thousands of strategies, performance optimization becomes critical. The `BacktestPerformanceTuningHarness` class provides a comprehensive tool for systematically testing different parameter combinations and identifying optimal settings for your hardware and dataset.
+
+### Overview
+
+The harness helps tune several interrelated performance parameters:
+
+- **Strategy count**: How many strategies to evaluate in a single backtest run
+- **Bar series size**: Number of bars to use (last-N bars from the dataset)
+- **Maximum bar count hint**: Indicator cache window size via `BarSeries.getMaximumBarCount()` to control memory usage
+- **JVM heap size**: Optional: fork child JVMs with different heap sizes to find optimal memory configuration
+
+The harness uses a non-trivial NetMomentumIndicator-based strategy workload to make garbage collection (GC) and caching behavior visible. It automatically detects non-linear performance degradation (e.g., excessive GC overhead or slowdown beyond expected scaling) and recommends optimal parameter combinations.
+
+### Execution Modes
+
+The harness supports three execution modes:
+
+1. **Run Once (default)**: Execute a single backtest with specified parameters. Useful for quick performance checks or production runs with known optimal settings.
+2. **Tune In-Process**: Run multiple backtests with varying parameters to find optimal settings. Tests different strategy counts, bar counts, and maximum bar count hints systematically.
+3. **Tune Across Heaps**: Fork child JVMs with different heap sizes to test memory configuration impact. Each child JVM runs a full tuning cycle.
+
+### Quick Start
+
+#### Example 1: Quick Performance Check
+
+Run a single backtest with 1000 strategies on the last 2000 bars:
+
+```bash
+java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
+  --strategies 1000 \
+  --barCount 2000 \
+  --executionMode full
 ```
 
-Ta4j comes with several analysis criteria; see the `org.ta4j.core.criteria` package in the project sources.
+#### Example 2: Find Optimal Settings
 
-### Visualizing backtest results
+Run a tuning cycle to find optimal parameters for your hardware:
 
-After running a backtest, you can visualize the results using ta4j's charting capabilities. Charts can display price data, trading signals, indicators, and performance metrics:
-
-```java
-// Create a chart showing the trading record
-ChartWorkflow chartWorkflow = new ChartWorkflow();
-chartWorkflow.builder()
-    .withSeries(series)
-    .withTradingRecordOverlay(tradingRecord)
-    .display();
+```bash
+java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
+  --tune \
+  --tuneStrategyStart 2000 \
+  --tuneStrategyStep 2000 \
+  --tuneStrategyMax 20000 \
+  --tuneBarCounts 500,1000,2000,full \
+  --tuneMaxBarCountHints 0,512,1024,2048 \
+  --executionMode topK \
+  --topK 20
 ```
 
-You can also visualize analysis criteria over time:
+This will test strategy counts from 2000 to 20000 (in steps of 2000) across different bar counts and maximum bar count hints, then recommend the best configuration.
 
-```java
-chartWorkflow.builder()
-    .withSeries(series)
-    .withTradingRecordOverlay(tradingRecord)
-    .withAnalysisCriterionOverlay(new NetProfitCriterion(), tradingRecord)
-    .display();
+#### Example 3: Test Different Heap Sizes
+
+Test performance across different JVM heap sizes:
+
+```bash
+java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
+  --tuneHeaps 4g,8g,16g \
+  --tuneStrategyStart 5000 \
+  --tuneStrategyMax 50000 \
+  --executionMode topK \
+  --topK 20
 ```
 
-See the [Charting Guide](Charting.md) for comprehensive documentation on creating trading charts.
+This forks separate JVMs with 4GB, 8GB, and 16GB heaps, running a full tuning cycle in each.
 
-### Walk-forward optimization
+#### Example 4: Production Run with Optimal Settings
 
-Ta4j allows you to perform a well-known *Walk-forward* optimization. An example can be found [here](Usage-examples.md).
+After tuning, use the recommended settings for a production run:
+
+```bash
+java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
+  --strategies 10000 \
+  --barCount 2000 \
+  --maxBarCountHint 1024 \
+  --executionMode topK \
+  --topK 20 \
+  --progress
+```
+
+The `--progress` flag enables progress logging with memory usage information.
+
+### Performance Tuning Workflow
+
+A typical performance tuning workflow follows these steps:
+
+1. **Initial Exploration**: Start with a broad tuning run to identify promising regions:
+   ```bash
+   --tune --tuneStrategyStart 1000 --tuneStrategyStep 5000 --tuneStrategyMax 50000
+   ```
+
+2. **Fine-Tuning**: Narrow down to the promising region with smaller steps:
+   ```bash
+   --tune --tuneStrategyStart 8000 --tuneStrategyStep 1000 --tuneStrategyMax 15000
+   ```
+
+3. **Memory Optimization**: Test different maximum bar count hints to balance memory and performance:
+   ```bash
+   --tune --tuneMaxBarCountHints 0,256,512,1024,2048,4096
+   ```
+
+4. **Heap Size Testing**: If memory is a concern, test different heap sizes:
+   ```bash
+   --tuneHeaps 2g,4g,8g,16g
+   ```
+
+### Understanding Results
+
+The harness outputs several types of information:
+
+- **HARNESS_RESULT**: JSON-formatted results for each run, including runtime statistics, GC overhead, heap usage, and work units (strategies × bars)
+- **RECOMMENDED_SETTINGS**: Optimal parameter combinations based on linear performance behavior (before non-linear degradation is detected)
+- **Non-linear detection**: When performance degrades beyond expected scaling (excessive GC overhead or slowdown ratio), the harness flags this and recommends staying below that threshold
+
+Example output:
+
+```
+HARNESS_RESULT: {"executionMode":"KEEP_TOP_K","strategyCount":10000,"barCount":2000,...}
+RECOMMENDED_SETTINGS: BEST {strategies=10000, bars=2000, maxBarCountHint=1024, ...}
+RECOMMENDED_SETTINGS: BEST CLI --dataset Coinbase-ETH-USD-PT1D-20160517_20251028.json --strategies 10000 --barCount 2000 --maxBarCountHint 1024 --executionMode topK --topK 20
+```
+
+### Strategy Generation
+
+The harness generates strategies using a grid search over NetMomentumIndicator parameters:
+
+- RSI bar count: 7 to 49 (increment: 7)
+- Momentum timeframe: 100 to 400 (increment: 100)
+- Oversold threshold: -2000 to 0 (increment: 250)
+- Overbought threshold: 0 to 1500 (increment: 250)
+- Decay factor: 0.9 to 1.0 (increment: 0.02)
+
+This generates approximately 10,416 unique strategy combinations. When fewer strategies are requested, the harness samples from this grid. When more are requested, it repeats the grid with different repetition markers.
+
+### Command-Line Options
+
+Run with `--help` to see all available options. Key options include:
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `--dataset <file>` | OHLC data file | `Coinbase-ETH-USD-PT1D-20160517_20251028.json` |
+| `--strategies <N>` | Number of strategies to test | Full grid (~10,416) |
+| `--barCount <N>` | Number of bars to use | Full series |
+| `--maxBarCountHint <N>` | Maximum bar count hint for indicator caching | 0 (disabled) |
+| `--executionMode full\|topK` | Execution mode | `full` |
+| `--topK <N>` | Number of top strategies to keep (topK mode) | 20 |
+| `--tune` | Enable tuning mode | false |
+| `--tuneStrategyStart <N>` | Starting strategy count for tuning | 2000 |
+| `--tuneStrategyStep <N>` | Strategy count increment for tuning | 2000 |
+| `--tuneStrategyMax <N>` | Maximum strategy count for tuning | 20000 |
+| `--tuneBarCounts <csv>` | Bar counts to test | `500,1000,2000,full` |
+| `--tuneMaxBarCountHints <csv>` | Maximum bar count hints to test | `0,512,1024,2048` |
+| `--nonlinearGcOverhead <0..1>` | GC overhead threshold for non-linear detection | 0.25 |
+| `--nonlinearSlowdownRatio <x>` | Slowdown ratio threshold for non-linear detection | 1.25 |
+| `--tuneHeaps <csv>` | Heap sizes to test (e.g., `4g,8g,16g`) | None |
+| `--progress` | Enable progress logging with memory information | false |
+| `--gcBetweenRuns` | Force GC between tuning runs | true |
+
+### Performance Notes
+
+- The default parameter ranges generate ~10,000+ strategies. `BacktestExecutor` automatically uses batch processing for large strategy counts (>1000) to prevent memory exhaustion.
+- If execution is too slow, consider:
+  1. Increasing increment values to reduce grid density
+  2. Narrowing MIN/MAX ranges based on preliminary results
+  3. Using coarser increments for initial exploration, then fine-tuning promising regions
+- The harness performs a warm-up run before tuning to stabilize JVM performance metrics.
+- Non-linear behavior detection helps identify when increasing strategy count or bar count causes performance to degrade beyond expected linear scaling.
+
+### See Also
+
+- [`BacktestPerformanceTuningHarness` source code](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java) - Full implementation with comprehensive Javadoc
+- [`BacktestExecutor`](https://github.com/ta4j/ta4j/blob/master/ta4j-core/src/main/java/org/ta4j/core/backtest/BacktestExecutor.java) - The underlying executor used for backtesting
+- `BarSeries.getMaximumBarCount()` - Maximum bar count hint for indicator caching
