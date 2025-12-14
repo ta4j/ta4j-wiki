@@ -1,6 +1,6 @@
 # Trading Strategies
 
-A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and take advantage of new features introduced in 0.19.
+A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and take advantage of features introduced in 0.19 and enhanced in 0.21.0.
 
 ## Trading rules
 
@@ -26,7 +26,7 @@ Key points:
 
 - `Rule#isSatisfied(int index)` is stateless. Pass the `TradingRecord` when the rule depends on open positions or previous signals.
 - Composition is fluent (`and`, `or`, `xor`, `negation`), making it easy to express “enter when fast SMA crosses slow SMA **and** RSI recovers above 40.”
-- Since 0.19 you can use `VoteRule` to require agreement between multiple rules (e.g., “at least 3 out of 5 oscillators must agree”).
+- Since 0.19 you can use `VoteRule` to require agreement between multiple rules (e.g., "at least 3 out of 5 oscillators must agree"). In 0.21.0, return representation is unified across all criteria for consistent formatting.
 
 ## Compose richer logic
 

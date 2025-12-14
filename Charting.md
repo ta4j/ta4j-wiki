@@ -4,7 +4,7 @@ Ta4j provides powerful charting capabilities through the `ChartWorkflow` class a
 
 ## Overview
 
-The charting system in ta4j-examples uses JFreeChart to render professional-quality trading charts. The refactored architecture (introduced in 0.19) separates concerns into dedicated components:
+The charting system in ta4j-examples uses JFreeChart to render professional-quality trading charts. The refactored architecture (introduced in 0.19, enhanced in 0.21.0) separates concerns into dedicated components:
 
 - **`ChartWorkflow`** - Facade class that coordinates chart creation, display, and persistence
 - **`ChartBuilder`** - Fluent API for constructing charts with type-safe stage interfaces

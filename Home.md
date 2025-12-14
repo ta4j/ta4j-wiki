@@ -11,12 +11,21 @@ Your one-stop guide for building technical-analysis-driven trading systems in Ja
 3. **Build your first strategy** – Follow the step-by-step tutorial in [Getting Started](Getting-started.md#walkthrough-build-your-first-strategy) and validate it by [backtesting](Backtesting.md).
 4. **Iterate & deploy** – Explore [Trading Strategies](Trading-strategies.md) for composition patterns, [Backtesting](Backtesting.md) for performance diagnostics, and [Live Trading](Live-trading.md) for operational concerns.
 
-## What's New in 0.19
+## What's New in 0.21.0
 
-- **Fast, observable backtests** with `BacktestExecutor`, execution-time tracing, and streaming top-K selection for large strategy grids.
-- **Strategy portability** thanks to `StrategySerialization`, JSON round-trips, and compact `NamedStrategy` descriptors.
-- **Expanded indicator toolbox**: Renko brick detectors, MACDV, Net Momentum, vote-based rules, Amount bars, begin-time builders, and more.
-- **Richer analytics** including commission impact, drawdown Monte Carlo simulations, streak metrics, and capital utilization insights.
+- **Unified return representation system** – Consistent formatting across all return-based criteria (multiplicative, decimal, percentage, logarithmic) via `ReturnRepresentation` and `ReturnRepresentationPolicy`
+- **New oscillators** – `TrueStrengthIndexIndicator`, `SchaffTrendCycleIndicator`, and `ConnorsRSIIndicator` expand oscillator coverage
+- **Helper indicators** – `PercentRankIndicator`, `DifferenceIndicator`, and `StreakIndicator` for advanced indicator composition
+- **High-precision improvements** – `DecimalNumFactory#exp` now uses configured `MathContext` for better precision in exponential calculations
+
+### Previous highlights (0.19)
+
+- **Fast, observable backtests** with `BacktestExecutor`, execution-time tracing, and streaming top-K selection for large strategy grids
+- **Strategy portability** thanks to `StrategySerialization`, JSON round-trips, and compact `NamedStrategy` descriptors
+- **Expanded indicator toolbox**: Renko brick detectors, MACDV, Net Momentum, vote-based rules, Amount bars, begin-time builders, and more
+- **Richer analytics** including commission impact, drawdown Monte Carlo simulations, streak metrics, and capital utilization insights
+- **Trendline and swing point analysis suite** – Automated support/resistance detection with fractal and ZigZag swing indicators
+- **Unified data source interface** – Consistent API for loading data from files, Yahoo Finance, Coinbase, and more
 
 Read the curated [Release Notes](Release-notes.md) for every addition plus migration guidance.
 

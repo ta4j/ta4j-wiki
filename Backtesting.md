@@ -7,7 +7,7 @@ Backtesting estimates how a strategy would have performed historically. In ta4j 
 | Driver | When to use | Highlights |
 | --- | --- | --- |
 | `BarSeriesManager` | Quick explorations or single strategies. | Minimal setup, returns a `TradingRecord` immediately. |
-| `BacktestExecutor` (new in 0.19) | Large parameter sweeps, grid searches, inventorying many strategies. | Parallel execution, runtime telemetry, streaming top-K filtering, progress callbacks. |
+| `BacktestExecutor` (introduced in 0.19) | Large parameter sweeps, grid searches, inventorying many strategies. | Parallel execution, runtime telemetry, streaming top-K filtering, progress callbacks. |
 
 ```java
 BarSeriesManager manager = new BarSeriesManager(series);

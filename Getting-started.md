@@ -4,7 +4,7 @@ Welcome! This guide walks you from “What is ta4j?” to running a validated ba
 
 ## Prerequisites
 
-- **JDK 21+** (ta4j 0.19 targets modern JVMs).
+- **JDK 21+** (ta4j 0.21.0 targets modern JVMs).
 - A build tool such as Maven, Gradle, or your preferred IDE.
 - Basic familiarity with Java syntax. No prior quant experience is required—we explain each concept as it shows up.
 
@@ -21,7 +21,7 @@ ta4j is published on Maven Central as `org.ta4j:ta4j-core`.
 <dependency>
   <groupId>org.ta4j</groupId>
   <artifactId>ta4j-core</artifactId>
-  <version>0.19</version>
+  <version>0.21.0</version>
 </dependency>
 ```
 </details>
@@ -30,7 +30,7 @@ ta4j is published on Maven Central as `org.ta4j:ta4j-core`.
 <summary>Gradle (Groovy DSL)</summary>
 
 ```groovy
-implementation 'org.ta4j:ta4j-core:0.19'
+implementation 'org.ta4j:ta4j-core:0.21.0'
 ```
 </details>
 

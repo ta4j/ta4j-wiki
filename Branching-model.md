@@ -9,12 +9,12 @@ This development process is similar to  [github flow](https://docs.github.com/en
 
 
 ## Snapshots
-A SNAPSHOT is the latest version of the **next** release. For instance a 0.18-Snapshot is the current build that should become the next 0.19 release. You can use the current SNAPSHOT version by adding the following dependency to your `pom.xml` file:
+A SNAPSHOT is the latest version of the **next** release. For instance a 0.22.0-SNAPSHOT is the current build that should become the next 0.22.0 release. You can use the current SNAPSHOT version by adding the following dependency to your `pom.xml` file:
 ```
 <dependency>
   <groupId>org.ta4j</groupId>
   <artifactId>ta4j-core</artifactId>
-  <version>0.18-SNAPSHOT</version>
+  <version>0.22.0-SNAPSHOT</version>
 </dependency>
 ```
 
