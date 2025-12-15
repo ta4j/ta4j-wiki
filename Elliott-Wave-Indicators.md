@@ -154,10 +154,11 @@ Counts the number of swings in the current sequence, optionally after compressio
 
 ### Supporting Components
 
-- **ElliottDegree**: Enumeration of wave degrees (Grand Supercycle through Sub-Minuette)
+- **ElliottDegree**: Enumeration of wave degrees (Grand Supercycle through Sub-Minuette) with navigation methods (`higherDegree()`, `lowerDegree()`)
 - **ElliottSwing**: Immutable record representing a single swing between two pivots
-- **ElliottPhase**: Enumeration of wave phases (WAVE1-5, CORRECTIVE_A-C, NONE)
-- **ElliottRatio**: Record containing ratio value and type (RETRACEMENT/EXTENSION/NONE)
+- **ElliottPhase**: Enumeration of wave phases (WAVE1-5, CORRECTIVE_A-C, NONE) with helper methods (`isImpulse()`, `isCorrective()`, `completesStructure()`)
+- **ElliottRatio**: Record containing ratio value, type, and `isValid()` helper
+- **ElliottChannel**: Record with `upper()`, `lower()`, `median()`, `width()`, `isValid()`, and `contains()` methods
 - **ElliottSwingCompressor**: Utility for filtering/compressing swing sequences
 - **ElliottFibonacciValidator**: Validates Fibonacci relationships between waves
 - **ElliottSwingMetadata**: Helper for slicing and analyzing swing windows
@@ -168,21 +169,48 @@ Counts the number of swings in the current sequence, optionally after compressio
 - **ElliottChannelIndicator**: Projects price channels based on Elliott Wave structure
 - **ElliottInvalidationIndicator**: Signals when wave structure is invalidated
 
+### Factory Class
+
+- **ElliottWaveFacade**: Facade that creates and coordinates a complete set of Elliott Wave indicators from a single configuration, with lazy initialization and shared swing detection
+
 ---
 
 ## Getting Started
 
-### Basic Setup
+### Using ElliottWaveFacade (Recommended)
 
-The simplest way to get started is with a fractal-based swing detector:
+The simplest way to get started is with the `ElliottWaveFacade` facade, which creates and coordinates all Elliott Wave indicators:
 
 ```java
-BarSeries series = // your bar series
+BarSeries series = // your bar series (minimum ~60 bars recommended for window=5; ~50 bars for window=3)
 
-// Create swing indicator with 5-bar fractal windows
+// Create a complete Elliott Wave analysis facade
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+
+// Access any indicator through the facade
+int index = series.getEndIndex();
+ElliottPhase phase = facade.phase().getValue(index);
+ElliottRatio ratio = facade.ratio().getValue(index);
+ElliottChannel channel = facade.channel().getValue(index);
+
+// Check for confluence
+if (facade.confluence().isConfluent(index)) {
+    System.out.println("Strong Elliott Wave confluence detected");
+}
+```
+
+### Basic Setup (Manual)
+
+For more control, create indicators individually:
+
+```java
+BarSeries series = // your bar series (minimum ~50 bars for meaningful analysis)
+
+// Create swing indicator with 3-bar fractal windows
+// Note: A window of N bars requires 2N+1 bars to confirm a pivot
 ElliottSwingIndicator swings = new ElliottSwingIndicator(
     series, 
-    5,  // lookback window
+    3,  // lookback/lookforward window
     ElliottDegree.INTERMEDIATE  // wave degree
 );
 
@@ -196,7 +224,10 @@ List<ElliottSwing> swingList = swings.getValue(currentIndex);
 For adaptive swing detection based on volatility:
 
 ```java
-// ZigZag with ATR(14) reversal threshold
+// ZigZag with ATR(14) reversal threshold - adapts to market volatility
+ElliottWaveFacade facade = ElliottWaveFacade.zigZag(series, ElliottDegree.INTERMEDIATE);
+
+// Or create just the swing indicator
 ElliottSwingIndicator swings = ElliottSwingIndicator.zigZag(
     series, 
     ElliottDegree.INTERMEDIATE
@@ -206,7 +237,9 @@ ElliottSwingIndicator swings = ElliottSwingIndicator.zigZag(
 ### Basic Wave Phase Detection
 
 ```java
-ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 5, ElliottDegree.INTERMEDIATE);
+// Use a window size appropriate for your data frequency
+// Daily data: 3-5 bars; Weekly: 2-3 bars; Intraday: 5-10 bars
+ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 3, ElliottDegree.INTERMEDIATE);
 ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings);
 
 int index = series.getEndIndex();
@@ -222,21 +255,24 @@ if (currentPhase.isImpulse()) {
 ### Basic Ratio Analysis
 
 ```java
-ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 5, ElliottDegree.INTERMEDIATE);
+ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 3, ElliottDegree.INTERMEDIATE);
 ElliottRatioIndicator ratios = new ElliottRatioIndicator(swings);
 
 int index = series.getEndIndex();
 ElliottRatio ratio = ratios.getValue(index);
 
-if (ratio.type() == RatioType.RETRACEMENT) {
-    System.out.println("Retracement ratio: " + ratio.value());
-} else if (ratio.type() == RatioType.EXTENSION) {
-    System.out.println("Extension ratio: " + ratio.value());
+// Always check validity before using the ratio
+if (ratio.isValid()) {
+    if (ratio.type() == RatioType.RETRACEMENT) {
+        System.out.println("Retracement ratio: " + ratio.value());
+    } else if (ratio.type() == RatioType.EXTENSION) {
+        System.out.println("Extension ratio: " + ratio.value());
+    }
 }
 
 // Check if near a Fibonacci level (e.g., 0.618)
-Num target = series.numOf(0.618);
-Num tolerance = series.numOf(0.05);
+Num target = series.numFactory().numOf(0.618);
+Num tolerance = series.numFactory().numOf(0.05);
 if (ratios.isNearLevel(index, target, tolerance)) {
     System.out.println("Near 61.8% retracement level");
 }
@@ -251,12 +287,12 @@ if (ratios.isNearLevel(index, target, tolerance)) {
 Analyze multiple timeframes simultaneously:
 
 ```java
-// Primary trend (longer timeframe)
-ElliottSwingIndicator primarySwings = new ElliottSwingIndicator(series, 20, ElliottDegree.PRIMARY);
+// Primary trend (longer timeframe) - use larger window for bigger waves
+ElliottSwingIndicator primarySwings = new ElliottSwingIndicator(series, 10, ElliottDegree.PRIMARY);
 ElliottPhaseIndicator primaryPhase = new ElliottPhaseIndicator(primarySwings);
 
-// Intermediate trend (shorter timeframe)
-ElliottSwingIndicator intermediateSwings = new ElliottSwingIndicator(series, 5, ElliottDegree.INTERMEDIATE);
+// Intermediate trend (shorter timeframe) - smaller window for finer detail
+ElliottSwingIndicator intermediateSwings = new ElliottSwingIndicator(series, 3, ElliottDegree.INTERMEDIATE);
 ElliottPhaseIndicator intermediatePhase = new ElliottPhaseIndicator(intermediateSwings);
 
 // Use both for context
@@ -268,6 +304,16 @@ ElliottPhase intermediate = intermediatePhase.getValue(index);
 if (primary.isImpulse() && intermediate.isCorrective()) {
     // Potential entry during intermediate correction in primary impulse
 }
+
+// Use ElliottDegree navigation for degree relationships
+ElliottDegree degree = ElliottDegree.INTERMEDIATE;
+ElliottDegree higherDegree = degree.higherDegree();  // Returns PRIMARY
+ElliottDegree lowerDegree = degree.lowerDegree();    // Returns MINOR
+
+// Check degree relationships
+if (degree.isHigherOrEqual(ElliottDegree.MINOR)) {
+    // This degree is significant enough for swing trading
+}
 ```
 
 ### Custom Swing Detection
@@ -275,19 +321,19 @@ if (primary.isImpulse() && intermediate.isCorrective()) {
 Use custom price sources or swing detectors:
 
 ```java
-// Use close prices instead of high/low
+// Use close prices instead of high/low for smoother swings
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 ElliottSwingIndicator swings = new ElliottSwingIndicator(
     close, 
-    5,  // lookback
-    5,  // lookforward
+    3,  // lookback
+    3,  // lookforward
     ElliottDegree.INTERMEDIATE
 );
 
-// Or use existing swing indicators
+// Or use existing swing indicators for full control
 RecentSwingIndicator customHighs = // your custom high detector
 RecentSwingIndicator customLows = // your custom low detector
-ElliottSwingIndicator swings = new ElliottSwingIndicator(
+ElliottSwingIndicator customSwings = new ElliottSwingIndicator(
     customHighs, 
     customLows, 
     ElliottDegree.INTERMEDIATE
@@ -321,20 +367,22 @@ if (phase.isCorrectiveConfirmed(index)) {
 Use Fibonacci ratios for trade management:
 
 ```java
-ElliottRatioIndicator ratios = new ElliottRatioIndicator(swings);
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+ElliottRatioIndicator ratios = facade.ratio();
+NumFactory nf = series.numFactory();
 
 int index = series.getEndIndex();
 ElliottRatio ratio = ratios.getValue(index);
 
 // Common Fibonacci retracement levels
-Num fib236 = series.numOf(0.236);
-Num fib382 = series.numOf(0.382);
-Num fib500 = series.numOf(0.500);
-Num fib618 = series.numOf(0.618);
-Num fib786 = series.numOf(0.786);
-Num tolerance = series.numOf(0.02); // 2% tolerance
+Num fib236 = nf.numOf(0.236);
+Num fib382 = nf.numOf(0.382);
+Num fib500 = nf.numOf(0.500);
+Num fib618 = nf.numOf(0.618);
+Num fib786 = nf.numOf(0.786);
+Num tolerance = nf.numOf(0.02); // 2% tolerance
 
-if (ratio.type() == RatioType.RETRACEMENT) {
+if (ratio.isValid() && ratio.type() == RatioType.RETRACEMENT) {
     if (ratios.isNearLevel(index, fib618, tolerance)) {
         // Strong support/resistance at 61.8% retracement
     } else if (ratios.isNearLevel(index, fib382, tolerance)) {
@@ -345,10 +393,15 @@ if (ratio.type() == RatioType.RETRACEMENT) {
 
 ### Swing Compression
 
-Filter swings before analysis:
+Filter swings before analysis to remove noise:
 
 ```java
-ElliottSwingCompressor compressor = // your compressor logic
+// Create a compressor that filters out small swings
+Num minimumAmplitude = series.numFactory().numOf(5.0);  // Minimum price move
+int minimumLength = 2;  // Minimum bars between pivots
+ElliottSwingCompressor compressor = new ElliottSwingCompressor(minimumAmplitude, minimumLength);
+
+// Use compressor with wave count indicator
 ElliottWaveCountIndicator counter = new ElliottWaveCountIndicator(swings, compressor);
 
 int index = series.getEndIndex();
@@ -365,6 +418,19 @@ List<ElliottSwing> compressedSwings = counter.getSwings(index);
 Combine multiple Elliott Wave signals for stronger confirmation:
 
 ```java
+// ElliottWaveFacade provides coordinated indicators with shared swing source
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+
+int index = series.getEndIndex();
+Num confluenceScore = facade.confluence().getValue(index);
+
+// Check if confluence meets minimum threshold (default is 2)
+if (facade.confluence().isConfluent(index)) {
+    // Strong confluence - high confidence signal
+    System.out.println("Confluence score: " + confluenceScore);
+}
+
+// Or create manually with custom configuration
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 ElliottRatioIndicator ratios = new ElliottRatioIndicator(swings);
 ElliottChannelIndicator channels = new ElliottChannelIndicator(swings);
@@ -374,14 +440,6 @@ ElliottConfluenceIndicator confluence = new ElliottConfluenceIndicator(
     ratios,
     channels
 );
-
-int index = series.getEndIndex();
-Num confluenceScore = confluence.getValue(index);
-
-// Check if confluence meets minimum threshold (default is 2)
-if (confluence.isConfluent(index)) {
-    // Strong confluence - high confidence signal
-}
 ```
 
 ### Channel Projection
@@ -400,14 +458,17 @@ if (channelData.isValid()) {
     Num upperBound = channelData.upper();
     Num lowerBound = channelData.lower();
     Num median = channelData.median();
+    Num width = channelData.width();  // Distance between upper and lower
     
     // Check if current price is within channel
     Num currentPrice = close.getValue(index);
-    Num tolerance = series.numOf(0.01); // 1% tolerance
+    Num tolerance = series.numFactory().numOf(0.01); // 1% tolerance
     if (channelData.contains(currentPrice, tolerance)) {
         // Price is within projected channel
     }
-    // Use for target projection or stop placement
+    
+    // Use channel width for position sizing or stop placement
+    System.out.println("Channel width: " + width);
 }
 ```
 
@@ -500,9 +561,30 @@ List<ElliottSwing> correction = phase.correctiveSwings(index);
 
 ### Error Handling
 
-1. **Check for NaN**: Always validate indicator values before use
-2. **Sufficient Swings**: Ensure enough swings exist for your analysis (typically 5+ for impulses)
-3. **Edge Cases**: Handle cases where swings are still forming or structure is ambiguous
+1. **Check for Valid Data**: Use `isValid()` methods on data classes like `ElliottRatio` and `ElliottChannel`
+2. **Use Num.isFinite()**: The `Num.isFinite(value)` utility checks if a numeric value is non-null and not NaN
+3. **Sufficient Swings**: Ensure enough swings exist for your analysis (typically 5+ for impulses)
+4. **Edge Cases**: Handle cases where swings are still forming or structure is ambiguous
+
+```java
+// Example: Safe value access pattern
+ElliottRatio ratio = ratios.getValue(index);
+if (ratio.isValid()) {
+    // Safe to use ratio.value()
+}
+
+ElliottChannel channel = channels.getValue(index);
+if (channel.isValid()) {
+    // Safe to use channel bounds
+    Num width = channel.width();
+}
+
+// For general Num values
+Num value = someIndicator.getValue(index);
+if (Num.isFinite(value)) {
+    // Safe to use the value
+}
+```
 
 ### Integration with Other Indicators
 
@@ -518,10 +600,11 @@ List<ElliottSwing> correction = phase.correctiveSwings(index);
 ### Basic Elliott Wave Rule
 
 ```java
-ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 5, ElliottDegree.INTERMEDIATE);
-ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings);
+// Use ElliottWaveFacade for simplified setup
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+ElliottPhaseIndicator phase = facade.phase();
 
-// Enter long at start of Wave 3
+// Enter long at start of Wave 3 (strongest impulse wave)
 Rule entryRule = new Rule() {
     @Override
     public boolean isSatisfied(int index, TradingRecord tradingRecord) {
@@ -545,15 +628,17 @@ Strategy strategy = new BaseStrategy(entryRule, exitRule);
 ### Ratio-Based Entry
 
 ```java
-ElliottRatioIndicator ratios = new ElliottRatioIndicator(swings);
-Num fib618 = series.numOf(0.618);
-Num tolerance = series.numOf(0.02);
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+ElliottRatioIndicator ratios = facade.ratio();
+Num fib618 = series.numFactory().numOf(0.618);
+Num tolerance = series.numFactory().numOf(0.02);
 
 Rule entryRule = new Rule() {
     @Override
     public boolean isSatisfied(int index, TradingRecord tradingRecord) {
         ElliottRatio ratio = ratios.getValue(index);
-        return ratio.type() == RatioType.RETRACEMENT 
+        return ratio.isValid() 
+            && ratio.type() == RatioType.RETRACEMENT 
             && ratios.isNearLevel(index, fib618, tolerance);
     }
 };
@@ -563,7 +648,9 @@ Rule entryRule = new Rule() {
 
 ```java
 // Combine Elliott Wave with other indicators
-ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings);
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+ElliottPhaseIndicator phase = facade.phase();
+ClosePriceIndicator close = new ClosePriceIndicator(series);
 RSIIndicator rsi = new RSIIndicator(close, 14);
 SMAIndicator sma = new SMAIndicator(close, 50);
 
@@ -576,7 +663,7 @@ Rule entryRule = new AndRule(
         }
     },
     // RSI: not overbought
-    new UnderIndicatorRule(rsi, series.numOf(70)),
+    new UnderIndicatorRule(rsi, series.numFactory().numOf(70)),
     // Price: above SMA (uptrend)
     new OverIndicatorRule(close, sma)
 );
@@ -619,7 +706,19 @@ Rule exitRule = new OrRule(
 
 ## Summary
 
-ta4j's Elliott Wave indicators provide a powerful toolkit for wave-based technical analysis. Start with basic swing detection and phase identification, then gradually incorporate ratio analysis, confluence, and advanced features as you become more comfortable with the system. Remember that Elliott Wave analysis is as much art as science—use the indicators as tools to support your analysis, not as absolute truth.
+ta4j's Elliott Wave indicators provide a powerful toolkit for wave-based technical analysis. The recommended approach is to use `ElliottWaveFacade` for easy setup:
 
-The modular design allows you to build custom workflows that match your trading style, whether you're a pure Elliott Wave trader or combining waves with other technical indicators. As development continues, new features and refinements will be added to enhance the analysis capabilities.
+```java
+// Quick start with ElliottWaveFacade
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+
+// Access all indicators through the facade
+ElliottPhase phase = facade.phase().getValue(index);
+boolean isConfluent = facade.confluence().isConfluent(index);
+boolean isInvalidated = facade.invalidation().getValue(index);
+```
+
+Start with basic swing detection and phase identification, then gradually incorporate ratio analysis, confluence, and advanced features as you become more comfortable with the system. Remember that Elliott Wave analysis is as much art as science—use the indicators as tools to support your analysis, not as absolute truth.
+
+The modular design allows you to build custom workflows that match your trading style, whether you're a pure Elliott Wave trader or combining waves with other technical indicators. All data classes provide `isValid()` methods to ensure safe value access, and the `Num.isFinite()` utility helps with general numeric validation.
 
