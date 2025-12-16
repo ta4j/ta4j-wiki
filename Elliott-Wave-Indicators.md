@@ -8,10 +8,15 @@ A comprehensive guide to using ta4j's Elliott Wave analysis tools, from basic co
 2. [Overview of ta4j's Elliott Wave Implementation](#overview-of-ta4js-elliott-wave-implementation)
 3. [Core Components](#core-components)
 4. [Getting Started](#getting-started)
-5. [Intermediate Usage Patterns](#intermediate-usage-patterns)
-6. [Advanced Topics](#advanced-topics)
-7. [Best Practices](#best-practices)
-8. [Integration with Trading Strategies](#integration-with-trading-strategies)
+5. [Scenario-Based Analysis](#scenario-based-analysis)
+6. [Confidence Scoring](#confidence-scoring)
+7. [Working with Alternative Wave Counts](#working-with-alternative-wave-counts)
+8. [Price Projections and Targets](#price-projections-and-targets)
+9. [Invalidation Levels](#invalidation-levels)
+10. [Intermediate Usage Patterns](#intermediate-usage-patterns)
+11. [Advanced Topics](#advanced-topics)
+12. [Best Practices](#best-practices)
+13. [Integration with Trading Strategies](#integration-with-trading-strategies)
 
 ---
 
@@ -36,14 +41,16 @@ Elliott Wave patterns consist of two main types of waves:
    - Wave 4 cannot overlap with Wave 1 (except in diagonal triangles)
    - Wave 5 must exceed Wave 3's extreme (in standard impulses)
 
-### Why Elliott Wave Analysis?
+### The Problem of Multiple Wave Counts
 
-Elliott Wave analysis helps traders:
-- Identify potential trend reversals and continuations
-- Set price targets based on Fibonacci relationships
-- Understand market structure and context
-- Time entries and exits more precisely
-- Combine with other technical indicators for confirmation
+A fundamental challenge in Elliott Wave analysis is that **any given price action can often support multiple valid wave interpretations**. Two experienced analysts looking at the same chart may arrive at different counts—and both may be technically valid according to Elliott Wave rules.
+
+This ambiguity is not a flaw in the theory; it reflects the inherent uncertainty in market forecasting. Ta4j addresses this challenge directly through:
+
+- **Scenario-based analysis**: Generating multiple plausible wave counts simultaneously
+- **Confidence scoring**: Quantifying how well each interpretation aligns with Elliott Wave principles
+- **Consensus detection**: Identifying when multiple interpretations agree on market direction
+- **Invalidation tracking**: Providing specific price levels that would disprove each count
 
 ---
 
@@ -57,9 +64,10 @@ The Elliott Wave indicators in ta4j are built on several key principles:
 
 1. **Swing-Based Foundation**: All Elliott Wave analysis starts with swing detection—identifying alternating pivot highs and lows in price action.
 2. **Modular Architecture**: Components are designed to work independently or together, allowing you to build custom analysis workflows.
-3. **Validation-Driven**: Wave identification includes validation against Elliott Wave rules and Fibonacci relationships.
-4. **Degree-Aware**: The system supports multiple wave degrees, allowing analysis across different timeframes.
-5. **Resilient to Edge Cases**: Indicators gracefully handle insufficient data, returning `NaN` values rather than throwing exceptions.
+3. **Scenario-Aware**: Rather than outputting a single "correct" wave count, the system generates multiple ranked alternatives with confidence scores.
+4. **Validation-Driven**: Wave identification includes validation against Elliott Wave rules and Fibonacci relationships.
+5. **Degree-Aware**: The system supports multiple wave degrees, allowing analysis across different timeframes.
+6. **Resilient to Edge Cases**: Indicators gracefully handle insufficient data, returning `NaN` values rather than throwing exceptions.
 
 ### Component Hierarchy
 
@@ -72,106 +80,186 @@ Swing Detection (Fractal/ZigZag)
     ↓
 ElliottSwingIndicator (alternating swings)
     ↓
-┌─────────────────────────────────────┐
-│  Analysis Layer                     │
-├─────────────────────────────────────┤
-│ • ElliottPhaseIndicator             │
-│ • ElliottRatioIndicator             │
-│ • ElliottWaveCountIndicator         │
-│ • ElliottConfluenceIndicator        │
-│ • ElliottChannelIndicator           │
-│ • ElliottInvalidationIndicator      │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  Deterministic Analysis Layer                           │
+├─────────────────────────────────────────────────────────┤
+│ • ElliottPhaseIndicator      (single phase output)      │
+│ • ElliottRatioIndicator      (Fibonacci ratios)         │
+│ • ElliottWaveCountIndicator  (swing counting)           │
+│ • ElliottConfluenceIndicator (signal aggregation)       │
+│ • ElliottChannelIndicator    (price channels)           │
+│ • ElliottInvalidationIndicator (boolean invalidation)   │
+└─────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────┐
+│  Scenario-Based Analysis Layer                          │
+├─────────────────────────────────────────────────────────┤
+│ • ElliottScenarioIndicator   (ranked alternatives)      │
+│ • ElliottConfidenceScorer    (confidence calculation)   │
+│ • ElliottScenarioGenerator   (scenario exploration)     │
+│ • ElliottProjectionIndicator (Fibonacci targets)        │
+│ • ElliottInvalidationLevelIndicator (price levels)      │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Integration with ta4j Ecosystem
+### When to Use Each Layer
 
-Elliott Wave indicators integrate naturally with:
-- **Swing Detection**: Built on ta4j's fractal and ZigZag swing indicators
-- **Rules**: Elliott Wave phases and ratios can drive trading rules
-- **Strategies**: Combine with other indicators for multi-factor strategies
-- **Charting**: Visualize waves, ratios, and phases on price charts
-- **Backtesting**: Test Elliott Wave-based strategies using ta4j's backtesting framework
+**Use the Deterministic Analysis Layer when:**
+- You need a single, definitive wave count for automated trading rules
+- Simplicity is preferred over nuance
+- You're building indicators that feed into other calculations
+
+**Use the Scenario-Based Analysis Layer when:**
+- You want to understand the range of plausible interpretations
+- You need confidence metrics for risk management
+- You want to track multiple wave counts simultaneously
+- You need explicit invalidation price levels for stop placement
 
 ---
 
 ## Core Components
 
-### ElliottSwingIndicator
+### Data Model Records
 
-The foundation of all Elliott Wave analysis. This indicator detects alternating swing highs and lows, producing a sequence of `ElliottSwing` objects.
+#### ElliottSwing
 
-**Key Features:**
-- Supports both fractal (window-based) and ZigZag (ATR-based) swing detection
-- Automatically compresses consecutive pivots of the same type (retains most extreme)
-- Associates each swing with a wave degree for multi-timeframe analysis
-- Returns a list of swings up to the current bar index
+Immutable representation of a single swing between two pivots:
 
-**Common Use Cases:**
-- Building the swing sequence for wave counting
-- Accessing swing pivot points and amplitudes
-- Filtering swings by degree or other criteria
+```java
+ElliottSwing swing = swings.get(0);
+int startBar = swing.fromIndex();       // Bar index where swing starts
+int endBar = swing.toIndex();           // Bar index where swing ends
+Num startPrice = swing.fromPrice();     // Price at swing start
+Num endPrice = swing.toPrice();         // Price at swing end
+ElliottDegree degree = swing.degree();  // Wave degree (MINOR, INTERMEDIATE, etc.)
 
-### ElliottPhaseIndicator
+boolean rising = swing.isRising();      // true if toPrice >= fromPrice
+Num amplitude = swing.amplitude();      // Absolute price displacement
+int barCount = swing.length();          // Number of bars covered
+```
 
-Tracks the current Elliott Wave phase (WAVE1 through WAVE5, or CORRECTIVE_A through CORRECTIVE_C).
+#### ElliottPhase
 
-**Key Features:**
-- Validates wave structure against Elliott Wave rules
-- Checks Fibonacci relationships between waves
-- Provides helper methods to access impulse and corrective segments
-- Recursively processes swing history to identify complete cycles
+Enumeration of wave phases with helper methods:
 
-**Wave Validation:**
-- Wave 2 retracement validation
-- Wave 3 extension requirements
-- Wave 4 retracement and non-overlap rules
-- Wave 5 projection targets
-- Corrective wave A-B-C structure
+```java
+ElliottPhase phase = ElliottPhase.WAVE3;
 
-### ElliottRatioIndicator
+phase.isImpulse();          // true for WAVE1-WAVE5
+phase.isCorrective();       // true for CORRECTIVE_A/B/C
+phase.completesStructure(); // true for WAVE5 and CORRECTIVE_C
+phase.impulseIndex();       // 1-5 for impulse waves, -1 otherwise
+phase.correctiveIndex();    // 1-3 for corrective waves, -1 otherwise
+```
 
-Calculates Fibonacci-style ratios between consecutive swings, classifying them as retracements or extensions.
+#### ElliottRatio
 
-**Key Features:**
-- Automatically classifies ratios as RETRACEMENT or EXTENSION
-- Handles edge cases (insufficient swings, zero amplitudes)
-- Provides `isNearLevel()` helper for tolerance-based level matching
-- Returns `ElliottRatio` records with value and type
+Captures Fibonacci-style ratios between swings:
 
-**Ratio Types:**
-- **Retracement**: Latest swing divided by opposite-direction prior swing
-- **Extension**: Latest swing divided by same-direction prior swing (when new extreme is made)
+```java
+ElliottRatio ratio = ratioIndicator.getValue(index);
 
-### ElliottWaveCountIndicator
+if (ratio.isValid()) {
+    Num value = ratio.value();     // The calculated ratio (e.g., 0.618)
+    RatioType type = ratio.type(); // RETRACEMENT, EXTENSION, or NONE
+}
+```
 
-Counts the number of swings in the current sequence, optionally after compression.
+#### ElliottChannel
 
-**Key Features:**
-- Simple swing counting for wave structure analysis
-- Optional swing compression before counting
-- Useful for identifying when sufficient waves exist for pattern recognition
+Projected price channel with support/resistance boundaries:
 
-### Supporting Components
+```java
+ElliottChannel channel = channelIndicator.getValue(index);
 
-- **ElliottDegree**: Enumeration of wave degrees (Grand Supercycle through Sub-Minuette) with navigation methods (`higherDegree()`, `lowerDegree()`)
-- **ElliottSwing**: Immutable record representing a single swing between two pivots
-- **ElliottPhase**: Enumeration of wave phases (WAVE1-5, CORRECTIVE_A-C, NONE) with helper methods (`isImpulse()`, `isCorrective()`, `completesStructure()`)
-- **ElliottRatio**: Record containing ratio value, type, and `isValid()` helper
-- **ElliottChannel**: Record with `upper()`, `lower()`, `median()`, `width()`, `isValid()`, and `contains()` methods
-- **ElliottSwingCompressor**: Utility for filtering/compressing swing sequences
-- **ElliottFibonacciValidator**: Validates Fibonacci relationships between waves
-- **ElliottSwingMetadata**: Helper for slicing and analyzing swing windows
+if (channel.isValid()) {
+    Num upper = channel.upper();   // Resistance boundary
+    Num lower = channel.lower();   // Support boundary
+    Num mid = channel.median();    // Channel midline
+    Num width = channel.width();   // Channel width
+    
+    // Check if price is within channel (with optional tolerance)
+    boolean inChannel = channel.contains(price, tolerance);
+}
+```
 
-### Advanced Indicators
+### Core Indicators
 
-- **ElliottConfluenceIndicator**: Measures confluence of multiple Elliott Wave signals
-- **ElliottChannelIndicator**: Projects price channels based on Elliott Wave structure
-- **ElliottInvalidationIndicator**: Signals when wave structure is invalidated
+#### ElliottSwingIndicator
 
-### Factory Class
+The foundation of all Elliott Wave analysis. Detects alternating swing highs and lows:
 
-- **ElliottWaveFacade**: Facade that creates and coordinates a complete set of Elliott Wave indicators from a single configuration, with lazy initialization and shared swing detection
+```java
+// Fractal-based detection (fixed window)
+ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 5, ElliottDegree.INTERMEDIATE);
+
+// ZigZag-based detection (volatility-adaptive)
+ElliottSwingIndicator swings = ElliottSwingIndicator.zigZag(series, ElliottDegree.INTERMEDIATE);
+
+// Get swings up to current bar
+List<ElliottSwing> swingList = swings.getValue(index);
+```
+
+#### ElliottPhaseIndicator
+
+Tracks the current wave phase by analyzing swing patterns:
+
+```java
+ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swingIndicator);
+
+ElliottPhase currentPhase = phase.getValue(index);
+
+// Check structure confirmation
+if (phase.isImpulseConfirmed(index)) {
+    List<ElliottSwing> impulseSwings = phase.impulseSwings(index);
+}
+
+if (phase.isCorrectiveConfirmed(index)) {
+    List<ElliottSwing> correctiveSwings = phase.correctiveSwings(index);
+}
+```
+
+#### ElliottRatioIndicator
+
+Calculates Fibonacci ratios between consecutive swings:
+
+```java
+ElliottRatioIndicator ratios = new ElliottRatioIndicator(swingIndicator);
+
+ElliottRatio ratio = ratios.getValue(index);
+
+// Check proximity to key Fibonacci levels
+Num target = series.numFactory().numOf(0.618);
+Num tolerance = series.numFactory().numOf(0.02);
+if (ratios.isNearLevel(index, target, tolerance)) {
+    // Near golden ratio retracement
+}
+```
+
+#### ElliottChannelIndicator
+
+Projects price channels based on recent swing structure:
+
+```java
+ElliottChannelIndicator channels = new ElliottChannelIndicator(swingIndicator);
+ElliottChannel channel = channels.getValue(index);
+```
+
+#### ElliottConfluenceIndicator
+
+Aggregates multiple Elliott Wave signals into a confluence score:
+
+```java
+ElliottConfluenceIndicator confluence = new ElliottConfluenceIndicator(
+    priceIndicator, ratioIndicator, channelIndicator);
+
+Num score = confluence.getValue(index);  // Score from 0 to 5
+
+// Check if minimum confluence threshold is met
+if (confluence.isConfluent(index)) {
+    // Multiple indicators align
+}
+```
 
 ---
 
@@ -179,102 +267,492 @@ Counts the number of swings in the current sequence, optionally after compressio
 
 ### Using ElliottWaveFacade (Recommended)
 
-The simplest way to get started is with the `ElliottWaveFacade` facade, which creates and coordinates all Elliott Wave indicators:
+The simplest way to get started is with `ElliottWaveFacade`, which creates and coordinates all Elliott Wave indicators with a shared swing source:
 
 ```java
-BarSeries series = // your bar series (minimum ~60 bars recommended for window=5; ~50 bars for window=3)
+BarSeries series = // your bar series (minimum ~60 bars recommended)
 
 // Create a complete Elliott Wave analysis facade
 ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
 
-// Access any indicator through the facade
 int index = series.getEndIndex();
+
+// Deterministic analysis
 ElliottPhase phase = facade.phase().getValue(index);
 ElliottRatio ratio = facade.ratio().getValue(index);
 ElliottChannel channel = facade.channel().getValue(index);
+boolean confluent = facade.confluence().isConfluent(index);
 
-// Check for confluence
-if (facade.confluence().isConfluent(index)) {
-    System.out.println("Strong Elliott Wave confluence detected");
-}
+// Scenario-based analysis
+Optional<ElliottScenario> primary = facade.primaryScenario(index);
+List<ElliottScenario> alternatives = facade.alternativeScenarios(index);
+String summary = facade.scenarioSummary(index);  // Human-readable summary
+
+// Price projections and invalidation
+Num projection = facade.projection().getValue(index);
+Num invalidationPrice = facade.invalidationLevel().getValue(index);
 ```
 
-### Basic Setup (Manual)
+### Factory Methods
 
-For more control, create indicators individually:
-
-```java
-BarSeries series = // your bar series (minimum ~50 bars for meaningful analysis)
-
-// Create swing indicator with 3-bar fractal windows
-// Note: A window of N bars requires 2N+1 bars to confirm a pivot
-ElliottSwingIndicator swings = new ElliottSwingIndicator(
-    series, 
-    3,  // lookback/lookforward window
-    ElliottDegree.INTERMEDIATE  // wave degree
-);
-
-// Get swings at current index
-int currentIndex = series.getEndIndex();
-List<ElliottSwing> swingList = swings.getValue(currentIndex);
-```
-
-### Using ZigZag Swings
-
-For adaptive swing detection based on volatility:
+`ElliottWaveFacade` provides several factory methods for different swing detection approaches:
 
 ```java
-// ZigZag with ATR(14) reversal threshold - adapts to market volatility
+// Fractal-based with symmetric window (5 bars before and after pivot)
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+
+// Fractal-based with asymmetric window
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 3, 5, ElliottDegree.INTERMEDIATE);
+
+// ZigZag-based with ATR(14) reversal threshold
 ElliottWaveFacade facade = ElliottWaveFacade.zigZag(series, ElliottDegree.INTERMEDIATE);
 
-// Or create just the swing indicator
-ElliottSwingIndicator swings = ElliottSwingIndicator.zigZag(
-    series, 
-    ElliottDegree.INTERMEDIATE
-);
+// From custom swing indicator
+ElliottWaveFacade facade = ElliottWaveFacade.from(customSwingIndicator, closePriceIndicator);
 ```
 
-### Basic Wave Phase Detection
+---
+
+## Scenario-Based Analysis
+
+### Understanding ElliottScenarioSet
+
+The `ElliottScenarioIndicator` returns an `ElliottScenarioSet` for each bar, containing all plausible wave interpretations ranked by confidence:
 
 ```java
-// Use a window size appropriate for your data frequency
-// Daily data: 3-5 bars; Weekly: 2-3 bars; Intraday: 5-10 bars
-ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 3, ElliottDegree.INTERMEDIATE);
-ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings);
+ElliottScenarioIndicator scenarios = facade.scenarios();
+ElliottScenarioSet scenarioSet = scenarios.getValue(index);
 
-int index = series.getEndIndex();
-ElliottPhase currentPhase = phase.getValue(index);
+// Check if scenarios exist
+if (scenarioSet.isEmpty()) {
+    // Not enough data for analysis
+    return;
+}
 
-if (currentPhase.isImpulse()) {
-    System.out.println("Current impulse wave: " + currentPhase.impulseIndex());
-} else if (currentPhase.isCorrective()) {
-    System.out.println("Current corrective wave: " + currentPhase.correctiveIndex());
+// Get the primary (highest confidence) scenario
+Optional<ElliottScenario> primary = scenarioSet.primary();
+
+// Get all alternatives (excluding primary)
+List<ElliottScenario> alternatives = scenarioSet.alternatives();
+
+// Get all scenarios including primary
+List<ElliottScenario> all = scenarioSet.all();
+
+// Get scenario counts
+int total = scenarioSet.size();
+int highConfidence = scenarioSet.highConfidenceCount();  // >= 0.7 confidence
+int lowConfidence = scenarioSet.lowConfidenceCount();    // < 0.3 confidence
+```
+
+### Filtering Scenarios
+
+You can filter scenarios by phase or pattern type:
+
+```java
+ElliottScenarioSet scenarioSet = scenarios.getValue(index);
+
+// Get only impulse scenarios
+ElliottScenarioSet impulseScenarios = scenarioSet.byType(ScenarioType.IMPULSE);
+
+// Get scenarios predicting a specific phase
+ElliottScenarioSet wave3Scenarios = scenarioSet.byPhase(ElliottPhase.WAVE3);
+
+// Get scenarios that remain valid at a given price
+Num testPrice = series.numFactory().numOf(100.0);
+ElliottScenarioSet validScenarios = scenarioSet.validAt(testPrice);
+
+// Get scenarios that would be invalidated at a given price
+List<ElliottScenario> invalidated = scenarioSet.invalidatedBy(testPrice);
+```
+
+### Consensus Detection
+
+Check whether multiple interpretations agree:
+
+```java
+ElliottScenarioSet scenarioSet = scenarios.getValue(index);
+
+// Get consensus phase (agreed upon by all high-confidence scenarios)
+ElliottPhase consensus = scenarioSet.consensus();
+if (consensus != ElliottPhase.NONE) {
+    System.out.println("All high-confidence scenarios agree: " + consensus);
+}
+
+// Check for strong consensus
+if (scenarioSet.hasStrongConsensus()) {
+    // Either single high-confidence scenario or large confidence spread
+    System.out.println("High conviction in primary scenario");
+}
+
+// Calculate confidence spread between primary and secondary
+double spread = scenarioSet.confidenceSpread();
+if (spread > 0.3) {
+    System.out.println("Primary scenario is significantly more confident");
 }
 ```
 
-### Basic Ratio Analysis
+### The ElliottScenario Record
+
+Each scenario contains comprehensive information about a wave interpretation:
 
 ```java
-ElliottSwingIndicator swings = new ElliottSwingIndicator(series, 3, ElliottDegree.INTERMEDIATE);
-ElliottRatioIndicator ratios = new ElliottRatioIndicator(swings);
+ElliottScenario scenario = primary.get();
 
+// Identity and classification
+String id = scenario.id();                    // Unique identifier
+ElliottPhase phase = scenario.currentPhase(); // Current wave (WAVE3, CORRECTIVE_B, etc.)
+ScenarioType type = scenario.type();          // IMPULSE, CORRECTIVE_ZIGZAG, etc.
+ElliottDegree degree = scenario.degree();     // Wave degree
+
+// Structure information
+List<ElliottSwing> swings = scenario.swings(); // The swings backing this interpretation
+int waveCount = scenario.waveCount();          // Number of waves identified
+int startIndex = scenario.startIndex();        // Bar where this structure begins
+
+// Confidence metrics
+ElliottConfidence confidence = scenario.confidence();
+Num score = scenario.confidenceScore();        // Aggregate score (0.0 - 1.0)
+boolean highConf = scenario.isHighConfidence(); // >= 0.7
+boolean lowConf = scenario.isLowConfidence();   // < 0.3
+
+// Trading information
+Num invalidation = scenario.invalidationPrice(); // Price that invalidates this count
+Num target = scenario.primaryTarget();           // Primary Fibonacci target
+List<Num> targets = scenario.fibonacciTargets(); // All calculated targets
+
+// Direction
+boolean bullish = scenario.isBullish();        // Based on first wave direction
+boolean bearish = scenario.isBearish();
+
+// Check if price would invalidate this scenario
+if (scenario.isInvalidatedBy(currentPrice)) {
+    System.out.println("This wave count is no longer valid");
+}
+```
+
+### Scenario Types
+
+The `ScenarioType` enum classifies the pattern structure:
+
+| Type | Description | Expected Waves |
+|------|-------------|----------------|
+| `IMPULSE` | Five-wave motive structure (1-2-3-4-5) | 5 |
+| `CORRECTIVE_ZIGZAG` | Sharp A-B-C where C exceeds A | 3 |
+| `CORRECTIVE_FLAT` | A-B-C where B retraces most of A | 3 |
+| `CORRECTIVE_TRIANGLE` | Five-wave contracting/expanding pattern (A-B-C-D-E) | 5 |
+| `CORRECTIVE_COMPLEX` | Double/triple combinations | Varies |
+| `UNKNOWN` | Pattern could not be determined | 0 |
+
+```java
+ScenarioType type = scenario.type();
+
+if (type.isImpulse()) {
+    // Trading with the trend
+} else if (type.isCorrective()) {
+    // Counter-trend or consolidation
+}
+
+int expected = type.expectedWaveCount(); // 5 for impulse, 3 for zigzag/flat
+```
+
+---
+
+## Confidence Scoring
+
+### How Confidence is Calculated
+
+The `ElliottConfidenceScorer` evaluates each scenario against five weighted factors:
+
+| Factor | Weight | Description |
+|--------|--------|-------------|
+| Fibonacci Proximity | 35% | How closely swing ratios match canonical Fibonacci levels (0.382, 0.618, 1.618, etc.) |
+| Time Proportions | 20% | Whether wave durations follow expected relationships (e.g., wave 3 typically longest) |
+| Alternation Quality | 15% | Degree of pattern/depth alternation between waves 2 and 4 |
+| Channel Adherence | 15% | Whether price stays within projected channel boundaries |
+| Structure Completeness | 15% | How many expected waves are confirmed |
+
+### The ElliottConfidence Record
+
+Each scenario includes detailed confidence breakdown:
+
+```java
+ElliottConfidence confidence = scenario.confidence();
+
+// Overall score (weighted combination)
+Num overall = confidence.overall();
+double percentage = confidence.asPercentage();  // 0-100
+
+// Individual factor scores (each 0.0 - 1.0)
+Num fibScore = confidence.fibonacciScore();       // Fibonacci alignment
+Num timeScore = confidence.timeProportionScore(); // Time relationships
+Num altScore = confidence.alternationScore();     // Wave 2/4 alternation
+Num chanScore = confidence.channelScore();        // Channel adherence
+Num compScore = confidence.completenessScore();   // Structure completeness
+
+// Primary reason for the confidence level
+String reason = confidence.primaryReason();  // e.g., "Strong Fibonacci conformance"
+
+// Identify the weakest factor
+String weakness = confidence.weakestFactor(); // e.g., "Wave alternation"
+
+// Threshold checks
+boolean valid = confidence.isValid();              // Non-null and not NaN
+boolean high = confidence.isHighConfidence();      // >= 0.7
+boolean low = confidence.isLowConfidence();        // < 0.3
+boolean meetsThreshold = confidence.isAboveThreshold(0.5); // Custom threshold
+```
+
+### Interpreting Confidence Levels
+
+| Confidence | Interpretation | Recommended Action |
+|------------|----------------|-------------------|
+| 0.7 - 1.0 | High confidence | Trade with conviction; use tighter stops |
+| 0.5 - 0.7 | Moderate confidence | Wait for confirmation or reduce position size |
+| 0.3 - 0.5 | Low confidence | Consider alternative scenarios; wide stops |
+| 0.0 - 0.3 | Very low confidence | Avoid trading; wave structure is unclear |
+
+### Custom Confidence Weights
+
+You can create a scorer with custom weights to emphasize factors important to your strategy:
+
+```java
+// Create custom scorer with different emphasis
+ElliottConfidenceScorer customScorer = new ElliottConfidenceScorer(
+    series.numFactory(),
+    0.50,  // fibonacciWeight - emphasize Fibonacci alignment
+    0.15,  // timeWeight
+    0.10,  // alternationWeight
+    0.15,  // channelWeight
+    0.10   // completenessWeight
+);
+
+// Use custom scorer with generator
+ElliottScenarioGenerator generator = new ElliottScenarioGenerator(
+    series.numFactory(), 
+    0.15,  // minConfidence threshold
+    5      // maxScenarios to return
+);
+```
+
+---
+
+## Working with Alternative Wave Counts
+
+### Why Multiple Counts Matter
+
+In practice, you'll often encounter situations where price action supports multiple valid interpretations. For example:
+
+- **Impulse vs. Correction**: Is this sharp move wave 3 of an impulse, or wave C of a correction?
+- **Degree Uncertainty**: Is this a minor wave 4 or an intermediate wave 2?
+- **Pattern Classification**: Is this a zigzag or a flat correction?
+
+The scenario-based system helps you:
+1. See all plausible interpretations at once
+2. Understand which interpretation is most likely (primary)
+3. Plan for alternative outcomes
+4. Know when the market will resolve the ambiguity (via invalidation levels)
+
+### Practical Example: Handling Ambiguity
+
+```java
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
 int index = series.getEndIndex();
-ElliottRatio ratio = ratios.getValue(index);
 
-// Always check validity before using the ratio
-if (ratio.isValid()) {
-    if (ratio.type() == RatioType.RETRACEMENT) {
-        System.out.println("Retracement ratio: " + ratio.value());
-    } else if (ratio.type() == RatioType.EXTENSION) {
-        System.out.println("Extension ratio: " + ratio.value());
+ElliottScenarioSet scenarioSet = facade.scenarios().getValue(index);
+
+System.out.println(scenarioSet.summary());
+// Example output: "3 scenario(s): Primary=WAVE3 (72.5%), 2 alternative(s), consensus=WAVE3"
+
+Optional<ElliottScenario> primary = scenarioSet.primary();
+if (primary.isPresent()) {
+    ElliottScenario p = primary.get();
+    
+    System.out.println("Primary interpretation:");
+    System.out.println("  Phase: " + p.currentPhase());
+    System.out.println("  Type: " + p.type());
+    System.out.println("  Confidence: " + String.format("%.1f%%", p.confidence().asPercentage()));
+    System.out.println("  Invalidation: " + p.invalidationPrice());
+    System.out.println("  Primary target: " + p.primaryTarget());
+}
+
+// Consider alternatives
+List<ElliottScenario> alternatives = scenarioSet.alternatives();
+if (!alternatives.isEmpty()) {
+    System.out.println("\nAlternative interpretations:");
+    for (ElliottScenario alt : alternatives) {
+        System.out.println("  " + alt.type() + " " + alt.currentPhase() + 
+            " (" + String.format("%.1f%%", alt.confidence().asPercentage()) + ")");
     }
 }
 
-// Check if near a Fibonacci level (e.g., 0.618)
-Num target = series.numFactory().numOf(0.618);
-Num tolerance = series.numFactory().numOf(0.05);
-if (ratios.isNearLevel(index, target, tolerance)) {
-    System.out.println("Near 61.8% retracement level");
+// Check consensus
+if (scenarioSet.hasStrongConsensus()) {
+    System.out.println("\nStrong consensus - high conviction trade opportunity");
+} else if (scenarioSet.consensus() != ElliottPhase.NONE) {
+    System.out.println("\nModerate consensus on phase: " + scenarioSet.consensus());
+} else {
+    System.out.println("\nNo consensus - market structure is ambiguous");
+}
+```
+
+### Monitoring Alternative Scenarios Over Time
+
+Track how scenarios evolve as new bars arrive:
+
+```java
+// Track the evolution of scenarios
+ElliottScenarioIndicator scenarios = facade.scenarios();
+
+for (int i = 0; i < series.getBarCount(); i++) {
+    ElliottScenarioSet set = scenarios.getValue(i);
+    
+    Optional<ElliottScenario> primary = set.primary();
+    if (primary.isPresent()) {
+        ElliottScenario p = primary.get();
+        
+        System.out.println(String.format("Bar %d: %s (%.1f%%) - %d alternatives",
+            i,
+            p.currentPhase(),
+            p.confidence().asPercentage(),
+            set.alternatives().size()));
+    }
+}
+```
+
+---
+
+## Price Projections and Targets
+
+### Using ElliottProjectionIndicator
+
+The projection indicator calculates Fibonacci-based price targets for the primary scenario:
+
+```java
+ElliottProjectionIndicator projection = facade.projection();
+
+// Get primary target for current bar
+Num primaryTarget = projection.getValue(index);
+if (Num.isValid(primaryTarget)) {
+    System.out.println("Primary target: " + primaryTarget);
+}
+
+// Get all Fibonacci targets
+List<Num> allTargets = projection.allTargets(index);
+for (Num target : allTargets) {
+    System.out.println("  Target: " + target);
+}
+```
+
+### Understanding Projection Logic
+
+Targets are calculated based on the current wave phase:
+
+**Impulse Wave Projections:**
+
+| Current Phase | Target Wave | Calculation |
+|---------------|-------------|-------------|
+| WAVE2 | Wave 3 | Wave 2 end + (Wave 1 amplitude × 1.0/1.618/2.618) |
+| WAVE4 | Wave 5 | Wave 4 end + (Wave 1 amplitude × 0.618/1.0/1.618) |
+
+**Corrective Wave Projections:**
+
+| Current Phase | Target Wave | Calculation |
+|---------------|-------------|-------------|
+| CORRECTIVE_B | Wave C | Wave B end ± (Wave A amplitude × 0.618/1.0/1.618) |
+
+### Calculating Custom Projections
+
+You can also calculate projections for any swing sequence and phase:
+
+```java
+ElliottProjectionIndicator projection = facade.projection();
+
+// Get swings from a specific scenario
+ElliottScenario scenario = scenarioSet.primary().get();
+List<ElliottSwing> swings = scenario.swings();
+ElliottPhase phase = scenario.currentPhase();
+
+// Calculate targets for this specific structure
+List<Num> targets = projection.calculateTargets(swings, phase);
+```
+
+---
+
+## Invalidation Levels
+
+### The Importance of Invalidation
+
+Every Elliott Wave count has specific price levels that would invalidate it. Knowing these levels is crucial for:
+
+- **Stop placement**: Setting stops just beyond invalidation levels
+- **Scenario transition**: Knowing when to switch from primary to alternative count
+- **Risk management**: Understanding exactly where the analysis is wrong
+
+### Using ElliottInvalidationLevelIndicator
+
+```java
+ElliottInvalidationLevelIndicator invalidation = facade.invalidationLevel();
+
+// Get invalidation price for primary scenario
+Num invalidationPrice = invalidation.getValue(index);
+
+if (Num.isValid(invalidationPrice)) {
+    System.out.println("Primary invalidation at: " + invalidationPrice);
+}
+```
+
+### Invalidation Modes
+
+The indicator supports three modes for different risk tolerances:
+
+```java
+import org.ta4j.core.indicators.elliott.ElliottInvalidationLevelIndicator.InvalidationMode;
+
+// PRIMARY mode (default): Use primary scenario's invalidation
+ElliottInvalidationLevelIndicator primary = 
+    new ElliottInvalidationLevelIndicator(scenarioIndicator, InvalidationMode.PRIMARY);
+
+// CONSERVATIVE mode: Use tightest invalidation across high-confidence scenarios
+// (First scenario invalidated = consider exiting)
+ElliottInvalidationLevelIndicator conservative = 
+    new ElliottInvalidationLevelIndicator(scenarioIndicator, InvalidationMode.CONSERVATIVE);
+
+// AGGRESSIVE mode: Use widest invalidation across all scenarios
+// (All scenarios must be invalidated before exiting)
+ElliottInvalidationLevelIndicator aggressive = 
+    new ElliottInvalidationLevelIndicator(scenarioIndicator, InvalidationMode.AGGRESSIVE);
+```
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `PRIMARY` | Invalidation level from the highest-confidence scenario | Standard trading with single scenario focus |
+| `CONSERVATIVE` | Tightest stop across high-confidence scenarios | Protective trading when multiple valid counts exist |
+| `AGGRESSIVE` | Widest stop (all scenarios must fail) | Position trades where you want maximum room |
+
+### Checking Invalidation Status
+
+```java
+ElliottInvalidationLevelIndicator invalidation = facade.invalidationLevel();
+Num currentPrice = series.getBar(index).getClosePrice();
+
+// Check if current price invalidates the primary scenario
+boolean isInvalid = invalidation.isInvalidated(index, currentPrice);
+
+// Get distance from current price to invalidation
+Num distance = invalidation.distanceToInvalidation(index, currentPrice);
+// Positive = still valid, Negative = invalidated
+```
+
+### Boolean Invalidation Indicator
+
+For simple true/false invalidation checking without price levels:
+
+```java
+ElliottInvalidationIndicator boolInvalidation = facade.invalidation();
+
+if (boolInvalidation.getValue(index)) {
+    System.out.println("Current wave structure is invalidated");
+    // Reassess wave count
 }
 ```
 
@@ -287,32 +765,29 @@ if (ratios.isNearLevel(index, target, tolerance)) {
 Analyze multiple timeframes simultaneously:
 
 ```java
-// Primary trend (longer timeframe) - use larger window for bigger waves
-ElliottSwingIndicator primarySwings = new ElliottSwingIndicator(series, 10, ElliottDegree.PRIMARY);
-ElliottPhaseIndicator primaryPhase = new ElliottPhaseIndicator(primarySwings);
+// Primary trend (larger degree)
+ElliottWaveFacade primaryFacade = 
+    ElliottWaveFacade.fractal(series, 10, ElliottDegree.PRIMARY);
 
-// Intermediate trend (shorter timeframe) - smaller window for finer detail
-ElliottSwingIndicator intermediateSwings = new ElliottSwingIndicator(series, 3, ElliottDegree.INTERMEDIATE);
-ElliottPhaseIndicator intermediatePhase = new ElliottPhaseIndicator(intermediateSwings);
+// Intermediate trend (smaller degree)
+ElliottWaveFacade intermediateFacade = 
+    ElliottWaveFacade.fractal(series, 3, ElliottDegree.INTERMEDIATE);
 
-// Use both for context
 int index = series.getEndIndex();
-ElliottPhase primary = primaryPhase.getValue(index);
-ElliottPhase intermediate = intermediatePhase.getValue(index);
 
-// Trade in direction of primary trend, using intermediate for timing
-if (primary.isImpulse() && intermediate.isCorrective()) {
-    // Potential entry during intermediate correction in primary impulse
-}
+// Get interpretations at both degrees
+Optional<ElliottScenario> primaryScenario = primaryFacade.primaryScenario(index);
+Optional<ElliottScenario> intermediateScenario = intermediateFacade.primaryScenario(index);
 
-// Use ElliottDegree navigation for degree relationships
-ElliottDegree degree = ElliottDegree.INTERMEDIATE;
-ElliottDegree higherDegree = degree.higherDegree();  // Returns PRIMARY
-ElliottDegree lowerDegree = degree.lowerDegree();    // Returns MINOR
-
-// Check degree relationships
-if (degree.isHigherOrEqual(ElliottDegree.MINOR)) {
-    // This degree is significant enough for swing trading
+// Trade when degrees align
+if (primaryScenario.isPresent() && intermediateScenario.isPresent()) {
+    ElliottScenario primary = primaryScenario.get();
+    ElliottScenario intermediate = intermediateScenario.get();
+    
+    if (primary.isBullish() && intermediate.currentPhase() == ElliottPhase.WAVE3) {
+        // Strong bullish alignment: wave 3 at intermediate degree within bullish primary
+        System.out.println("Aligned bullish setup");
+    }
 }
 ```
 
@@ -321,213 +796,145 @@ if (degree.isHigherOrEqual(ElliottDegree.MINOR)) {
 Use custom price sources or swing detectors:
 
 ```java
-// Use close prices instead of high/low for smoother swings
+// Use close prices instead of high/low
 ClosePriceIndicator close = new ClosePriceIndicator(series);
-ElliottSwingIndicator swings = new ElliottSwingIndicator(
-    close, 
-    3,  // lookback
-    3,  // lookforward
-    ElliottDegree.INTERMEDIATE
-);
+ElliottSwingIndicator swings = new ElliottSwingIndicator(close, 3, 3, ElliottDegree.INTERMEDIATE);
 
-// Or use existing swing indicators for full control
-RecentSwingIndicator customHighs = // your custom high detector
-RecentSwingIndicator customLows = // your custom low detector
-ElliottSwingIndicator customSwings = new ElliottSwingIndicator(
-    customHighs, 
-    customLows, 
-    ElliottDegree.INTERMEDIATE
-);
-```
-
-### Wave Confirmation Patterns
-
-Wait for wave confirmation before acting:
-
-```java
-ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings);
-
-int index = series.getEndIndex();
-
-// Wait for complete 5-wave impulse
-if (phase.isImpulseConfirmed(index)) {
-    List<ElliottSwing> impulseSwings = phase.impulseSwings(index);
-    // Analyze the completed impulse structure
-}
-
-// Wait for complete A-B-C correction
-if (phase.isCorrectiveConfirmed(index)) {
-    List<ElliottSwing> correctiveSwings = phase.correctiveSwings(index);
-    // Analyze the completed correction
-}
-```
-
-### Ratio-Based Entry/Exit Signals
-
-Use Fibonacci ratios for trade management:
-
-```java
-ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
-ElliottRatioIndicator ratios = facade.ratio();
-NumFactory nf = series.numFactory();
-
-int index = series.getEndIndex();
-ElliottRatio ratio = ratios.getValue(index);
-
-// Common Fibonacci retracement levels
-Num fib236 = nf.numOf(0.236);
-Num fib382 = nf.numOf(0.382);
-Num fib500 = nf.numOf(0.500);
-Num fib618 = nf.numOf(0.618);
-Num fib786 = nf.numOf(0.786);
-Num tolerance = nf.numOf(0.02); // 2% tolerance
-
-if (ratio.isValid() && ratio.type() == RatioType.RETRACEMENT) {
-    if (ratios.isNearLevel(index, fib618, tolerance)) {
-        // Strong support/resistance at 61.8% retracement
-    } else if (ratios.isNearLevel(index, fib382, tolerance)) {
-        // Moderate retracement at 38.2%
-    }
-}
+// Create facade from custom swing indicator
+ElliottWaveFacade facade = ElliottWaveFacade.from(swings, close);
 ```
 
 ### Swing Compression
 
-Filter swings before analysis to remove noise:
+Filter out small swings before analysis:
 
 ```java
-// Create a compressor that filters out small swings
+ElliottSwingIndicator rawSwings = new ElliottSwingIndicator(series, 3, ElliottDegree.MINOR);
+
+// Create compressor that filters small moves
 Num minimumAmplitude = series.numFactory().numOf(5.0);  // Minimum price move
 int minimumLength = 2;  // Minimum bars between pivots
 ElliottSwingCompressor compressor = new ElliottSwingCompressor(minimumAmplitude, minimumLength);
 
 // Use compressor with wave count indicator
-ElliottWaveCountIndicator counter = new ElliottWaveCountIndicator(swings, compressor);
+ElliottWaveCountIndicator counter = new ElliottWaveCountIndicator(rawSwings, compressor);
 
-int index = series.getEndIndex();
-int swingCount = counter.getValue(index);
-List<ElliottSwing> compressedSwings = counter.getSwings(index);
+// Get filtered swings
+List<ElliottSwing> compressed = counter.getSwings(index);
+```
+
+### Wave Degree Navigation
+
+Navigate between wave degrees programmatically:
+
+```java
+ElliottDegree degree = ElliottDegree.INTERMEDIATE;
+
+ElliottDegree higher = degree.higherDegree();  // Returns PRIMARY
+ElliottDegree lower = degree.lowerDegree();    // Returns MINOR
+
+// Check degree relationships
+if (degree.isHigherOrEqual(ElliottDegree.MINOR)) {
+    // This degree is significant enough for swing trading
+}
+
+// Iterate through degrees
+for (ElliottDegree d : ElliottDegree.values()) {
+    System.out.println(d.name());
+}
 ```
 
 ---
 
 ## Advanced Topics
 
-### Confluence Analysis
+### Scenario Generator Configuration
 
-Combine multiple Elliott Wave signals for stronger confirmation:
+Fine-tune how scenarios are generated:
 
 ```java
-// ElliottWaveFacade provides coordinated indicators with shared swing source
-ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
-
-int index = series.getEndIndex();
-Num confluenceScore = facade.confluence().getValue(index);
-
-// Check if confluence meets minimum threshold (default is 2)
-if (facade.confluence().isConfluent(index)) {
-    // Strong confluence - high confidence signal
-    System.out.println("Confluence score: " + confluenceScore);
-}
-
-// Or create manually with custom configuration
-ClosePriceIndicator close = new ClosePriceIndicator(series);
-ElliottRatioIndicator ratios = new ElliottRatioIndicator(swings);
-ElliottChannelIndicator channels = new ElliottChannelIndicator(swings);
-
-ElliottConfluenceIndicator confluence = new ElliottConfluenceIndicator(
-    close, 
-    ratios,
-    channels
+// Create generator with custom thresholds
+ElliottScenarioGenerator generator = new ElliottScenarioGenerator(
+    series.numFactory(),
+    0.10,  // minConfidence: lower threshold keeps more scenarios
+    10     // maxScenarios: maximum to return
 );
+
+// Create scenario indicator with custom generator
+ElliottScenarioIndicator scenarios = new ElliottScenarioIndicator(
+    swingIndicator, channelIndicator, generator);
 ```
 
-### Channel Projection
+### Working with Scenario History
 
-Project price channels based on Elliott Wave structure:
+Track scenario evolution for a trading journal:
 
 ```java
-ElliottChannelIndicator channel = new ElliottChannelIndicator(swings);
-ClosePriceIndicator close = new ClosePriceIndicator(series);
+StringBuilder journal = new StringBuilder();
+
+for (int i = 50; i < series.getBarCount(); i++) {
+    ElliottScenarioSet set = facade.scenarios().getValue(i);
+    
+    journal.append(String.format("Bar %d: %s%n", i, set.summary()));
+    
+    // Track scenario changes
+    if (i > 50) {
+        ElliottScenarioSet previous = facade.scenarios().getValue(i - 1);
+        Optional<ElliottScenario> prevPrimary = previous.primary();
+        Optional<ElliottScenario> currPrimary = set.primary();
+        
+        if (prevPrimary.isPresent() && currPrimary.isPresent()) {
+            if (prevPrimary.get().currentPhase() != currPrimary.get().currentPhase()) {
+                journal.append("  ** Phase change detected **\n");
+            }
+        }
+    }
+}
+```
+
+### Combining with Other Indicators
+
+Elliott Wave analysis works well with momentum and volume indicators:
+
+```java
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), 14);
 
 int index = series.getEndIndex();
-ElliottChannel channelData = channel.getValue(index);
+Optional<ElliottScenario> primary = facade.primaryScenario(index);
+Num rsiValue = rsi.getValue(index);
 
-// Access channel boundaries
-if (channelData.isValid()) {
-    Num upperBound = channelData.upper();
-    Num lowerBound = channelData.lower();
-    Num median = channelData.median();
-    Num width = channelData.width();  // Distance between upper and lower
+if (primary.isPresent()) {
+    ElliottScenario scenario = primary.get();
     
-    // Check if current price is within channel
-    Num currentPrice = close.getValue(index);
-    Num tolerance = series.numFactory().numOf(0.01); // 1% tolerance
-    if (channelData.contains(currentPrice, tolerance)) {
-        // Price is within projected channel
+    // Wave 2 + oversold RSI = potential wave 3 entry
+    if (scenario.currentPhase() == ElliottPhase.WAVE2 
+            && rsiValue.isLessThan(series.numFactory().numOf(30))) {
+        System.out.println("Wave 3 entry setup with RSI confirmation");
     }
     
-    // Use channel width for position sizing or stop placement
-    System.out.println("Channel width: " + width);
+    // Wave 5 + overbought RSI + bearish divergence = potential exit
+    if (scenario.currentPhase() == ElliottPhase.WAVE5
+            && rsiValue.isGreaterThan(series.numFactory().numOf(70))) {
+        System.out.println("Potential wave 5 exhaustion");
+    }
 }
-```
-
-### Wave Invalidation Detection
-
-Monitor for wave structure invalidations:
-
-```java
-ElliottInvalidationIndicator invalidation = new ElliottInvalidationIndicator(
-    phaseIndicator
-);
-
-int index = series.getEndIndex();
-boolean isInvalidated = invalidation.getValue(index);
-
-if (isInvalidated) {
-    // Wave count needs to be reassessed
-    // Previous wave labels may be incorrect
-}
-```
-
-### Custom Fibonacci Validation
-
-Fine-tune Fibonacci relationship validation:
-
-```java
-// Create custom validator with specific tolerances
-ElliottFibonacciValidator validator = new ElliottFibonacciValidator(
-    series.numFactory()
-);
-// Configure validator parameters as needed
-
-ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings, validator);
-```
-
-### Recursive Wave Analysis
-
-Analyze nested wave structures:
-
-```java
-// The phase indicator automatically handles recursive cycles
-// When a complete 5-3 cycle finishes, it looks for the next cycle
-ElliottPhaseIndicator phase = new ElliottPhaseIndicator(swings);
-
-int index = series.getEndIndex();
-ElliottPhase current = phase.getValue(index);
-
-// The indicator internally tracks multiple cycles
-// Access impulse and corrective segments separately
-List<ElliottSwing> impulse = phase.impulseSwings(index);
-List<ElliottSwing> correction = phase.correctiveSwings(index);
 ```
 
 ### Performance Considerations
 
-- **Caching**: All indicators extend `CachedIndicator`, so values are cached after first calculation
-- **Unstable Bars**: Use `getCountOfUnstableBars()` to determine when indicators stabilize
-- **Swing Window Size**: Larger windows produce fewer swings but more reliable pivots
-- **Degree Selection**: Match degree to your trading timeframe and data granularity
+All Elliott Wave indicators extend `CachedIndicator`, so values are cached after first calculation:
+
+```java
+// First call calculates and caches
+ElliottScenarioSet set1 = scenarios.getValue(index);
+
+// Second call returns cached value (no recalculation)
+ElliottScenarioSet set2 = scenarios.getValue(index);
+
+// Get unstable bar count (values before this index may not be reliable)
+int unstable = scenarios.getCountOfUnstableBars();
+```
 
 ---
 
@@ -544,181 +951,187 @@ List<ElliottSwing> correction = phase.correctiveSwings(index);
    - High volatility: Use ZigZag with ATR-based thresholds
    - Low volatility: Fractal windows work well
 
-3. **Allow for Flat Tops/Bottoms**:
-   - Set `allowedEqualBars` > 0 for markets with frequent equal highs/lows
+### Confidence Interpretation
 
-### Wave Degree Selection
+1. **Don't Chase High Confidence**: A 90% confidence scenario isn't "right"—it just fits the current data well
+2. **Watch for Confidence Decay**: If confidence drops bar-over-bar, the count may be becoming less valid
+3. **Value Consensus Over Confidence**: When multiple scenarios agree on direction, that's often more actionable than a single high-confidence count
 
-- **Match to Trading Timeframe**: Use INTERMEDIATE for daily charts, MINOR for intraday
-- **Consistency**: Use the same degree across related indicators
-- **Multi-Timeframe**: Analyze higher degree for trend, lower degree for entries
+### Managing Multiple Counts
 
-### Validation and Confirmation
-
-1. **Wait for Confirmation**: Use `isImpulseConfirmed()` and `isCorrectiveConfirmed()` before acting
-2. **Check Multiple Signals**: Combine phase, ratio, and confluence indicators
-3. **Respect Invalidation**: Monitor `ElliottInvalidationIndicator` and reassess when invalidated
+1. **Plan for Alternatives**: Before entering a trade, identify what price level would shift you to the alternative count
+2. **Use Conservative Invalidation**: When uncertain, use the conservative invalidation mode
+3. **Accept Ambiguity**: Some market conditions genuinely have multiple valid interpretations—don't force a single count
 
 ### Error Handling
 
-1. **Check for Valid Data**: Use `isValid()` methods on data classes like `ElliottRatio` and `ElliottChannel`
-2. **Use Num.isFinite()**: The `Num.isFinite(value)` utility checks if a numeric value is non-null and not NaN
-3. **Sufficient Swings**: Ensure enough swings exist for your analysis (typically 5+ for impulses)
-4. **Edge Cases**: Handle cases where swings are still forming or structure is ambiguous
+Always check for valid data before using values:
 
 ```java
-// Example: Safe value access pattern
-ElliottRatio ratio = ratios.getValue(index);
-if (ratio.isValid()) {
-    // Safe to use ratio.value()
+// Check Num values
+Num price = indicator.getValue(index);
+if (Num.isValid(price)) {
+    // Safe to use
 }
 
-ElliottChannel channel = channels.getValue(index);
-if (channel.isValid()) {
-    // Safe to use channel bounds
-    Num width = channel.width();
+// Check Optional scenarios
+Optional<ElliottScenario> primary = facade.primaryScenario(index);
+if (primary.isPresent() && primary.get().isHighConfidence()) {
+    // Safe to trade
 }
 
-// For general Num values
-Num value = someIndicator.getValue(index);
-if (Num.isFinite(value)) {
-    // Safe to use the value
+// Check confidence validity
+ElliottConfidence conf = scenario.confidence();
+if (conf.isValid()) {
+    // Safe to use confidence values
+}
+
+// Check scenario set
+ElliottScenarioSet set = scenarios.getValue(index);
+if (!set.isEmpty()) {
+    // Safe to access scenarios
 }
 ```
-
-### Integration with Other Indicators
-
-- **Trend Confirmation**: Combine with moving averages or trend indicators
-- **Momentum**: Use RSI or MACD to confirm wave direction
-- **Volume**: Volume should expand in impulse waves, contract in corrections
-- **Support/Resistance**: Align Elliott Wave targets with traditional S/R levels
 
 ---
 
 ## Integration with Trading Strategies
 
-### Basic Elliott Wave Rule
+### Basic Scenario-Aware Rule
 
 ```java
-// Use ElliottWaveFacade for simplified setup
 ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
-ElliottPhaseIndicator phase = facade.phase();
 
-// Enter long at start of Wave 3 (strongest impulse wave)
+// Enter long when high-confidence wave 3 begins
 Rule entryRule = new Rule() {
     @Override
     public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-        ElliottPhase current = phase.getValue(index);
-        return current == ElliottPhase.WAVE3;
+        Optional<ElliottScenario> primary = facade.primaryScenario(index);
+        return primary.isPresent()
+            && primary.get().currentPhase() == ElliottPhase.WAVE3
+            && primary.get().isHighConfidence()
+            && facade.hasScenarioConsensus(index);
     }
 };
 
-// Exit at completion of Wave 5
+// Exit at wave 5 completion or invalidation
 Rule exitRule = new Rule() {
     @Override
     public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-        ElliottPhase current = phase.getValue(index);
-        return current == ElliottPhase.WAVE5 && phase.isImpulseConfirmed(index);
+        Optional<ElliottScenario> primary = facade.primaryScenario(index);
+        if (primary.isEmpty()) return true;  // Exit if no scenarios
+        
+        ElliottScenario scenario = primary.get();
+        Num currentPrice = series.getBar(index).getClosePrice();
+        
+        // Exit conditions
+        boolean wave5Complete = scenario.currentPhase() == ElliottPhase.WAVE5 
+            && scenario.expectsCompletion();
+        boolean invalidated = scenario.isInvalidatedBy(currentPrice);
+        
+        return wave5Complete || invalidated;
     }
 };
 
 Strategy strategy = new BaseStrategy(entryRule, exitRule);
 ```
 
-### Ratio-Based Entry
+### Confidence-Based Position Sizing
 
 ```java
-ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
-ElliottRatioIndicator ratios = facade.ratio();
-Num fib618 = series.numFactory().numOf(0.618);
-Num tolerance = series.numFactory().numOf(0.02);
-
-Rule entryRule = new Rule() {
-    @Override
-    public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-        ElliottRatio ratio = ratios.getValue(index);
-        return ratio.isValid() 
-            && ratio.type() == RatioType.RETRACEMENT 
-            && ratios.isNearLevel(index, fib618, tolerance);
+public double calculatePositionSize(ElliottScenario scenario, double baseSize) {
+    ElliottConfidence conf = scenario.confidence();
+    
+    if (conf.isHighConfidence()) {
+        return baseSize * 1.0;  // Full size
+    } else if (conf.isAboveThreshold(0.5)) {
+        return baseSize * 0.5;  // Half size
+    } else {
+        return baseSize * 0.25; // Quarter size or skip
     }
-};
+}
 ```
 
-### Multi-Factor Strategy
+### Dynamic Stop Based on Invalidation
 
 ```java
-// Combine Elliott Wave with other indicators
-ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
-ElliottPhaseIndicator phase = facade.phase();
-ClosePriceIndicator close = new ClosePriceIndicator(series);
-RSIIndicator rsi = new RSIIndicator(close, 14);
-SMAIndicator sma = new SMAIndicator(close, 50);
-
-Rule entryRule = new AndRule(
-    // Elliott Wave: entering Wave 3
-    new Rule() {
-        @Override
-        public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-            return phase.getValue(index) == ElliottPhase.WAVE3;
-        }
-    },
-    // RSI: not overbought
-    new UnderIndicatorRule(rsi, series.numFactory().numOf(70)),
-    // Price: above SMA (uptrend)
-    new OverIndicatorRule(close, sma)
-);
+public Num calculateStopLevel(ElliottScenarioSet scenarioSet, boolean conservative) {
+    InvalidationMode mode = conservative 
+        ? InvalidationMode.CONSERVATIVE 
+        : InvalidationMode.PRIMARY;
+    
+    ElliottInvalidationLevelIndicator invalidation = 
+        new ElliottInvalidationLevelIndicator(scenarioIndicator, mode);
+    
+    return invalidation.getValue(scenarioSet.barIndex());
+}
 ```
 
-### Strategy with Wave Invalidation
+### Multi-Scenario Trading Logic
 
 ```java
-ElliottInvalidationIndicator invalidation = new ElliottInvalidationIndicator(phase);
-
-Rule exitRule = new OrRule(
-    // Normal exit: Wave 5 complete
-    new Rule() {
-        @Override
-        public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-            return phase.isImpulseConfirmed(index);
-        }
-    },
-    // Emergency exit: wave invalidated
-    new Rule() {
-        @Override
-        public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-            return invalidation.getValue(index);
-        }
-    }
-);
+// Trade when primary and alternatives agree on direction
+public boolean shouldEnterLong(int index) {
+    ElliottScenarioSet set = facade.scenarios().getValue(index);
+    
+    // Require at least 2 scenarios
+    if (set.size() < 2) return false;
+    
+    // Check if primary is bullish
+    Optional<ElliottScenario> primary = set.primary();
+    if (primary.isEmpty() || !primary.get().isBullish()) return false;
+    
+    // Check if majority of alternatives also bullish
+    List<ElliottScenario> alternatives = set.alternatives();
+    long bullishAlternatives = alternatives.stream()
+        .filter(ElliottScenario::isBullish)
+        .count();
+    
+    double bullishRatio = (double)(bullishAlternatives + 1) / set.size();
+    
+    return bullishRatio >= 0.6; // 60% of scenarios are bullish
+}
 ```
-
----
-
-## Additional Resources
-
-- **Elliott Wave Theory**: Study the foundational principles from Elliott's original work and modern interpretations
-- **Fibonacci Analysis**: Understand Fibonacci retracements, extensions, and projections
-- **Swing Detection**: See [Trendlines & Swing Points](Trendlines-and-Swing-Points.md) for detailed swing detection documentation
-- **Strategy Development**: Review [Trading Strategies](Trading-strategies.md) for rule composition patterns
-- **Backtesting**: Use [Backtesting](Backtesting.md) guide to validate Elliott Wave strategies
 
 ---
 
 ## Summary
 
-ta4j's Elliott Wave indicators provide a powerful toolkit for wave-based technical analysis. The recommended approach is to use `ElliottWaveFacade` for easy setup:
+ta4j's Elliott Wave indicators provide a sophisticated toolkit for wave-based technical analysis that acknowledges the inherent uncertainty in wave counting:
+
+### Quick Start with Scenarios
 
 ```java
-// Quick start with ElliottWaveFacade
+// Create facade
 ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
+int index = series.getEndIndex();
 
-// Access all indicators through the facade
-ElliottPhase phase = facade.phase().getValue(index);
-boolean isConfluent = facade.confluence().isConfluent(index);
-boolean isInvalidated = facade.invalidation().getValue(index);
+// Get primary interpretation with confidence
+Optional<ElliottScenario> primary = facade.primaryScenario(index);
+if (primary.isPresent()) {
+    ElliottScenario p = primary.get();
+    System.out.println("Phase: " + p.currentPhase());
+    System.out.println("Confidence: " + String.format("%.1f%%", p.confidence().asPercentage()));
+    System.out.println("Invalidation: " + p.invalidationPrice());
+    System.out.println("Target: " + p.primaryTarget());
+}
+
+// Check for consensus
+if (facade.hasScenarioConsensus(index)) {
+    System.out.println("Strong consensus: " + facade.scenarioConsensus(index));
+}
+
+// Get alternatives
+List<ElliottScenario> alts = facade.alternativeScenarios(index);
+System.out.println("Alternative counts: " + alts.size());
 ```
 
-Start with basic swing detection and phase identification, then gradually incorporate ratio analysis, confluence, and advanced features as you become more comfortable with the system. Remember that Elliott Wave analysis is as much art as science—use the indicators as tools to support your analysis, not as absolute truth.
+### Key Takeaways
 
-The modular design allows you to build custom workflows that match your trading style, whether you're a pure Elliott Wave trader or combining waves with other technical indicators. All data classes provide `isValid()` methods to ensure safe value access, and the `Num.isFinite()` utility helps with general numeric validation.
+1. **Embrace Uncertainty**: Multiple valid wave counts are normal, not a problem
+2. **Use Confidence Wisely**: High confidence means good fit to rules, not prediction accuracy
+3. **Plan for Alternatives**: Know what would change your view before entering trades
+4. **Set Invalidation Stops**: Use explicit invalidation levels for disciplined risk management
+5. **Watch for Consensus**: When scenarios agree, conviction can be higher
 
+The modular design allows you to build custom workflows that match your trading style, whether you prefer a single deterministic count or a full scenario-based approach with confidence weighting.
