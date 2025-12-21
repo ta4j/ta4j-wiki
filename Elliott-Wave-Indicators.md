@@ -138,6 +138,33 @@ Num amplitude = swing.amplitude();      // Absolute price displacement
 int barCount = swing.length();          // Number of bars covered
 ```
 
+#### ElliottSwingMetadata
+
+Utility class providing a validated snapshot of swing statistics:
+
+```java
+List<ElliottSwing> swings = swingIndicator.getValue(index);
+ElliottSwingMetadata metadata = ElliottSwingMetadata.of(swings, series.numFactory());
+
+// Check validity
+if (metadata.isValid()) {
+    // Access swing statistics
+    int count = metadata.size();
+    Num highest = metadata.highestPrice();  // Highest price across all swings
+    Num lowest = metadata.lowestPrice();    // Lowest price across all swings
+    
+    // Access swing subsets
+    List<ElliottSwing> first5 = metadata.leading(5);      // First 5 swings
+    List<ElliottSwing> last3 = metadata.trailing(3);      // Last 3 swings
+    List<ElliottSwing> middle = metadata.subList(2, 5);   // Swings 2-4
+    
+    // Access individual swings
+    ElliottSwing first = metadata.swing(0);
+}
+```
+
+`ElliottSwingMetadata` validates that all swings contain valid (non-null, non-NaN) prices and provides convenient methods for accessing swing subsets and statistics.
+
 #### ElliottPhase
 
 Enumeration of wave phases with helper methods:
@@ -283,6 +310,10 @@ ElliottRatio ratio = facade.ratio().getValue(index);
 ElliottChannel channel = facade.channel().getValue(index);
 boolean confluent = facade.confluence().isConfluent(index);
 
+// Wave counting
+int waveCount = facade.waveCount().getValue(index);              // All swings
+int filteredCount = facade.filteredWaveCount().getValue(index);  // Filtered (if compressor configured)
+
 // Scenario-based analysis
 Optional<ElliottScenario> primary = facade.primaryScenario(index);
 List<ElliottScenario> alternatives = facade.alternativeScenarios(index);
@@ -291,6 +322,11 @@ String summary = facade.scenarioSummary(index);  // Human-readable summary
 // Price projections and invalidation
 Num projection = facade.projection().getValue(index);
 Num invalidationPrice = facade.invalidationLevel().getValue(index);
+
+// Consensus and confidence
+boolean hasConsensus = facade.hasScenarioConsensus(index);
+ElliottPhase consensusPhase = facade.scenarioConsensus(index);
+Num confidence = facade.confidenceForPhase(index, ElliottPhase.WAVE3);
 ```
 
 ### Factory Methods
@@ -310,6 +346,38 @@ ElliottWaveFacade facade = ElliottWaveFacade.zigZag(series, ElliottDegree.INTERM
 // From custom swing indicator
 ElliottWaveFacade facade = ElliottWaveFacade.from(customSwingIndicator, closePriceIndicator);
 ```
+
+All factory methods support optional custom configuration:
+
+```java
+// Custom Fibonacci tolerance and swing compressor
+Num customTolerance = series.numFactory().numOf(0.25);
+ElliottSwingCompressor compressor = new ElliottSwingCompressor(series); // 1% of price, 2 bars minimum
+
+// Fractal with custom configuration
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(
+    series, 5, ElliottDegree.INTERMEDIATE, 
+    Optional.of(customTolerance), 
+    Optional.of(compressor)
+);
+
+// ZigZag with custom configuration
+ElliottWaveFacade facade = ElliottWaveFacade.zigZag(
+    series, ElliottDegree.INTERMEDIATE,
+    Optional.of(customTolerance),
+    Optional.of(compressor)
+);
+
+// From custom swing indicator with configuration
+ElliottWaveFacade facade = ElliottWaveFacade.from(
+    customSwingIndicator, 
+    closePriceIndicator,
+    Optional.of(customTolerance),
+    Optional.of(compressor)
+);
+```
+
+When a custom Fibonacci tolerance is provided, the phase indicator uses a custom `ElliottFibonacciValidator` with that tolerance instead of the default (0.05). When a compressor is provided, `filteredWaveCount()` uses it to filter swings before counting; otherwise, `filteredWaveCount()` returns the same as `waveCount()`.
 
 ---
 
@@ -421,14 +489,24 @@ Num target = scenario.primaryTarget();           // Primary Fibonacci target
 List<Num> targets = scenario.fibonacciTargets(); // All calculated targets
 
 // Direction
-boolean bullish = scenario.isBullish();        // Based on first wave direction
-boolean bearish = scenario.isBearish();
+boolean hasDirection = scenario.hasKnownDirection(); // Check if direction is known
+if (hasDirection) {
+    boolean bullish = scenario.isBullish();        // Based on first wave direction
+    boolean bearish = scenario.isBearish();
+}
 
 // Check if price would invalidate this scenario
 if (scenario.isInvalidatedBy(currentPrice)) {
     System.out.println("This wave count is no longer valid");
 }
+
+// Check if current phase expects completion soon
+if (scenario.expectsCompletion()) {
+    System.out.println("Wave structure approaching completion");
+}
 ```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+read_file
 
 ### Scenario Types
 
@@ -636,11 +714,17 @@ if (Num.isValid(primaryTarget)) {
     System.out.println("Primary target: " + primaryTarget);
 }
 
-// Get all Fibonacci targets
+// Get all Fibonacci targets for the primary scenario
 List<Num> allTargets = projection.allTargets(index);
 for (Num target : allTargets) {
     System.out.println("  Target: " + target);
 }
+
+// Calculate targets for a specific swing sequence and phase
+ElliottScenario scenario = scenarioSet.primary().get();
+List<ElliottSwing> swings = scenario.swings();
+ElliottPhase phase = scenario.currentPhase();
+List<Num> customTargets = projection.calculateTargets(swings, phase);
 ```
 
 ### Understanding Projection Logic
@@ -756,6 +840,8 @@ if (boolInvalidation.getValue(index)) {
 }
 ```
 
+The `ElliottInvalidationIndicator` checks if the current wave structure violates Elliott Wave rules (e.g., Wave 2 retracing beyond Wave 1 start, Wave 4 overlapping with Wave 1, etc.).
+
 ---
 
 ## Intermediate Usage Patterns
@@ -802,26 +888,52 @@ ElliottSwingIndicator swings = new ElliottSwingIndicator(close, 3, 3, ElliottDeg
 
 // Create facade from custom swing indicator
 ElliottWaveFacade facade = ElliottWaveFacade.from(swings, close);
+
+// Or with custom configuration
+Num fibTolerance = series.numFactory().numOf(0.25);
+ElliottSwingCompressor compressor = new ElliottSwingCompressor(series);
+ElliottWaveFacade facade = ElliottWaveFacade.from(
+    swings, 
+    close, 
+    Optional.of(fibTolerance), 
+    Optional.of(compressor)
+);
 ```
 
 ### Swing Compression
 
-Filter out small swings before analysis:
+Filter out small swings before analysis using `ElliottSwingCompressor`:
 
 ```java
 ElliottSwingIndicator rawSwings = new ElliottSwingIndicator(series, 3, ElliottDegree.MINOR);
 
-// Create compressor that filters small moves
+// Option 1: No filtering (all swings retained)
+ElliottSwingCompressor noFilter = new ElliottSwingCompressor();
+
+// Option 2: Absolute thresholds (explicit price and bar length)
 Num minimumAmplitude = series.numFactory().numOf(5.0);  // Minimum price move
 int minimumLength = 2;  // Minimum bars between pivots
 ElliottSwingCompressor compressor = new ElliottSwingCompressor(minimumAmplitude, minimumLength);
+
+// Option 3: Relative price-based (percentage of current price)
+ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+ElliottSwingCompressor relativeCompressor = new ElliottSwingCompressor(
+    closePrice, 
+    0.01,  // 1% of current price
+    2      // Minimum 2 bars
+);
+
+// Option 4: Convenience constructor (1% of current price, 2 bars minimum)
+ElliottSwingCompressor defaultCompressor = new ElliottSwingCompressor(series);
 
 // Use compressor with wave count indicator
 ElliottWaveCountIndicator counter = new ElliottWaveCountIndicator(rawSwings, compressor);
 
 // Get filtered swings
-List<ElliottSwing> compressed = counter.getSwings(index);
+List<ElliottSwing> compressed = compressor.compress(rawSwings.getValue(index));
 ```
+
+The compressor filters swings that don't meet both the minimum amplitude and minimum bar length thresholds. This is useful for removing noise and focusing on significant price movements.
 
 ### Wave Degree Navigation
 
@@ -1032,6 +1144,9 @@ Rule exitRule = new Rule() {
         return wave5Complete || invalidated;
     }
 };
+```
+
+Note: The `expectsCompletion()` method on `ElliottScenario` indicates whether the current phase is expected to complete soon (e.g., Wave 5 or Corrective C).
 
 Strategy strategy = new BaseStrategy(entryRule, exitRule);
 ```
