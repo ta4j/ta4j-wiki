@@ -8,6 +8,8 @@ A comprehensive guide to using ta4j's Elliott Wave analysis tools, from basic co
 2. [Overview of ta4j's Elliott Wave Implementation](#overview-of-ta4js-elliott-wave-implementation)
 3. [Core Components](#core-components)
 4. [Getting Started](#getting-started)
+   - [Example Classes](#example-classes)
+   - [Using ElliottWaveFacade (Recommended)](#using-elliottwavefacade-recommended)
 5. [Scenario-Based Analysis](#scenario-based-analysis)
 6. [Confidence Scoring](#confidence-scoring)
 7. [Working with Alternative Wave Counts](#working-with-alternative-wave-counts)
@@ -291,6 +293,73 @@ if (confluence.isConfluent(index)) {
 ---
 
 ## Getting Started
+
+### Example Classes
+
+ta4j provides several example classes that demonstrate Elliott Wave analysis with real market data:
+
+#### ElliottWaveAnalysis
+
+The main example class that demonstrates comprehensive Elliott Wave analysis with chart visualization. It can be used in two ways:
+
+**Command-line usage:**
+```bash
+# Load default dataset (ossified BTC-USD data)
+java ElliottWaveAnalysis
+
+# Load from external data source (4-6 arguments)
+java ElliottWaveAnalysis [dataSource] [ticker] [barDuration] [startEpoch] [endEpoch]
+java ElliottWaveAnalysis [dataSource] [ticker] [barDuration] [degree] [startEpoch] [endEpoch]
+```
+
+**Arguments:**
+- `dataSource`: "YahooFinance" or "Coinbase" (case-insensitive)
+- `ticker`: Symbol (e.g., "BTC-USD", "AAPL", "^GSPC")
+- `barDuration`: ISO-8601 duration (e.g., "PT1D" for daily, "PT4H" for 4-hour, "PT5M" for 5-minute)
+- `degree`: Elliott degree (optional; if omitted, auto-selected based on bar duration and count)
+- `startEpoch`: Start time as Unix epoch seconds
+- `endEpoch`: End time as Unix epoch seconds (optional, defaults to now)
+
+**Programmatic usage:**
+```java
+BarSeries series = // ... load your bar series
+ElliottWaveAnalysis analysis = new ElliottWaveAnalysis();
+analysis.analyze(series, ElliottDegree.PRIMARY, 0.25);
+```
+
+The `analyze()` method performs complete Elliott Wave analysis including:
+- Swing detection and wave counting
+- Phase identification (impulse and corrective waves)
+- Fibonacci ratio validation
+- Channel projections
+- Scenario-based analysis with confidence scoring
+- Chart visualization with wave pivot labels
+
+Charts are saved to `temp/charts/` and displayed if running in a non-headless environment.
+
+#### Asset-Specific Examples
+
+For quick analysis of specific assets, use the dedicated example classes:
+
+**BTCUSDElliottWaveAnalysis** - Bitcoin (BTC-USD) analysis using Coinbase data:
+```bash
+java BTCUSDElliottWaveAnalysis
+```
+Loads 365 days of daily Bitcoin data from Coinbase and performs analysis using the PRIMARY degree.
+
+**ETHUSDElliottWaveAnalysis** - Ethereum (ETH-USD) analysis using Coinbase data:
+```bash
+java ETHUSDElliottWaveAnalysis
+```
+Loads daily Ethereum data from Coinbase starting from a specific timestamp.
+
+**SP500ElliottWaveAnalysis** - S&P 500 Index (^GSPC) analysis using Yahoo Finance data:
+```bash
+java SP500ElliottWaveAnalysis
+```
+Loads 365 days of daily S&P 500 index data from Yahoo Finance with auto-selected degree.
+
+These example classes demonstrate simple usage patterns and can be modified to analyze different time periods or use different degrees.
 
 ### Using ElliottWaveFacade (Recommended)
 
@@ -956,6 +1025,39 @@ for (ElliottDegree d : ElliottDegree.values()) {
 }
 ```
 
+### Auto-Selecting Wave Degrees
+
+The `ElliottDegree` class provides recommendations based on bar duration and history length:
+
+```java
+Duration barDuration = Duration.ofDays(1);  // Daily bars
+int barCount = 365;  // One year of data
+
+// Get recommended degrees (ordered by best fit)
+List<ElliottDegree> recommendations = ElliottDegree.getRecommendedDegrees(barDuration, barCount);
+
+// Use the first recommendation (best fit)
+ElliottDegree selected = recommendations.get(0);
+
+// Or iterate through all recommendations
+for (ElliottDegree degree : recommendations) {
+    System.out.println("Recommended: " + degree);
+}
+```
+
+The recommendation system considers:
+- **Bar duration**: Filters out degrees that are too fine for the timeframe
+- **History length**: Matches total history (duration × count) to typical ranges for each degree
+- **Score ranking**: Returns degrees ordered by how well they fit the available data
+
+**Typical ranges (rule of thumb):**
+- Daily bars: PRIMARY through MINUTE degrees
+- Weekly bars: CYCLE, PRIMARY, INTERMEDIATE degrees
+- Hourly bars: INTERMEDIATE through MINUETTE degrees
+- 5-15 minute bars: MINOR through SUB_MINUETTE degrees
+
+The `ElliottWaveAnalysis` class automatically uses degree recommendations when no explicit degree is provided via command-line arguments.
+
 ---
 
 ## Advanced Topics
@@ -1241,6 +1343,26 @@ List<ElliottScenario> alts = facade.alternativeScenarios(index);
 System.out.println("Alternative counts: " + alts.size());
 ```
 
+### Quick Start with Example Classes
+
+For the fastest way to see Elliott Wave analysis in action, use the provided example classes:
+
+```bash
+# Analyze Bitcoin with default settings
+java BTCUSDElliottWaveAnalysis
+
+# Analyze Ethereum
+java ETHUSDElliottWaveAnalysis
+
+# Analyze S&P 500
+java SP500ElliottWaveAnalysis
+
+# Custom analysis with command-line arguments
+java ElliottWaveAnalysis Coinbase BTC-USD PT1D PRIMARY 1686960000 1697040000
+```
+
+All examples generate charts with wave pivot labels, scenario analysis, and confidence scores. Charts are saved to `temp/charts/` and displayed if running in a non-headless environment.
+
 ### Key Takeaways
 
 1. **Embrace Uncertainty**: Multiple valid wave counts are normal, not a problem
@@ -1248,5 +1370,6 @@ System.out.println("Alternative counts: " + alts.size());
 3. **Plan for Alternatives**: Know what would change your view before entering trades
 4. **Set Invalidation Stops**: Use explicit invalidation levels for disciplined risk management
 5. **Watch for Consensus**: When scenarios agree, conviction can be higher
+6. **Leverage Examples**: Start with the provided example classes to understand usage patterns
 
 The modular design allows you to build custom workflows that match your trading style, whether you prefer a single deterministic count or a full scenario-based approach with confidence weighting.

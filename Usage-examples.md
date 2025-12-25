@@ -66,6 +66,13 @@ Strategy examples that use charting:
 - **[TradeCost](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/TradeCost.java)** – study how transaction/holding costs impact returns.
 - **[StrategyExecutionLogging](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/logging/StrategyExecutionLogging.java)** – trace rule evaluations line-by-line.
 
+## Elliott Wave analysis
+
+- **[ElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveAnalysis.java)** – comprehensive Elliott Wave analysis with scenario-based confidence scoring, chart visualization, and wave pivot labels. Supports command-line arguments for loading data from Yahoo Finance or Coinbase, or uses a default dataset if no arguments provided. See [Elliott Wave Indicators](Elliott-Wave-Indicators.md) for detailed documentation.
+- **[BTCUSDElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/BTCUSDElliottWaveAnalysis.java)** – example Elliott Wave analysis for Bitcoin (BTC-USD) using Coinbase data with PRIMARY degree.
+- **[ETHUSDElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ETHUSDElliottWaveAnalysis.java)** – example Elliott Wave analysis for Ethereum (ETH-USD) using Coinbase data.
+- **[SP500ElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/SP500ElliottWaveAnalysis.java)** – example Elliott Wave analysis for S&P 500 Index (^GSPC) using Yahoo Finance data.
+
 ## Bots & live trading
 
 - **[TradingBotOnMovingBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingBarSeries.java)** – continuously updates a moving bar series and reacts to strategy signals.
