@@ -384,7 +384,7 @@ int waveCount = facade.waveCount().getValue(index);              // All swings
 int filteredCount = facade.filteredWaveCount().getValue(index);  // Filtered (if compressor configured)
 
 // Scenario-based analysis
-Optional<ElliottScenario> primary = facade.primaryScenario(index);
+Optional<ElliottScenario> baseCase = facade.primaryScenario(index);
 List<ElliottScenario> alternatives = facade.alternativeScenarios(index);
 String summary = facade.scenarioSummary(index);  // Human-readable summary
 
@@ -466,13 +466,13 @@ if (scenarioSet.isEmpty()) {
     return;
 }
 
-// Get the primary (highest confidence) scenario
-Optional<ElliottScenario> primary = scenarioSet.primary();
+// Get the base case (highest confidence) scenario
+Optional<ElliottScenario> baseCase = scenarioSet.base();
 
-// Get all alternatives (excluding primary)
+// Get all alternatives (excluding base case)
 List<ElliottScenario> alternatives = scenarioSet.alternatives();
 
-// Get all scenarios including primary
+// Get all scenarios including base case
 List<ElliottScenario> all = scenarioSet.all();
 
 // Get scenario counts
@@ -518,13 +518,13 @@ if (consensus != ElliottPhase.NONE) {
 // Check for strong consensus
 if (scenarioSet.hasStrongConsensus()) {
     // Either single high-confidence scenario or large confidence spread
-    System.out.println("High conviction in primary scenario");
+    System.out.println("High conviction in base case scenario");
 }
 
-// Calculate confidence spread between primary and secondary
+// Calculate confidence spread between base case and secondary
 double spread = scenarioSet.confidenceSpread();
 if (spread > 0.3) {
-    System.out.println("Primary scenario is significantly more confident");
+    System.out.println("Base case scenario is significantly more confident");
 }
 ```
 
@@ -533,7 +533,7 @@ if (spread > 0.3) {
 Each scenario contains comprehensive information about a wave interpretation:
 
 ```java
-ElliottScenario scenario = primary.get();
+ElliottScenario scenario = baseCase.get();
 
 // Identity and classification
 String id = scenario.id();                    // Unique identifier
@@ -695,7 +695,7 @@ In practice, you'll often encounter situations where price action supports multi
 
 The scenario-based system helps you:
 1. See all plausible interpretations at once
-2. Understand which interpretation is most likely (primary)
+2. Understand which interpretation is most likely (base case)
 3. Plan for alternative outcomes
 4. Know when the market will resolve the ambiguity (via invalidation levels)
 
@@ -708,18 +708,18 @@ int index = series.getEndIndex();
 ElliottScenarioSet scenarioSet = facade.scenarios().getValue(index);
 
 System.out.println(scenarioSet.summary());
-// Example output: "3 scenario(s): Primary=WAVE3 (72.5%), 2 alternative(s), consensus=WAVE3"
+// Example output: "3 scenario(s): Base case=WAVE3 (72.5%), 2 alternative(s), consensus=WAVE3"
 
-Optional<ElliottScenario> primary = scenarioSet.primary();
-if (primary.isPresent()) {
-    ElliottScenario p = primary.get();
+Optional<ElliottScenario> baseCase = scenarioSet.base();
+if (baseCase.isPresent()) {
+    ElliottScenario bc = baseCase.get();
     
-    System.out.println("Primary interpretation:");
-    System.out.println("  Phase: " + p.currentPhase());
-    System.out.println("  Type: " + p.type());
-    System.out.println("  Confidence: " + String.format("%.1f%%", p.confidence().asPercentage()));
-    System.out.println("  Invalidation: " + p.invalidationPrice());
-    System.out.println("  Primary target: " + p.primaryTarget());
+    System.out.println("Base case interpretation:");
+    System.out.println("  Phase: " + bc.currentPhase());
+    System.out.println("  Type: " + bc.type());
+    System.out.println("  Confidence: " + String.format("%.1f%%", bc.confidence().asPercentage()));
+    System.out.println("  Invalidation: " + bc.invalidationPrice());
+    System.out.println("  Primary target: " + bc.primaryTarget());
 }
 
 // Consider alternatives
@@ -753,14 +753,14 @@ ElliottScenarioIndicator scenarios = facade.scenarios();
 for (int i = 0; i < series.getBarCount(); i++) {
     ElliottScenarioSet set = scenarios.getValue(i);
     
-    Optional<ElliottScenario> primary = set.primary();
-    if (primary.isPresent()) {
-        ElliottScenario p = primary.get();
+    Optional<ElliottScenario> baseCase = set.base();
+    if (baseCase.isPresent()) {
+        ElliottScenario bc = baseCase.get();
         
         System.out.println(String.format("Bar %d: %s (%.1f%%) - %d alternatives",
             i,
-            p.currentPhase(),
-            p.confidence().asPercentage(),
+            bc.currentPhase(),
+            bc.confidence().asPercentage(),
             set.alternatives().size()));
     }
 }
@@ -772,25 +772,25 @@ for (int i = 0; i < series.getBarCount(); i++) {
 
 ### Using ElliottProjectionIndicator
 
-The projection indicator calculates Fibonacci-based price targets for the primary scenario:
+The projection indicator calculates Fibonacci-based price targets for the base case scenario:
 
 ```java
 ElliottProjectionIndicator projection = facade.projection();
 
-// Get primary target for current bar
-Num primaryTarget = projection.getValue(index);
-if (Num.isValid(primaryTarget)) {
-    System.out.println("Primary target: " + primaryTarget);
+// Get base case target for current bar
+Num baseCaseTarget = projection.getValue(index);
+if (Num.isValid(baseCaseTarget)) {
+    System.out.println("Base case target: " + baseCaseTarget);
 }
 
-// Get all Fibonacci targets for the primary scenario
+// Get all Fibonacci targets for the base case scenario
 List<Num> allTargets = projection.allTargets(index);
 for (Num target : allTargets) {
     System.out.println("  Target: " + target);
 }
 
 // Calculate targets for a specific swing sequence and phase
-ElliottScenario scenario = scenarioSet.primary().get();
+ElliottScenario scenario = scenarioSet.base().get();
 List<ElliottSwing> swings = scenario.swings();
 ElliottPhase phase = scenario.currentPhase();
 List<Num> customTargets = projection.calculateTargets(swings, phase);
@@ -821,7 +821,7 @@ You can also calculate projections for any swing sequence and phase:
 ElliottProjectionIndicator projection = facade.projection();
 
 // Get swings from a specific scenario
-ElliottScenario scenario = scenarioSet.primary().get();
+ElliottScenario scenario = scenarioSet.base().get();
 List<ElliottSwing> swings = scenario.swings();
 ElliottPhase phase = scenario.currentPhase();
 
@@ -846,11 +846,11 @@ Every Elliott Wave count has specific price levels that would invalidate it. Kno
 ```java
 ElliottInvalidationLevelIndicator invalidation = facade.invalidationLevel();
 
-// Get invalidation price for primary scenario
+// Get invalidation price for base case scenario
 Num invalidationPrice = invalidation.getValue(index);
 
 if (Num.isValid(invalidationPrice)) {
-    System.out.println("Primary invalidation at: " + invalidationPrice);
+    System.out.println("Base case invalidation at: " + invalidationPrice);
 }
 ```
 
@@ -861,7 +861,7 @@ The indicator supports three modes for different risk tolerances:
 ```java
 import org.ta4j.core.indicators.elliott.ElliottInvalidationLevelIndicator.InvalidationMode;
 
-// PRIMARY mode (default): Use primary scenario's invalidation
+// PRIMARY mode (default): Use base case scenario's invalidation
 ElliottInvalidationLevelIndicator primary = 
     new ElliottInvalidationLevelIndicator(scenarioIndicator, InvalidationMode.PRIMARY);
 
@@ -888,7 +888,7 @@ ElliottInvalidationLevelIndicator aggressive =
 ElliottInvalidationLevelIndicator invalidation = facade.invalidationLevel();
 Num currentPrice = series.getBar(index).getClosePrice();
 
-// Check if current price invalidates the primary scenario
+// Check if current price invalidates the base case scenario
 boolean isInvalid = invalidation.isInvalidated(index, currentPrice);
 
 // Get distance from current price to invalidation
@@ -931,16 +931,16 @@ ElliottWaveFacade intermediateFacade =
 int index = series.getEndIndex();
 
 // Get interpretations at both degrees
-Optional<ElliottScenario> primaryScenario = primaryFacade.primaryScenario(index);
-Optional<ElliottScenario> intermediateScenario = intermediateFacade.primaryScenario(index);
+Optional<ElliottScenario> primaryBaseCase = primaryFacade.primaryScenario(index);
+Optional<ElliottScenario> intermediateBaseCase = intermediateFacade.primaryScenario(index);
 
 // Trade when degrees align
-if (primaryScenario.isPresent() && intermediateScenario.isPresent()) {
-    ElliottScenario primary = primaryScenario.get();
-    ElliottScenario intermediate = intermediateScenario.get();
+if (primaryBaseCase.isPresent() && intermediateBaseCase.isPresent()) {
+    ElliottScenario primaryBase = primaryBaseCase.get();
+    ElliottScenario intermediateBase = intermediateBaseCase.get();
     
-    if (primary.isBullish() && intermediate.currentPhase() == ElliottPhase.WAVE3) {
-        // Strong bullish alignment: wave 3 at intermediate degree within bullish primary
+    if (primaryBase.isBullish() && intermediateBase.currentPhase() == ElliottPhase.WAVE3) {
+        // Strong bullish alignment: wave 3 at intermediate degree within bullish base case
         System.out.println("Aligned bullish setup");
     }
 }
@@ -1094,11 +1094,11 @@ for (int i = 50; i < series.getBarCount(); i++) {
     // Track scenario changes
     if (i > 50) {
         ElliottScenarioSet previous = facade.scenarios().getValue(i - 1);
-        Optional<ElliottScenario> prevPrimary = previous.primary();
-        Optional<ElliottScenario> currPrimary = set.primary();
+        Optional<ElliottScenario> prevBaseCase = previous.base();
+        Optional<ElliottScenario> currBaseCase = set.base();
         
-        if (prevPrimary.isPresent() && currPrimary.isPresent()) {
-            if (prevPrimary.get().currentPhase() != currPrimary.get().currentPhase()) {
+        if (prevBaseCase.isPresent() && currBaseCase.isPresent()) {
+            if (prevBaseCase.get().currentPhase() != currBaseCase.get().currentPhase()) {
                 journal.append("  ** Phase change detected **\n");
             }
         }
@@ -1115,11 +1115,11 @@ ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.IN
 RSIIndicator rsi = new RSIIndicator(new ClosePriceIndicator(series), 14);
 
 int index = series.getEndIndex();
-Optional<ElliottScenario> primary = facade.primaryScenario(index);
+Optional<ElliottScenario> baseCase = facade.primaryScenario(index);
 Num rsiValue = rsi.getValue(index);
 
-if (primary.isPresent()) {
-    ElliottScenario scenario = primary.get();
+if (baseCase.isPresent()) {
+    ElliottScenario scenario = baseCase.get();
     
     // Wave 2 + oversold RSI = potential wave 3 entry
     if (scenario.currentPhase() == ElliottPhase.WAVE2 
@@ -1189,8 +1189,8 @@ if (Num.isValid(price)) {
 }
 
 // Check Optional scenarios
-Optional<ElliottScenario> primary = facade.primaryScenario(index);
-if (primary.isPresent() && primary.get().isHighConfidence()) {
+Optional<ElliottScenario> baseCase = facade.primaryScenario(index);
+if (baseCase.isPresent() && baseCase.get().isHighConfidence()) {
     // Safe to trade
 }
 
@@ -1220,10 +1220,10 @@ ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.IN
 Rule entryRule = new Rule() {
     @Override
     public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-        Optional<ElliottScenario> primary = facade.primaryScenario(index);
-        return primary.isPresent()
-            && primary.get().currentPhase() == ElliottPhase.WAVE3
-            && primary.get().isHighConfidence()
+        Optional<ElliottScenario> baseCase = facade.primaryScenario(index);
+        return baseCase.isPresent()
+            && baseCase.get().currentPhase() == ElliottPhase.WAVE3
+            && baseCase.get().isHighConfidence()
             && facade.hasScenarioConsensus(index);
     }
 };
@@ -1232,10 +1232,10 @@ Rule entryRule = new Rule() {
 Rule exitRule = new Rule() {
     @Override
     public boolean isSatisfied(int index, TradingRecord tradingRecord) {
-        Optional<ElliottScenario> primary = facade.primaryScenario(index);
-        if (primary.isEmpty()) return true;  // Exit if no scenarios
+        Optional<ElliottScenario> baseCase = facade.primaryScenario(index);
+        if (baseCase.isEmpty()) return true;  // Exit if no scenarios
         
-        ElliottScenario scenario = primary.get();
+        ElliottScenario scenario = baseCase.get();
         Num currentPrice = series.getBar(index).getClosePrice();
         
         // Exit conditions
@@ -1294,9 +1294,9 @@ public boolean shouldEnterLong(int index) {
     // Require at least 2 scenarios
     if (set.size() < 2) return false;
     
-    // Check if primary is bullish
-    Optional<ElliottScenario> primary = set.primary();
-    if (primary.isEmpty() || !primary.get().isBullish()) return false;
+    // Check if base case is bullish
+    Optional<ElliottScenario> baseCase = set.base();
+    if (baseCase.isEmpty() || !baseCase.get().isBullish()) return false;
     
     // Check if majority of alternatives also bullish
     List<ElliottScenario> alternatives = set.alternatives();
@@ -1323,10 +1323,10 @@ ta4j's Elliott Wave indicators provide a sophisticated toolkit for wave-based te
 ElliottWaveFacade facade = ElliottWaveFacade.fractal(series, 5, ElliottDegree.INTERMEDIATE);
 int index = series.getEndIndex();
 
-// Get primary interpretation with confidence
-Optional<ElliottScenario> primary = facade.primaryScenario(index);
-if (primary.isPresent()) {
-    ElliottScenario p = primary.get();
+// Get base case interpretation with confidence
+Optional<ElliottScenario> baseCase = facade.primaryScenario(index);
+if (baseCase.isPresent()) {
+    ElliottScenario bc = baseCase.get();
     System.out.println("Phase: " + p.currentPhase());
     System.out.println("Confidence: " + String.format("%.1f%%", p.confidence().asPercentage()));
     System.out.println("Invalidation: " + p.invalidationPrice());
