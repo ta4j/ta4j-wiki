@@ -30,6 +30,7 @@
 - [Found a Bug?](Found-a-bug.md)
 - [Roadmap & Tasks](Roadmap-and-Tasks.md)
 - [Branching Model](Branching-model.md)
+- [Release Process](Release-process.md)
 - [Alternative Libraries](Alternative-libraries.md)
 - [Related Projects](Related-projects.md)
 - [XLS Testing](XLS-Testing.md)
