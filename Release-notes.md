@@ -1,6 +1,45 @@
 Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangelog.com/en/1.0.0/) from version 0.9 onwards.
 
 
+## 0.22.2 (Unreleased)
+
+### Added
+- **Concurrent real-time bar series pipeline**: Introduced core support for concurrent, streaming bar ingestion with a dedicated series (`ConcurrentBarSeries`/`ConcurrentBarSeriesBuilder`), realtime bar model (`RealtimeBar`/`BaseRealtimeBar`), and streaming-bar ingestion helpers to enable candle reconciliation and side/liquidity-aware trade aggregation.
+  - `ConcurrentBarSeries`: Thread-safe `BarSeries` implementation using `ReentrantReadWriteLock` for concurrent read/write access. Essential for live trading systems where one thread ingests market data while another evaluates strategies.
+  - `ConcurrentBarSeriesBuilder`: Fluent builder API for creating `ConcurrentBarSeries` instances with configurable `NumFactory`, `BarBuilderFactory`, and maximum bar count.
+  - `RealtimeBar` interface and `BaseRealtimeBar` implementation: Extends `Bar` with optional side (buy/sell) and liquidity (maker/taker) breakdowns for market microstructure analysis.
+  - Streaming trade ingestion: `ingestTrade()` methods automatically aggregate trades into bars using the configured `BarBuilder`, handling bar rollovers seamlessly.
+  - Streaming bar ingestion: `ingestStreamingBar()` and `ingestStreamingBars()` methods for ingesting pre-aggregated bars (e.g., from WebSocket candle feeds) with automatic handling of appends, replacements, and historical corrections.
+  - `StreamingBarIngestResult`: Record describing how a streaming bar was applied (APPENDED, REPLACED_LAST, or REPLACED_HISTORICAL) and the affected index.
+- **Enhanced bar builders with trade ingestion**: All bar builder implementations (`TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, `AmountBarBuilder`) now support trade-level ingestion with optional side and liquidity classification.
+- **Remainder carry-over policy**: Added `RemainderCarryOverPolicy` for volume/amount bars to control whether side/liquidity splits follow threshold rollovers, providing fine-grained control over bar aggregation behavior.
+- **Bar replacement API**: Added `replaceBar()` method to `BaseBarSeries` for bar replacement without changing indices, useful for data reconciliation workflows.
+
+### Changed
+- **TimeBarBuilder**: Enhanced with trade ingestion logic, time alignment validation, and `RealtimeBar` support. Now omits empty bars for missing periods, improving gap handling behavior.
+- **BaseBarSeriesBuilder**: Deprecated `setConstrained()` in favor of deriving constrained mode from max-bar-count configuration. When `withMaxBarCount()` is called, the series automatically becomes unconstrained to allow removals.
+- **BarBuilder implementations**: All bar builders (`TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, `AmountBarBuilder`) now support trade ingestion with side/liquidity metadata and can emit `RealtimeBar` instances when side or liquidity data is available.
+- **Factory selection from bars**: Derive the `NumFactory` from the first available bar price instead of assuming a specific price is always present, improving robustness when working with incomplete data.
+- **Release workflow improvements**: Major enhancements to the automated release process for better maintainability and reliability:
+  - **Two-phase release workflows**: Split release process into `prepare-release.yml` and `publish-release.yml` to separate release preparation from tagging and deployment, ensuring release commits land on `master` before tags are created.
+  - **Release workflow branching**: Auto-merge the release PR by default, with optional direct push to the default branch when `RELEASE_DIRECT_PUSH=true` for emergency scenarios.
+  - **Release health workflow**: Added scheduled checks for tag reachability, snapshot version drift, stale release PRs, and missing release notes, with summaries posted to GitHub Discussions.
+  - **Release workflow notifications**: Post GitHub Discussion updates for release-scheduler and release runs with decision summaries, run mode, and timestamps for better auditability.
+  - **Release scheduler dispatch**: Route automated releases through `prepare-release.yml` and include the binary change count in the AI prompt, with deterministic no-release outputs for zero binary changes.
+  - **Release automation tokens**: Use `GH_TA4J_REPO_TOKEN` for release push operations when available, with fail-fast preflight checks for write permissions.
+  - **Release scheduler enablement**: Gate scheduled runs on `RELEASE_SCHEDULER_ENABLED` (defaults to disabled when unset) for controlled automation.
+  - **Release process documentation**: Overhauled `RELEASE_PROCESS.md` with clearer steps, rationale, and example scenarios for maintainers.
+- **Agent workflow**: Allow skipping the full build when the only changes are within `.github/workflows/`, `CHANGELOG.md`, or documentation-only files (e.g., `*.md`, `docs/`), improving CI efficiency.
+- **Workflow lint hook**: Added a repository `pre-push` hook to run `actionlint` on workflow changes, catching workflow expression and shell syntax errors early (see CONTRIBUTING.md for details).
+
+### Fixed
+- **TimeBarBuilder gap handling**: Preserve in-progress bars when trade ingestion skips across multiple time periods, preventing data loss during gaps.
+- **BarSeries MaxBarCount**: Fixed sub-series creation to preserve the original series max bars, instead of resetting it to default `Integer.MAX_VALUE`.
+- **ConcurrentBarSeries serialization**: Enhanced serialization to make bar builder factories serializable, reinitialize locks after deserialization, and ensure sub-series preserve max bar count and builder factory configuration.
+- **Release workflow notifications**: Fixed discussion comment posting in workflows (unescaped template literals).
+- **Release scheduler**: Gate release decisions on binary-impacting changes (`pom.xml` or `src/main/**`) so workflow-only updates no longer trigger releases.
+- **Release version validation**: Fixed version comparison in `prepare-release.yml` to properly validate that `nextVersion` is greater than `releaseVersion` using semantic version sorting, preventing invalid version sequences.
+
 ## 0.21.0 (Released November 29, 2025)
 
 ### Changed

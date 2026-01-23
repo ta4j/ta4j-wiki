@@ -32,7 +32,60 @@ TradingRecord tradingRecord = new BaseTradingRecord();
 
 ## Feeding the series
 
-Most exchanges stream trades or candles you can convert into ta4j bars:
+### Using ConcurrentBarSeries (recommended for live trading)
+
+For live trading with concurrent access, `ConcurrentBarSeries` provides thread-safe trade ingestion:
+
+#### Streaming trade ingestion
+
+The recommended approach is to use `ingestTrade()` methods, which automatically aggregate trades into bars:
+
+```java
+// Simple trade ingestion
+concurrentSeries.ingestTrade(
+    trade.getTime(),
+    trade.getVolume(),
+    trade.getPrice()
+);
+
+// With side and liquidity classification (for RealtimeBar analytics)
+concurrentSeries.ingestTrade(
+    trade.getTime(),
+    trade.getVolume(),
+    trade.getPrice(),
+    trade.getSide() == TradeSide.BUY ? RealtimeBar.Side.BUY : RealtimeBar.Side.SELL,
+    trade.getLiquidity() == TradeLiquidity.TAKER ? RealtimeBar.Liquidity.TAKER : RealtimeBar.Liquidity.MAKER
+);
+```
+
+The `ingestTrade()` methods automatically:
+- Aggregate trades into bars using the configured `BarBuilder`
+- Handle bar rollovers when thresholds are met
+- Update the latest bar in-place or append new bars
+- Maintain thread safety throughout
+
+#### Streaming bar ingestion
+
+For pre-aggregated candles (e.g., from WebSocket feeds):
+
+```java
+Bar candle = concurrentSeries.barBuilder()
+        .timePeriod(Duration.ofMinutes(1))
+        .endTime(candleData.closeTime())
+        .openPrice(candleData.open())
+        .highPrice(candleData.high())
+        .lowPrice(candleData.low())
+        .closePrice(candleData.close())
+        .volume(candleData.volume())
+        .build();
+
+StreamingBarIngestResult result = concurrentSeries.ingestStreamingBar(candle);
+// result.action() indicates: APPENDED, REPLACED_LAST, or REPLACED_HISTORICAL
+```
+
+### Using BaseBarSeries (single-threaded)
+
+For single-threaded scenarios, you can still use the traditional approach:
 
 ```java
 Bar bar = liveSeries.barBuilder()
@@ -60,6 +113,8 @@ liveSeries.addBar(replacementBar, true);
 
 ## Evaluating and executing
 
+### Single-threaded evaluation
+
 ```java
 int endIndex = liveSeries.getEndIndex();
 Num price = liveSeries.getBar(endIndex).getClosePrice();
@@ -73,11 +128,53 @@ if (strategy.shouldEnter(endIndex, tradingRecord)) {
 }
 ```
 
+### Multi-threaded evaluation with ConcurrentBarSeries
+
+With `ConcurrentBarSeries`, you can safely evaluate strategies in a separate thread while another thread ingests data:
+
+```java
+// Thread 1: Ingest trades (runs continuously)
+executorService.submit(() -> {
+    while (running) {
+        Trade trade = websocket.receiveTrade();
+        concurrentSeries.ingestTrade(
+            trade.getTime(),
+            trade.getVolume(),
+            trade.getPrice(),
+            trade.getSide(),
+            trade.getLiquidity()
+        );
+    }
+});
+
+// Thread 2: Evaluate strategy (runs on a schedule or trigger)
+executorService.submit(() -> {
+    while (running) {
+        int endIndex = concurrentSeries.getEndIndex();
+        if (endIndex < 0) continue; // No bars yet
+        
+        Num price = concurrentSeries.getBar(endIndex).getClosePrice();
+        
+        if (strategy.shouldEnter(endIndex, tradingRecord)) {
+            orderService.submitBuy(price, desiredQuantity());
+            tradingRecord.enter(endIndex, price, desiredQuantity());
+        } else if (strategy.shouldExit(endIndex, tradingRecord)) {
+            orderService.submitSell(price, openQuantity());
+            tradingRecord.exit(endIndex, price, openQuantity());
+        }
+        
+        Thread.sleep(100); // Or use a scheduled executor
+    }
+});
+```
+
 Guidelines:
 
 - Always check that `tradingRecord.isOpened()`/`isClosed()` lines up with your broker state. If an order is partially filled, delay updating the record until the fill completes.
 - Consider using ta4j’s `TradeExecutionModel` implementations to simulate your broker’s order semantics before going live.
 - Wrap the evaluation + execution block in robust error handling to avoid missing bars while recovering from exchange hiccups.
+- With `ConcurrentBarSeries`, multiple threads can safely read from the series concurrently (e.g., parallel strategy evaluation, indicator calculation).
+- Use `ConcurrentBarSeries` when you need thread-safe access; it provides read/write locks internally.
 
 ## Persistence & recovery
 

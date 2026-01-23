@@ -22,6 +22,17 @@ The SNAPSHOT version contains all fixes, enhancements and new features that have
 
 Please note that a SNAPSHOT version can be changed in any way at any time.
 
+## Release Process
+
+For maintainers, the release process is fully automated using GitHub Actions workflows. The process includes:
+
+- **Automated release scheduling**: AI-powered scheduler analyzes changes and determines version bumps (patch/minor/major)
+- **Two-phase release workflow**: `prepare-release.yml` prepares release commits and PRs, `publish-release.yml` handles tagging and deployment
+- **Release health monitoring**: Automated checks for tag reachability, version drift, and stale release PRs
+- **GitHub Release automation**: Automatic creation of GitHub Releases with artifacts and release notes
+
+For detailed information about the release process, see [RELEASE_PROCESS.md](https://github.com/ta4j/ta4j/blob/master/RELEASE_PROCESS.md) in the main repository.
+
 See also:
 * http://nvie.com/posts/a-successful-git-branching-model/
 * https://help.github.com/articles/about-pull-requests/

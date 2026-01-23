@@ -23,6 +23,12 @@ ta4j has been around for years and serves a large, diverse user base. Contributi
    mvn -B clean license:format formatter:format test
    ```
    Update `CHANGELOG.md` when you add, fix, or change behavior.
+   
+   **Optional: Enable workflow linting hook** - If you're modifying GitHub Actions workflows, enable the pre-push hook to catch syntax errors early:
+   ```bash
+   git config core.hooksPath .githooks
+   ```
+   Then install `actionlint` (e.g., `brew install actionlint`). The hook will automatically lint any modified files under `.github/workflows/` before pushing.
 4. **Open the PR** against `ta4j/master`. Draft PRs are encouraged for early feedback.
 
 ## Contribution priorities
