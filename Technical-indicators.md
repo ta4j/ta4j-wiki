@@ -2,6 +2,8 @@
 
 Technical indicators (a.k.a. *technicals*) transform price/volume data into structured signals that power rules and strategies. ta4j ships with 130+ indicators covering every major category plus building blocks for your own creations.
 
+**Exhaustive list:** For a full inventory of all indicators in ta4j-core and ta4j-examples (fully qualified names, class names, short descriptions, and usage notes), see [Indicators Inventory](Indicators-Inventory.md).
+
 | Category | Highlights | Docs |
 | --- | --- | --- |
 | Trend / Moving Averages | SMA, EMA, HMA, VIDYA, Jurik, Displaced variants, SuperTrend, Renko helpers. | [Moving Average Indicators](Moving-Average-Indicators.md) |

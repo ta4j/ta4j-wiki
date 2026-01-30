@@ -9,6 +9,7 @@
 - [Data Sources](Data-Sources.md)
 - [Num](Num.md)
 - [Technical Indicators](Technical-indicators.md)
+- [Indicators Inventory](Indicators-Inventory.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
 - [Elliott Wave Indicators](Elliott-Wave-Indicators.md)
