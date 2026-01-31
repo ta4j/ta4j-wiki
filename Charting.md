@@ -60,6 +60,19 @@ JFreeChart chart = chartWorkflow.builder()
     .toChart();
 ```
 
+#### Handling Gaps (Weekends & Holidays)
+
+By default, charts use real timestamps, so missing bars appear as gaps. Use `TimeAxisMode.BAR_INDEX` to compress the
+domain axis so bars are evenly spaced by index, which is useful for markets that do not trade 24/7.
+
+```java
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+JFreeChart chart = chartWorkflow.builder()
+    .withTimeAxisMode(TimeAxisMode.BAR_INDEX)
+    .withSeries(series)
+    .toChart();
+```
+
 #### Indicator-Based Chart
 
 Start with an indicator as the base:
@@ -645,4 +658,3 @@ For large datasets:
 - Consider using sub-charts instead of many overlays
 - Reduce the number of indicators displayed simultaneously
 - Use the `save()` method instead of `display()` for batch processing
-

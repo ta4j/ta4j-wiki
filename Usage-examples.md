@@ -42,6 +42,17 @@ chartWorkflow.builder()
     .save("target/charts", "my-strategy");
 ```
 
+To compress weekend/holiday gaps on the time axis, switch to bar-indexed spacing:
+
+```java
+ChartWorkflow chartWorkflow = new ChartWorkflow();
+chartWorkflow.builder()
+    .withTimeAxisMode(TimeAxisMode.BAR_INDEX)
+    .withSeries(series)
+    .withTradingRecordOverlay(tradingRecord)
+    .display();
+```
+
 Strategy examples that use charting:
 - **[RSI2Strategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/RSI2Strategy.java)**
 - **[NetMomentumStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java)**
