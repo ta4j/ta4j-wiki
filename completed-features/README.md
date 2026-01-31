@@ -13,6 +13,7 @@ These documents serve as:
 ## Contents
 
 - **[RELEASE_PROCESS_PRD.md](RELEASE_PROCESS_PRD.md)** - Automated Release Process PRD documenting the two-phase release workflow implementation (completed 2026-01-16)
+- **[PRD-Charting-Refactor-Checklist.md](PRD-Charting-Refactor-Checklist.md)** - Charting refactor checklist and implementation status (completed 2026-01-31)
 
 ## Adding New Completed Features
 
