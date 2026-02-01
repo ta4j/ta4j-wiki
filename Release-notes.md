@@ -14,6 +14,22 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
 - **Enhanced bar builders with trade ingestion**: All bar builder implementations (`TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, `AmountBarBuilder`) now support trade-level ingestion with optional side and liquidity classification.
 - **Remainder carry-over policy**: Added `RemainderCarryOverPolicy` for volume/amount bars to control whether side/liquidity splits follow threshold rollovers, providing fine-grained control over bar aggregation behavior.
 - **Bar replacement API**: Added `replaceBar()` method to `BaseBarSeries` for bar replacement without changing indices, useful for data reconciliation workflows.
+- **Live trading record**: Introduced `LiveTradingRecord` for live and backtest scenarios that need partial fills, multi-lot positions, and explicit cost/unrealized PnL tracking.
+  - `LiveTradingRecord`: Thread-safe trading record supporting partial fills, configurable execution matching (FIFO), and integration with `TransactionCostModel`/`HoldingCostModel`. Use when you need per-lot cost basis, unrealized PnL, or position book visibility.
+  - `Position`, `OpenPosition`, `Trade`, `PositionBook`, `PositionLot`: Refined model for positions and trades; `Trade` represents a single execution (fill), while `Position` aggregates trades and supports multiple lots.
+  - `ExecutionFill`, `ExecutionMatchPolicy`, `ExecutionSide`, `LiveTradingRecordSnapshot`: Execution semantics and snapshots for auditing and recovery.
+- **Analysis and performance indicators**: New and updated analysis types that work with both `BaseTradingRecord` and `LiveTradingRecord`:
+  - `PerformanceIndicator` interface: Shared contract for equity/return indicators (e.g. `CashFlow`, `Returns`, `CumulativePnL`) with configurable open-position handling.
+  - `OpenPositionHandling`, `EquityCurveMode`: Control how open positions contribute to equity curve and criteria (e.g. mark-to-market vs cost basis).
+  - `ExcessReturns`: Compounded excess returns between sampled index pairs for risk-adjusted analysis.
+  - `AnalysisUtils`, `AnalysisPositionSupport`: Helpers for position-aware analysis.
+- **Criteria**: New and reorganized criteria for drawdown, fees, and open-position metrics:
+  - `SharpeRatioCriterion`: Risk-adjusted return (excess return over volatility).
+  - `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`: Cost basis and unrealized PnL for open positions (for use with `LiveTradingRecord`).
+  - `TotalFeesCriterion` (in `criteria/commissions/`): Total fees across positions.
+  - Drawdown criteria in `criteria/drawdown/`: `MaximumDrawdownCriterion`, `MaximumAbsoluteDrawdownCriterion`, `MaximumDrawdownBarLengthCriterion`, `MonteCarloMaximumDrawdownCriterion`, `ReturnOverMaxDrawdownCriterion`.
+- **Rule**: `InSlopeRule`: Rule satisfied when the slope of one indicator is within a boundary of another (e.g. trend strength or momentum alignment).
+- **Indicators**: The full indicator set is documented in [Indicators Inventory](Indicators-Inventory.md). This branch aligns core indicators including ATR, ConnorsRSI, RecentFractalSwing high/low, Elliott channel/confluence, CombineIndicator, DifferencePercentageIndicator, and Keltner channel indicators; see [Technical Indicators](Technical-indicators.md) for categories and usage.
 
 ### Changed
 - **TimeBarBuilder**: Enhanced with trade ingestion logic, time alignment validation, and `RealtimeBar` support. Now omits empty bars for missing periods, improving gap handling behavior.

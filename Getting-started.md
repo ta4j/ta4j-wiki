@@ -146,9 +146,11 @@ System.out.printf("Commission drag: %s%n", commissions.calculate(series, record)
 
 Need deeper insight?
 
+- Risk-adjusted return: `SharpeRatioCriterion`.
 - Drawdown distribution: `MonteCarloMaximumDrawdownCriterion`.
 - Time invested: `InPositionPercentageCriterion`.
 - Streaks: `MaxConsecutiveLossCriterion` and `MaxConsecutiveProfitCriterion`.
+- Total fees: `TotalFeesCriterion`; open-position cost basis and unrealized PnL: `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion` (with `LiveTradingRecord`).
 - Full statement: `new BaseTradingStatement(strategy, record)` exposes trades, exposure, and commission totals.
 
 ## Standard Next Steps
@@ -160,6 +162,7 @@ Need deeper insight?
 | Compare many parameter sets | See [Trading Strategies](Trading-strategies.md#parameterizing-and-named-strategies) for best practices plus `VoteRule` tips for ensembles. |
 | Persist and share strategies | Use `StrategySerialization` / `Strategy.fromJson(...)` (documented in [Trading Strategies](Trading-strategies.md#serializing-strategies)). |
 | Prepare for live trading | Read [Live Trading](Live-trading.md) for architecture patterns, bar updates, and trade execution models. |
+| Track partial fills, cost basis, or unrealized PnL | Use [LiveTradingRecord](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis) and the walkthrough there for code examples and criteria. |
 
 ## Keep Going
 

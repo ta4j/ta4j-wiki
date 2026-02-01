@@ -41,22 +41,27 @@ List<TradingStatement> ranked = result.getTopStrategies(
 AnalysisCriterion net = new NetReturnCriterion();
 AnalysisCriterion buyHold = new VersusEnterAndHoldCriterion(new NetReturnCriterion());
 AnalysisCriterion romad = new ReturnOverMaxDrawdownCriterion();
+AnalysisCriterion sharpe = new SharpeRatioCriterion();
 AnalysisCriterion drawdownRisk = new MonteCarloMaximumDrawdownCriterion();
 AnalysisCriterion commissions = new CommissionsImpactPercentageCriterion();
+AnalysisCriterion totalFees = new TotalFeesCriterion();
 
 System.out.println("Net return: " + net.calculate(series, record));
 System.out.println("Vs buy & hold: " + buyHold.calculate(series, record));
 System.out.println("Return / Max DD: " + romad.calculate(series, record));
+System.out.println("Sharpe ratio: " + sharpe.calculate(series, record));
 System.out.println("Drawdown risk p95: " + drawdownRisk.calculate(series, record));
 System.out.println("Commission drag: " + commissions.calculate(series, record));
+System.out.println("Total fees: " + totalFees.calculate(series, record));
 ```
 
 Ta4j includes dozens of criteria organized by package:
 
 - `criteria.pnl.*` – differentiate net vs. gross results.
 - `criteria.drawdown.*` – absolute, relative, duration, Monte Carlo.
+- `criteria.commissions.*` – total fees across positions.
 - `criteria.costs.*` – commissions and holding costs.
-- `criteria.position.*` – streaks, max profit/loss per position, time in market.
+- `criteria.position.*` – streaks, max profit/loss per position, time in market, open-position cost basis and unrealized PnL when using `LiveTradingRecord`.
 
 Mix and match to build your own evaluation stack.
 
@@ -120,6 +125,10 @@ charts.displayTradingRecordChart(
 ```
 
 Saved images are JPEGs (see `FileSystemChartStorage`), so the directory you pass to the constructor ends up with files like `mySeries_2023-01-01_to_2024-05-01_timestamp.jpg`. `ChartMaker` composes JFreeChart visualizations through pluggable display and storage backends, so you can pop up Swing windows, stream bytes, or save those JPEGs after each backtest. Explore [`ta4jexamples.charting.ChartMaker`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/charting/ChartMaker.java) and the [`ta4jexamples.strategies.NetMomentumStrategy`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java) sample, which loads data, runs a strategy, and drops charts into `ta4j-examples/log/charts`.
+
+## Backtesting with LiveTradingRecord
+
+When you need cost basis, unrealized PnL, or a position book in your backtest (e.g. to align with live reconciliation), run your strategy in a loop and feed a `LiveTradingRecord` instead of using `BarSeriesManager.run(strategy)` (which returns a `BaseTradingRecord`). At each bar, call `strategy.shouldEnter(index, record)` / `shouldExit(index, record)` and then `record.enter(index, price, amount)` or `record.exit(index, price, amount)`. You can then use `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`, and `record.getOpenPositions()` / `getNetOpenPosition()` for analysis. For a full walkthrough of partial fills and criteria, see [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis).
 
 ## Avoid common pitfalls
 

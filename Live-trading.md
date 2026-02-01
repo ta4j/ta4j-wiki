@@ -30,6 +30,82 @@ Strategy strategy = strategyFactory.apply(liveSeries);
 TradingRecord tradingRecord = new BaseTradingRecord();
 ```
 
+### Choosing a trading record
+
+- **`BaseTradingRecord`**: Simple list of positions (one entry + one exit per position). Use for backtests or live bots where every fill is treated as a single trade and you do not need per-lot cost basis or unrealized PnL. `BarSeriesManager.run(strategy)` returns a `BaseTradingRecord`.
+- **`LiveTradingRecord`**: Supports partial fills, multiple lots per position, configurable execution matching (e.g. FIFO), and optional cost models. Use when you need cost basis, unrealized PnL, or a position book for live reconciliation. Thread-safe for concurrent ingestion and evaluation. See release notes for `Position`, `OpenPosition`, `Trade`, `PositionBook`, and related criteria (`OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`).
+
+### Walkthrough: LiveTradingRecord with partial fills and cost basis
+
+When your broker reports partial fills or you want per-lot cost basis and unrealized PnL, use `LiveTradingRecord` instead of `BaseTradingRecord`. The following examples show the same API for simple enter/exit, then how to record individual fills and read the position book.
+
+**1. Simple enter/exit (same as BaseTradingRecord)**
+
+You can use `enter(index, price, amount)` and `exit(index, price, amount)` exactly like `BaseTradingRecord`. Each call records a single fill; the record stays compatible with all criteria and with `BarSeriesManager` if you drive it manually.
+
+```java
+LiveTradingRecord record = new LiveTradingRecord(Trade.TradeType.BUY);
+Num price = series.getBar(endIndex).getClosePrice();
+Num amount = series.numFactory().numOf(1);
+
+if (strategy.shouldEnter(endIndex, record)) {
+    record.enter(endIndex, price, amount);
+} else if (strategy.shouldExit(endIndex, record)) {
+    record.exit(endIndex, price, amount);
+}
+```
+
+**2. Partial fills and position book**
+
+When you receive fills from the broker one-by-one, record each fill with `recordFill(ExecutionFill)`. Use `ExecutionSide.BUY` / `ExecutionSide.SELL` and optional fee, order id, and correlation id. The record applies FIFO (or your configured `ExecutionMatchPolicy`) and maintains open lots.
+
+```java
+LiveTradingRecord record = new LiveTradingRecord(
+    Trade.TradeType.BUY,
+    ExecutionMatchPolicy.FIFO,
+    new ZeroCostModel(),
+    new ZeroCostModel(),
+    null, null);
+
+NumFactory num = series.numFactory();
+
+// Two buy fills (e.g. from broker)
+record.recordFill(new ExecutionFill(
+    Instant.now(), num.numOf(100.0), num.numOf(0.5), num.zero(),
+    ExecutionSide.BUY, "order-1", null));
+record.recordFill(new ExecutionFill(
+    Instant.now(), num.numOf(101.0), num.numOf(0.5), num.zero(),
+    ExecutionSide.BUY, "order-2", null));
+
+// Open position: two lots, average cost and total amount available
+List<OpenPosition> openPositions = record.getOpenPositions();
+OpenPosition net = record.getNetOpenPosition();
+// net.amount(), net.averageEntryPrice(), net.costBasis(), etc.
+
+// Exit (e.g. one full exit at current price – FIFO matches against first lot)
+record.recordFill(new ExecutionFill(
+    Instant.now(), num.numOf(102.0), num.numOf(1.0), num.zero(),
+    ExecutionSide.SELL, "order-3", null));
+```
+
+**3. Cost basis and unrealized PnL with criteria**
+
+After you have a `BarSeries` and a `LiveTradingRecord` (from live fills or from a custom backtest loop), you can measure cost basis and unrealized PnL with the same criteria used for analysis:
+
+```java
+BarSeries series = ...;   // your bar series
+LiveTradingRecord record = ...;  // populated via enter/exit or recordFill
+int endIndex = series.getEndIndex();
+
+AnalysisCriterion costBasis = new OpenPositionCostBasisCriterion();
+AnalysisCriterion unrealizedPnL = new OpenPositionUnrealizedProfitCriterion();
+
+System.out.println("Open position cost basis: " + costBasis.calculate(series, record));
+System.out.println("Unrealized PnL: " + unrealizedPnL.calculate(series, record));
+```
+
+Use `record.snapshot()` to capture a point-in-time view of positions and trades for persistence or auditing.
+
 ## Feeding the series
 
 ### Using ConcurrentBarSeries (recommended for live trading)

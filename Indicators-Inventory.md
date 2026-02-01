@@ -410,6 +410,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
+| `org.ta4j.core.analysis` | **PerformanceIndicator** | Interface for performance indicators derived from trading records (equity curve, open-position handling). |
 | `org.ta4j.core.analysis` | **CashFlow** | Cash flow series from a strategy over the bar series (implements Indicator&lt;Num&gt;). |
 | `org.ta4j.core.analysis` | **Returns** | Returns (e.g. per-bar or compounded) from a strategy; implements Indicator&lt;Num&gt;. |
 | `org.ta4j.core.analysis` | **CumulativePnL** | Cumulative P&amp;L over the bar series for given position(s); implements Indicator&lt;Num&gt;. |

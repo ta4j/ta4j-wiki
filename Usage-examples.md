@@ -88,5 +88,6 @@ Strategy examples that use charting:
 
 - **[TradingBotOnMovingBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingBarSeries.java)** – continuously updates a moving bar series and reacts to strategy signals.
 - **ConcurrentBarSeries for live trading**: Since 0.22.2, use `ConcurrentBarSeries` for thread-safe bar ingestion in multi-threaded live trading scenarios. See [Live Trading](Live-trading.md) and [Bar Series & Bars](Bar-series-and-bars.md#concurrent-bar-series-for-multi-threaded-scenarios) for comprehensive documentation and examples.
+- **LiveTradingRecord (partial fills, cost basis, position book)**: For bots that receive partial fills or need per-lot cost basis and unrealized PnL, use `LiveTradingRecord` with `recordFill(ExecutionFill)` or `enter`/`exit`. See the [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis) for a step-by-step code guide and criteria (`OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`).
 
 Have a favorite workflow or integration that is not covered yet? Contributions to `ta4j-examples` are welcome—new examples make the wiki even more actionable.
