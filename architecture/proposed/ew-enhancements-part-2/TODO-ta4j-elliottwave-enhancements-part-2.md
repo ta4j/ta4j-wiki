@@ -283,36 +283,36 @@ Add/Update:
 ### D) Concrete implementation checklist (mapped to code areas)
 
 #### D1) Swing adaptivity
-- [ ] Add `SwingDetector` interface + adapters around existing `RecentSwingIndicator` style detectors.
-- [ ] Implement `AdaptiveZigZagSwingDetector` (config: ATR period, min/max threshold, smoothing).  
-- [ ] Implement `CompositeSwingDetector` (policy: AND/OR; reconcile pivot disagreements).  
-- [ ] Implement `MinMagnitudeSwingFilter` (relative-to-largest-swing or ATR-based).  
-- [ ] Add unit tests with synthetic volatility regime shifts.
+- [x] Add `SwingDetector` interface + adapters around existing `RecentSwingIndicator` style detectors.
+- [x] Implement `AdaptiveZigZagSwingDetector` (config: ATR period, min/max threshold, smoothing).  
+- [x] Implement `CompositeSwingDetector` (policy: AND/OR; reconcile pivot disagreements).  
+- [x] Implement `MinMagnitudeSwingFilter` (relative-to-largest-swing or ATR-based).  
+- [x] Add unit tests with synthetic volatility regime shifts.
 
 #### D2) Time alternation scoring
-- [ ] Extend internal swing metadata to always include bar indices / durations (if not already tracked).  
-- [ ] Add `TimeAlternationFactor`:
+- [x] Extend internal swing metadata to always include bar indices / durations (if not already tracked).  
+- [x] Add `TimeAlternationFactor`:
   - inputs: swing index positions of W2 and W4
   - outputs: `barsW2`, `barsW4`, `ratio`, `score`
-- [ ] Ensure confidence output exposes these diagnostics.
+- [x] Ensure confidence output exposes these diagnostics.
 
 #### D3) Confidence model refactor
-- [ ] Introduce `ConfidenceFactor` framework.  
-- [ ] Convert existing scorer subparts into factors:
+- [x] Introduce `ConfidenceFactor` framework.  
+- [x] Convert existing scorer subparts into factors:
   - fib proximity (existing), time proportions (existing), alternation (existing), channel adherence (existing), structure completeness (existing)
-- [ ] Add per-pattern `ConfidenceProfile` map keyed by `ScenarioType`.
-- [ ] Add granular fib relationships (factor set uses `ElliottFibonacciValidator` scoring functions).
+- [x] Add per-pattern `ConfidenceProfile` map keyed by `ScenarioType`.
+- [x] Add granular fib relationships (factor set uses `ElliottFibonacciValidator` scoring functions).
 
 #### D4) Analyzer orchestration
-- [ ] Add `ElliottWaveAnalyzer` builder and `ElliottAnalysisResult`.  
-- [ ] Optionally wire `ElliottWaveFacade` to use analyzer behind the scenes (no API break).
+- [x] Add `ElliottWaveAnalyzer` builder and `ElliottAnalysisResult`.  
+- [x] Optionally wire `ElliottWaveFacade` to use analyzer behind the scenes (no API break).
 
 #### D5) Pattern set configuration
-- [ ] Add `PatternSet` config and route into scenario generation selection.
-- [ ] Add tests that ensure disabled patterns are never produced.
+- [x] Add `PatternSet` config and route into scenario generation selection.
+- [x] Add tests that ensure disabled patterns are never produced.
 
 #### D6) Examples
-- [ ] Update `ElliottWaveAnalysis` to show:
+- [x] Update `ElliottWaveAnalysis` to show:
   - base + alternative scenarios
   - confidence breakdown + time alternation diagnostics  
 
