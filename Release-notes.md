@@ -30,6 +30,13 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
   - Drawdown criteria in `criteria/drawdown/`: `MaximumDrawdownCriterion`, `MaximumAbsoluteDrawdownCriterion`, `MaximumDrawdownBarLengthCriterion`, `MonteCarloMaximumDrawdownCriterion`, `ReturnOverMaxDrawdownCriterion`.
 - **Rule**: `InSlopeRule`: Rule satisfied when the slope of one indicator is within a boundary of another (e.g. trend strength or momentum alignment).
 - **Indicators**: The full indicator set is documented in [Indicators Inventory](Indicators-Inventory.md). This branch aligns core indicators including ATR, ConnorsRSI, RecentFractalSwing high/low, Elliott channel/confluence, CombineIndicator, DifferencePercentageIndicator, and Keltner channel indicators; see [Technical Indicators](Technical-indicators.md) for categories and usage.
+- **Elliott Wave analysis improvements** (feature/ew-analysis-improvements):
+  - **ElliottWaveAnalyzer**: Orchestrates one-shot Elliott Wave analysis with pluggable swing detectors and confidence profiles; returns `ElliottAnalysisResult` (raw/processed swings, scenarios, confidence breakdowns, channel, trend bias).
+  - **ElliottTrendBiasIndicator** and **ElliottTrendBias**: Aggregate directional bias across Elliott wave scenarios (bullish/bearish/neutral score, consensus flag).
+  - **Pluggable swing detection** (`org.ta4j.core.indicators.elliott.swing`): `SwingDetector` interface; `FractalSwingDetector`, `ZigZagSwingDetector`, `AdaptiveZigZagSwingDetector`, `CompositeSwingDetector`; `SwingDetectors` factory; `SwingFilter`, `MinMagnitudeSwingFilter`; `SwingPivot`, `SwingPivotType`, `SwingDetectorResult`, `AdaptiveZigZagConfig`.
+  - **Confidence model refactor** (`org.ta4j.core.indicators.elliott.confidence`): `ConfidenceModel`, `ConfidenceProfile`, `ConfidenceProfiles`, `ElliottConfidenceBreakdown`; factor types: `ChannelAdherenceFactor`, `FibonacciRelationshipFactor`, `ScenarioTypeConfidenceModel`, `StructureCompletenessFactor`, `TimeAlternationFactor`, `TimeProportionFactor`.
+  - **Data types**: `ElliottAnalysisResult`, `ElliottScenarioSet` (ranked scenarios), `PatternSet` (enabled scenario types).
+  - **Examples**: `ElliottWaveAdaptiveSwingAnalysis`, `ElliottWavePatternProfileDemo`, `ElliottWaveTrendBacktest`, `HighRewardElliottWaveBacktest`, and **HighRewardElliottWaveStrategy** (named strategy for high-confidence impulse scenarios with trend/momentum confirmation). See [Elliott Wave Indicators](Elliott-Wave-Indicators.md) and [Usage Examples](Usage-examples.md#elliott-wave-analysis).
 
 ### Changed
 - **TimeBarBuilder**: Enhanced with trade ingestion logic, time alignment validation, and `RealtimeBar` support. Now omits empty bars for missing periods, improving gap handling behavior.

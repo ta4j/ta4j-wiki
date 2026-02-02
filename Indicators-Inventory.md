@@ -351,11 +351,49 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.elliott` | **ElliottPhaseIndicator** | Current Elliott phase (e.g. impulse/corrective). |
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioIndicator** | Set of possible Elliott scenarios at index. |
 | `org.ta4j.core.indicators.elliott` | **ElliottConfluenceIndicator** | Confluence score (e.g. agreement across scenarios). |
+| `org.ta4j.core.indicators.elliott` | **ElliottTrendBiasIndicator** | Aggregate directional bias across Elliott wave scenarios (bullish/bearish/neutral). |
+| `org.ta4j.core.indicators.elliott` | **ElliottWaveAnalyzer** | Orchestrates Elliott Wave analysis with pluggable swing detectors and confidence profiles; returns ElliottAnalysisResult. |
+| `org.ta4j.core.indicators.elliott` | **ElliottScenarioSet** | Immutable container of ranked alternative Elliott scenarios (base case + alternatives). |
+| `org.ta4j.core.indicators.elliott` | **PatternSet** | Configures which Elliott scenario pattern types are enabled (impulse, corrective zigzag, etc.). |
+
+### 10.1. Elliott swing detection (org.ta4j.core.indicators.elliott.swing)
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators.elliott.swing` | **SwingDetector** | Interface: detects swing pivots and constructs swing sequences for a bar index. |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorResult** | Record: detected pivots and derived swings for a given index. |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, and composite swing detectors. |
+| `org.ta4j.core.indicators.elliott.swing` | **FractalSwingDetector** | Swing detector backed by fractal swing high/low (fixed lookback/lookforward window). |
+| `org.ta4j.core.indicators.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
+| `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
+| `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
+| `org.ta4j.core.indicators.elliott.swing` | **CompositeSwingDetector** | Combines multiple swing detectors with AND/OR pivot agreement policy. |
+| `org.ta4j.core.indicators.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingFilter** | Interface: post-processes swing lists (e.g. remove noise, apply constraints). |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingPivot** | Record: confirmed swing pivot (index, price, type high/low). |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingPivotType** | Enum: pivot classification (high/low). |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorSupport** | Helper for building ElliottSwing lists from detector results. |
+
+### 10.2. Elliott confidence (org.ta4j.core.indicators.elliott.confidence)
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceModel** | Interface: supplies confidence profile for a scenario. |
+| `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceProfile** | Weights and factors for confidence scoring (Fibonacci, time, alternation, channel, completeness). |
+| `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceProfiles** | Default and scenario-type–aware confidence models. |
+| `org.ta4j.core.indicators.elliott.confidence` | **ElliottConfidenceBreakdown** | Per-scenario confidence breakdown (factor scores and category). |
+| `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceFactor** | Interface: single confidence factor (e.g. Fibonacci, channel). |
+| `org.ta4j.core.indicators.elliott.confidence` | **ChannelAdherenceFactor** | Scores how well price adheres to projected channel. |
+| `org.ta4j.core.indicators.elliott.confidence` | **FibonacciRelationshipFactor** | Scores Fibonacci proximity of swing ratios. |
+| `org.ta4j.core.indicators.elliott.confidence` | **ScenarioTypeConfidenceModel** | Confidence model that selects profiles by ScenarioType. |
+| `org.ta4j.core.indicators.elliott.confidence` | **StructureCompletenessFactor** | Scores wave structure completeness. |
+| `org.ta4j.core.indicators.elliott.confidence` | **TimeAlternationFactor** | Scores wave 2/4 alternation with time diagnostics. |
+| `org.ta4j.core.indicators.elliott.confidence` | **TimeProportionFactor** | Scores time proportion conformance. |
 
 **Short usage**  
-- **What it is:** Elliott Wave structure (swings, count, channel, ratios, projection, invalidation, phase, scenarios, confluence).  
+- **What it is:** Elliott Wave structure (swings, count, channel, ratios, projection, invalidation, phase, scenarios, confluence); trend bias across scenarios; pluggable analyzer with swing detectors and confidence profiles.  
 - **Theory:** Elliott Wave Theory models market structure in impulsive and corrective waves with Fibonacci relationships.  
-- **When to use:** When applying Elliott-based rules or targets; use confluence and invalidation for robustness.  
+- **When to use:** When applying Elliott-based rules or targets; use confluence, invalidation, and trend bias for robustness; use ElliottWaveAnalyzer for one-shot analysis with custom detectors.  
 - **When not to use:** When wave rules or degree are not clearly defined; interpretation is subjective.  
 - *Future: use cases, example code.*  
 - See also: [Elliott Wave Indicators](Elliott-Wave-Indicators.md).

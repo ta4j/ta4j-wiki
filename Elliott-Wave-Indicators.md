@@ -11,14 +11,17 @@ A comprehensive guide to using ta4j's Elliott Wave analysis tools, from basic co
    - [Example Classes](#example-classes)
    - [Using ElliottWaveFacade (Recommended)](#using-elliottwavefacade-recommended)
 5. [Scenario-Based Analysis](#scenario-based-analysis)
-6. [Confidence Scoring](#confidence-scoring)
-7. [Working with Alternative Wave Counts](#working-with-alternative-wave-counts)
-8. [Price Projections and Targets](#price-projections-and-targets)
-9. [Invalidation Levels](#invalidation-levels)
-10. [Intermediate Usage Patterns](#intermediate-usage-patterns)
-11. [Advanced Topics](#advanced-topics)
-12. [Best Practices](#best-practices)
-13. [Integration with Trading Strategies](#integration-with-trading-strategies)
+6. [ElliottWaveAnalyzer and One-Shot Analysis](#elliottwaveanalyzer-and-one-shot-analysis)
+7. [ElliottTrendBias and ElliottTrendBiasIndicator](#elliotttrendbias-and-elliotttrendbiasindicator)
+8. [Pluggable Swing Detection](#pluggable-swing-detection)
+9. [Confidence Scoring](#confidence-scoring)
+10. [Working with Alternative Wave Counts](#working-with-alternative-wave-counts)
+11. [Price Projections and Targets](#price-projections-and-targets)
+12. [Invalidation Levels](#invalidation-levels)
+13. [Intermediate Usage Patterns](#intermediate-usage-patterns)
+14. [Advanced Topics](#advanced-topics)
+15. [Best Practices](#best-practices)
+16. [Integration with Trading Strategies](#integration-with-trading-strategies)
 
 ---
 
@@ -101,6 +104,16 @@ ElliottSwingIndicator (alternating swings)
 │ • ElliottScenarioGenerator   (scenario exploration)     │
 │ • ElliottProjectionIndicator (Fibonacci targets)        │
 │ • ElliottInvalidationLevelIndicator (price levels)      │
+│ • ElliottTrendBiasIndicator (aggregate directional bias)│
+└─────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────┐
+│  Pluggable Analysis Pipeline (0.22.2+)                   │
+├─────────────────────────────────────────────────────────┤
+│ • ElliottWaveAnalyzer       (one-shot analysis)         │
+│ • SwingDetector             (pluggable swing detection)  │
+│ • FractalSwingDetector / ZigZag / AdaptiveZigZag        │
+│ • ConfidenceModel / ConfidenceProfile (pluggable weights)│
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -359,6 +372,16 @@ java SP500ElliottWaveAnalysis
 ```
 Loads 365 days of daily S&P 500 index data from Yahoo Finance with auto-selected degree.
 
+**ElliottWaveAdaptiveSwingAnalysis** (0.22.2+) – Elliott Wave analysis using the **adaptive ZigZag** swing detector (volatility-adaptive reversal threshold). Demonstrates pluggable swing detection and one-shot analysis via `ElliottWaveAnalyzer`.
+
+**ElliottWavePatternProfileDemo** (0.22.2+) – Demonstrates confidence profiles and scenario-type–aware confidence models. Shows how different Elliott pattern types (impulse, corrective zigzag, etc.) can use different confidence weightings.
+
+**ElliottWaveTrendBacktest** (0.22.2+) – Backtests and walk-forward tests Elliott Wave **trend bias** predictions. Evaluates whether trend bias from scenarios correctly predicts price direction over a lookahead horizon across multiple datasets (e.g. ETH-USD, AAPL).
+
+**HighRewardElliottWaveBacktest** (0.22.2+) – Runs the **HighRewardElliottWaveStrategy** on ossified data and prints performance metrics. Entry requires high-confidence impulse scenarios, favorable risk/reward, trend/momentum alignment, and wave 2/4 time alternation; exit uses invalidation, targets, and trend/momentum breakdown.
+
+**HighRewardElliottWaveStrategy** (0.22.2+) – Named strategy that trades only high-confidence impulse scenarios (wave 3 or 5) with trend (SMA) and momentum (RSI/MACD) confirmation. Uses `ElliottWaveAnalyzer`, pluggable swing detectors, and custom confidence profiles. See [Usage Examples](Usage-examples.md#elliott-wave-analysis) for links.
+
 These example classes demonstrate simple usage patterns and can be modified to analyze different time periods or use different degrees.
 
 ### Using ElliottWaveFacade (Recommended)
@@ -601,6 +624,144 @@ if (type.isImpulse()) {
 
 int expected = type.expectedWaveCount(); // 5 for impulse, 3 for zigzag/flat
 ```
+
+---
+
+## ElliottWaveAnalyzer and One-Shot Analysis
+
+The `ElliottWaveAnalyzer` (0.22.2+) orchestrates a full Elliott Wave analysis run with **pluggable swing detectors** and **confidence profiles**. It returns an `ElliottAnalysisResult` containing raw and processed swings, scenarios, confidence breakdowns, channel, and trend bias—ideal for one-shot analysis, reports, or custom pipelines.
+
+### Using the analyzer
+
+```java
+import org.ta4j.core.indicators.elliott.ElliottWaveAnalyzer;
+import org.ta4j.core.indicators.elliott.ElliottAnalysisResult;
+import org.ta4j.core.indicators.elliott.ElliottDegree;
+import org.ta4j.core.indicators.elliott.swing.SwingDetectors;
+
+// Build analyzer with fractal swing detection
+SwingDetector detector = SwingDetectors.fractal(5);
+ElliottWaveAnalyzer analyzer = ElliottWaveAnalyzer.builder()
+    .swingDetector(detector)
+    .degree(ElliottDegree.INTERMEDIATE)
+    .minConfidence(0.15)
+    .maxScenarios(5)
+    .build();
+
+ElliottAnalysisResult result = analyzer.analyze(series);
+int index = result.index();
+ElliottScenarioSet scenarios = result.scenarios();
+ElliottTrendBias trendBias = result.trendBias();
+ElliottChannel channel = result.channel();
+
+// Per-scenario confidence breakdown
+Optional<ElliottScenario> baseCase = scenarios.base();
+baseCase.ifPresent(sc -> result.breakdownFor(sc).ifPresent(System.out::println));
+```
+
+### ElliottAnalysisResult
+
+The result record includes:
+
+| Field | Description |
+|-------|-------------|
+| `degree` | Elliott degree used for analysis |
+| `index` | Bar index evaluated |
+| `rawSwings` | Swings from the detector (before filter/compressor) |
+| `processedSwings` | Swings after optional filter and compressor |
+| `scenarios` | Ranked scenario set (base case + alternatives) |
+| `confidenceBreakdowns` | Per-scenario confidence breakdown (keyed by scenario id) |
+| `channel` | Projected Elliott channel at this index |
+| `trendBias` | Aggregate directional bias across scenarios |
+
+Use `breakdownFor(ElliottScenario)` to get the confidence breakdown for a specific scenario.
+
+---
+
+## ElliottTrendBias and ElliottTrendBiasIndicator
+
+The **ElliottTrendBiasIndicator** aggregates directional bias across all Elliott wave scenarios at each bar. It produces an `ElliottTrendBias` value with a signed score (-1.0 to 1.0), bullish/bearish/neutral classification, and consensus flag.
+
+### ElliottTrendBias record
+
+| Field | Description |
+|-------|-------------|
+| `direction` | BULLISH, BEARISH, or NEUTRAL |
+| `score` | Signed bias score; positive = bullish dominance, negative = bearish |
+| `bullishWeight` / `bearishWeight` | Sum of confidence weights for bullish/bearish scenarios |
+| `bullishCount` / `bearishCount` / `unknownCount` | Scenario counts by direction |
+| `consensus` | True when high-confidence scenarios agree on direction |
+
+Helper methods: `isBullish()`, `isBearish()`, `isNeutral()`.
+
+### Using the indicator
+
+```java
+ElliottTrendBiasIndicator trendBias = new ElliottTrendBiasIndicator(scenarioIndicator);
+// Optional: custom neutral threshold (default 0.15)
+ElliottTrendBiasIndicator trendBias = new ElliottTrendBiasIndicator(scenarioIndicator, 0.20);
+
+ElliottTrendBias bias = trendBias.getValue(index);
+if (bias.isBullish() && bias.consensus()) {
+    // High-confidence scenarios agree on bullish direction
+}
+```
+
+Use trend bias for entry filters (e.g. only enter long when bias is bullish and consensus is true) or for reporting.
+
+---
+
+## Pluggable Swing Detection
+
+Elliott Wave analysis can use different swing detection backends via the **SwingDetector** interface (package `org.ta4j.core.indicators.elliott.swing`). The analyzer accepts any `SwingDetector` and optional `SwingFilter` and `ElliottSwingCompressor`.
+
+### Built-in detectors
+
+| Detector | Description |
+|----------|-------------|
+| **FractalSwingDetector** | Fixed lookback/lookforward window (fractal-style pivots). |
+| **ZigZagSwingDetector** | ZigZag state with fixed or ATR-based reversal threshold. |
+| **AdaptiveZigZagSwingDetector** | ZigZag with volatility-adaptive threshold (ATR period, multiplier, min/max clamp). |
+| **CompositeSwingDetector** | Combines multiple detectors with AND/OR pivot agreement. |
+
+Use **SwingDetectors** for factory methods:
+
+```java
+// Fractal with symmetric window
+SwingDetector fractal = SwingDetectors.fractal(5);
+
+// Fractal with explicit lookback/lookforward
+SwingDetector fractal = SwingDetectors.fractal(3, 5, 1);
+
+// Adaptive ZigZag (ATR-based)
+AdaptiveZigZagConfig config = new AdaptiveZigZagConfig(14, 2.0, 0, 0, 1);
+SwingDetector adaptive = SwingDetectors.adaptiveZigZag(config);
+
+// Composite: require both fractal and ZigZag to agree on pivots
+SwingDetector composite = SwingDetectors.composite(
+    CompositeSwingDetector.Policy.AND, fractal, zigzag);
+```
+
+### SwingFilter and MinMagnitudeSwingFilter
+
+**SwingFilter** post-processes swing lists (e.g. remove noise). **MinMagnitudeSwingFilter** drops swings whose magnitude is below a fraction of the largest swing:
+
+```java
+SwingFilter filter = new MinMagnitudeSwingFilter(0.10); // keep swings >= 10% of largest
+ElliottWaveAnalyzer analyzer = ElliottWaveAnalyzer.builder()
+    .swingDetector(detector)
+    .swingFilter(filter)
+    .degree(ElliottDegree.INTERMEDIATE)
+    .build();
+```
+
+### Data types
+
+- **SwingDetectorResult**: Pivots and derived swings for a bar index.
+- **SwingPivot** / **SwingPivotType**: Single pivot (index, price, high/low).
+- **AdaptiveZigZagConfig**: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag.
+
+See [Indicators Inventory](Indicators-Inventory.md#102-elliott-confidence-orgta4jcoreindicatorselliottconfidence) for the full list of swing and confidence types.
 
 ---
 
