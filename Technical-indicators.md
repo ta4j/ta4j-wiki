@@ -10,6 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum (new), MACD/MACDV, KST, Stochastics, Calm (CMO), ROC. | This page |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Volume spikes. | Indicators package |
+| Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
 | Candle/Pattern | Hammer, Shooting Star, Three White Soldiers, DownTrend/UpTrend. | `indicators.candles` |
 | Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator` transforms. | `indicators.renko` |
 | Oscillators | TrueStrengthIndex, SchaffTrendCycle, ConnorsRSI (0.21.0), RSI family, MACD/MACDV, KST, Stochastics, CMO, ROC. | This page |
@@ -31,6 +32,18 @@ Indicator<Num> blendedMomentum = BinaryOperationIndicator.add(macdv.getMacd(), n
 
 - `BinaryOperationIndicator` / `UnaryOperationIndicator` replace the older `TransformIndicator`/`CombineIndicator` classes (removed in 0.19, enhanced in 0.21.0).
 - Output indicators can feed directly into rules (`new OverIndicatorRule(trendBias, numOf(1.0))`) or become inputs to other indicators.
+
+## Market structure workflow (VWAP + S/R + Wyckoff)
+
+ta4j now includes a complete workflow for value, location, and phase analysis:
+
+- Value: `VWAPIndicator`, `AnchoredVWAPIndicator`, `VWAPBandIndicator`, `VWAPZScoreIndicator`
+- Location: `PriceClusterSupportIndicator`, `PriceClusterResistanceIndicator`, `BounceCountSupportIndicator`, `BounceCountResistanceIndicator`, `VolumeProfileKDEIndicator`
+- Phase: `WyckoffPhaseIndicator`
+
+Use the dedicated guide for implementation templates and tuning advice:
+
+- [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)
 
 ## Backtesting indicators
 

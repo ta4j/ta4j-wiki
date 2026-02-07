@@ -17,6 +17,7 @@ Your one-stop guide for building technical-analysis-driven trading systems in Ja
 - **New oscillators** – `TrueStrengthIndexIndicator`, `SchaffTrendCycleIndicator`, and `ConnorsRSIIndicator` expand oscillator coverage
 - **Helper indicators** – `PercentRankIndicator`, `DifferenceIndicator`, and `StreakIndicator` for advanced indicator composition
 - **High-precision improvements** – `DecimalNumFactory#exp` now uses configured `MathContext` for better precision in exponential calculations
+- **Market-structure stack guide** – New [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) covering backtesting and live-trading usage patterns
 
 ### Previous highlights (0.19)
 

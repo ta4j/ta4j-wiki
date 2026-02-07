@@ -264,6 +264,16 @@ Guidelines:
 - With `ConcurrentBarSeries`, multiple threads can safely read from the series concurrently (e.g., parallel strategy evaluation, indicator calculation).
 - Use `ConcurrentBarSeries` when you need thread-safe access; it provides read/write locks internally.
 
+## Live workflow for VWAP, support/resistance, and Wyckoff
+
+For the full implementation playbook, see [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md). In live routing:
+
+- Prefer closed-bar evaluation when combining VWAP bands, S/R zones, and Wyckoff phases to avoid intrabar churn.
+- Block trading until the maximum unstable window across all active indicators is fully elapsed.
+- Use anchored VWAP reset signals for session boundaries or structural events when regime context changes.
+- Require confluence (for example: Wyckoff confidence + VWAP alignment + S/R proximity) before placing orders.
+- Persist last processed bar, latest phase transition index, and active anchor context for restart-safe execution.
+
 ## Persistence & recovery
 
 - **Strategy state** – Serialize strategies via `StrategySerialization.toJson(strategy)` or keep `NamedStrategy` descriptors in configuration. This ensures bots can reload the exact same logic after restarts.

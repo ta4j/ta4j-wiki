@@ -35,6 +35,15 @@ List<TradingStatement> ranked = result.getTopStrategies(
 - `BacktestExecutionResult` – wraps a `TradingRecord` plus execution metrics (runtime, bars processed, memory estimates). Great for profiling slow strategies.
 - `BacktestRuntimeReport` – aggregated stats from a `BacktestExecutor` run, used by the progress listener hook.
 
+## Backtesting VWAP, support/resistance, and Wyckoff stacks
+
+For a complete walkthrough, see [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md). For backtests specifically:
+
+- Compute a single unstable-window gate from all dependencies and apply it with `strategy.setUnstableBars(...)`.
+- Use confluence conditions (value + location + phase) instead of single-indicator triggers.
+- Tune `lookbackLength`, `bandwidth`, and tolerance values with out-of-sample validation, not in-sample only.
+- Model fees and slippage; these signals often trigger near crowded liquidity zones where execution quality dominates edge.
+
 ## Measure what matters
 
 ```java

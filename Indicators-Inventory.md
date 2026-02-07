@@ -2,7 +2,7 @@
 
 This page is an **exhaustive inventory** of all indicators in **ta4j-core** and **ta4j-examples**, with fully qualified names, class names, short codebase descriptions, and minimal usage guidance. It is intended as a reference and a base for future expansion (detailed use cases, example code, and cross-references).
 
-For an overview of indicator categories and composition patterns, see [Technical Indicators](Technical-indicators.md). For moving averages in depth, see [Moving Average Indicators](Moving-Average-Indicators.md). For Elliott Wave indicators, see [Elliott Wave Indicators](Elliott-Wave-Indicators.md).
+For an overview of indicator categories and composition patterns, see [Technical Indicators](Technical-indicators.md). For moving averages in depth, see [Moving Average Indicators](Moving-Average-Indicators.md). For Elliott Wave indicators, see [Elliott Wave Indicators](Elliott-Wave-Indicators.md). For the combined VWAP/support-resistance/Wyckoff workflow, see [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md).
 
 ---
 
