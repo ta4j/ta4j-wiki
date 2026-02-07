@@ -189,6 +189,18 @@ liveSeries.addBar(replacementBar, true);
 
 ## Evaluating and executing
 
+### Stop-rule playbook for live trading
+
+ta4j now includes fixed, trailing, fixed-amount, volatility-scaled, and ATR-based stop loss/gain rules. For selection guidance, configuration patterns, and deployment pitfalls, use:
+
+- [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
+
+Live-specific recommendation:
+
+- Keep a hard fail-safe stop (`StopLossRule` or `FixedAmountStopLossRule`) even if your primary stop is volatility-adaptive.
+- Align rule reference prices with the broker's actual trigger source (last trade vs bid/ask vs mark/index).
+- Add replace throttling when using trailing stops in fast markets.
+
 ### Single-threaded evaluation
 
 ```java

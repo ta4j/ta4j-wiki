@@ -17,6 +17,7 @@
 
 ## Build Strategies
 - [Trading Strategies](Trading-strategies.md)
+- [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting](Backtesting.md)
 - [Charting](Charting.md)
 - [Usage Examples](Usage-examples.md)

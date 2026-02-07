@@ -53,6 +53,8 @@ This configuration fires an **entry** when at least two of the following hold on
 On top of that vote, the Net Momentum indicator must be above zero so entries only happen when breadth is positive.  
 The **exit** rule triggers if MACD crosses below its signal line, price falls 3% from the entry (`StopLossRule`), or price rallies 5% (`StopGainRule`).
 
+For the full stop toolkit (fixed %, fixed amount, trailing, volatility, ATR) and live-trading usage guidance, see [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md).
+
 Use numeric indicator helpers like `BinaryOperationIndicator` and `UnaryOperationIndicator` when you need on-the-fly math (ratios, differences, powers) without writing custom indicator classes—each helper still benefits from caching.
 
 ## Build a strategy
