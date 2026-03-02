@@ -11,6 +11,7 @@
 - [Technical Indicators](Technical-indicators.md)
 - [Indicators Inventory](Indicators-Inventory.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
+- [Bill Williams Indicators](Bill-Williams-Indicators.md)
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
 - [Elliott Wave Indicators](Elliott-Wave-Indicators.md)
 - [VWAP, S/R & Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)

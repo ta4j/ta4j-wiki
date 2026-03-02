@@ -156,6 +156,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **StochasticOscillatorDIndicator** | Stochastic %D (smoothed %K). |
 | `org.ta4j.core.indicators` | **MACDIndicator** | MACD (APO): short EMA − long EMA. |
 | `org.ta4j.core.indicators` | **MACDVIndicator** | MACD with volume weighting. |
+| `org.ta4j.core.indicators.macd` | **VolatilityNormalizedMACDIndicator** | MACD-V formulation using volatility normalization. |
 | `org.ta4j.core.indicators` | **PPOIndicator** | Percentage Price Oscillator (MACD as % of longer EMA). |
 | `org.ta4j.core.indicators` | **ROCIndicator** | Rate of change (price change over period). |
 | `org.ta4j.core.indicators` | **CMOIndicator** | Chande Momentum Oscillator. |
@@ -164,8 +165,10 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **CCIIndicator** | Commodity Channel Index. |
 | `org.ta4j.core.indicators` | **KRIIndicator** | Klinger Volume Oscillator (simplified or full). |
 | `org.ta4j.core.indicators` | **AwesomeOscillatorIndicator** | Awesome Oscillator (median price, 5 vs 34 period). |
+| `org.ta4j.core.indicators` | **GatorOscillatorIndicator** | Bill Williams gator oscillator derived from alligator line spreads. |
 | `org.ta4j.core.indicators` | **AccelerationDecelerationIndicator** | AC: acceleration/deceleration of momentum. |
 | `org.ta4j.core.indicators` | **TrueStrengthIndexIndicator** | TSI: double-smoothed momentum. |
+| `org.ta4j.core.indicators` | **UltimateOscillatorIndicator** | Multi-window oscillator combining short/mid/long buying pressure. |
 | `org.ta4j.core.indicators` | **SchaffTrendCycleIndicator** | Schaff Trend Cycle; MACD + stochastic-style normalization. |
 | `org.ta4j.core.indicators` | **ConnorsRSIIndicator** | Connors RSI (streak + RSI components). |
 | `org.ta4j.core.indicators` | **FisherIndicator** | Fisher transform (normalizes price to Gaussian-like). |
@@ -203,6 +206,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.aroon` | **AroonUpIndicator** | Aroon Up (periods since highest high). |
 | `org.ta4j.core.indicators.aroon` | **AroonDownIndicator** | Aroon Down (periods since lowest low). |
 | `org.ta4j.core.indicators.aroon` | **AroonOscillatorIndicator** | Aroon Up − Aroon Down. |
+| `org.ta4j.core.indicators` | **AlligatorIndicator** | Bill Williams alligator line (jaw/teeth/lips displaced SMMAs). |
 | `org.ta4j.core.indicators.ichimoku` | **IchimokuTenkanSenIndicator** | Tenkan-sen (conversion line). |
 | `org.ta4j.core.indicators.ichimoku` | **IchimokuKijunSenIndicator** | Kijun-sen (base line). |
 | `org.ta4j.core.indicators.ichimoku` | **IchimokuSenkouSpanAIndicator** | Senkou Span A (leading span A). |
@@ -214,6 +218,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.supertrend` | **SuperTrendLowerBandIndicator** | SuperTrend lower band. |
 | `org.ta4j.core.indicators.trend` | **UpTrendIndicator** | Boolean: price in uptrend (e.g. above MA). |
 | `org.ta4j.core.indicators.trend` | **DownTrendIndicator** | Boolean: price in downtrend. |
+| `org.ta4j.core.indicators` | **VortexIndicator** | Vortex (+VI, −VI, and oscillator) trend-strength/direction indicator. |
 
 **Short usage**  
 - **What it is:** ADX/DI measure trend strength and direction; Aroon and Ichimoku add structure; SuperTrend gives a single trend line.  
@@ -233,6 +238,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.volume` | **ChaikinMoneyFlowIndicator** | CMF: volume-weighted money flow over period. |
 | `org.ta4j.core.indicators.volume` | **ChaikinOscillatorIndicator** | Chaikin Oscillator (A/D short − long EMA). |
 | `org.ta4j.core.indicators.volume` | **MoneyFlowIndexIndicator** | MFI: volume-weighted RSI-style oscillator. |
+| `org.ta4j.core.indicators` | **MarketFacilitationIndexIndicator** | Bill Williams MFI: `(high - low) / volume` (not Money Flow Index). |
 | `org.ta4j.core.indicators.volume` | **VWAPIndicator** | Volume-weighted average price (from open). |
 | `org.ta4j.core.indicators.volume` | **MVWAPIndicator** | Moving VWAP (VWAP over a rolling window). |
 | `org.ta4j.core.indicators.volume` | **NVIIndicator** | Negative Volume Index. |
@@ -320,6 +326,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **RecentSwingHighIndicator** | Price of the most recent confirmed swing high. |
 | `org.ta4j.core.indicators` | **RecentSwingLowIndicator** | Price of the most recent confirmed swing low. |
 | `org.ta4j.core.indicators` | **RecentSwingIndicator** | Generic recent swing (e.g. value at last swing). |
+| `org.ta4j.core.indicators` | **FractalHighIndicator** | Bill Williams fractal high confirmation indicator (no look-ahead). |
+| `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |
