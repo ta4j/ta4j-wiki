@@ -57,6 +57,24 @@ For the full stop toolkit (fixed %, fixed amount, trailing, volatility, ATR) and
 
 Use numeric indicator helpers like `BinaryOperationIndicator` and `UnaryOperationIndicator` when you need on-the-fly math (ratios, differences, powers) without writing custom indicator classes—each helper still benefits from caching.
 
+## MACD-V momentum-state filters (0.22.3)
+
+`org.ta4j.core.indicators.macd.MACDVIndicator` now ships with momentum-state helpers you can wire directly into rules.
+
+```java
+MACDVIndicator macdv = new MACDVIndicator(series, 12, 26, 9);
+MACDVMomentumStateIndicator state = new MACDVMomentumStateIndicator(
+        macdv,
+        MACDVMomentumProfile.defaultProfile()); // +50/+150/-50/-150
+
+Rule bullishState = new MomentumStateRule(state, MACDVMomentumState.RALLYING_OR_RETRACING)
+        .or(new MomentumStateRule(state, MACDVMomentumState.HIGH_RISK));
+Rule macdCrossUp = macdv.crossedUpSignal();
+Rule entryRule = macdCrossUp.and(bullishState);
+```
+
+This pattern keeps entries aligned with MACD-V regime and avoids triggering signal-line crosses during weak/ranging states.
+
 ## Build a strategy
 
 ```java

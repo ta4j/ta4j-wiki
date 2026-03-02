@@ -51,18 +51,26 @@ AnalysisCriterion net = new NetReturnCriterion();
 AnalysisCriterion buyHold = new VersusEnterAndHoldCriterion(new NetReturnCriterion());
 AnalysisCriterion romad = new ReturnOverMaxDrawdownCriterion();
 AnalysisCriterion sharpe = new SharpeRatioCriterion();
+AnalysisCriterion sortino = new SortinoRatioCriterion(0.05, SamplingFrequency.DAILY, Annualization.ANNUALIZED, ZoneOffset.UTC);
 AnalysisCriterion drawdownRisk = new MonteCarloMaximumDrawdownCriterion();
 AnalysisCriterion commissions = new CommissionsImpactPercentageCriterion();
 AnalysisCriterion totalFees = new TotalFeesCriterion();
+AnalysisCriterion avgDurationSeconds = new PositionDurationCriterion(Statistics.MEAN);
+AnalysisCriterion rMultiple = new RMultipleCriterion(new StopLossPositionRiskModel(5));
 
 System.out.println("Net return: " + net.calculate(series, record));
 System.out.println("Vs buy & hold: " + buyHold.calculate(series, record));
 System.out.println("Return / Max DD: " + romad.calculate(series, record));
 System.out.println("Sharpe ratio: " + sharpe.calculate(series, record));
+System.out.println("Sortino ratio: " + sortino.calculate(series, record));
 System.out.println("Drawdown risk p95: " + drawdownRisk.calculate(series, record));
 System.out.println("Commission drag: " + commissions.calculate(series, record));
 System.out.println("Total fees: " + totalFees.calculate(series, record));
+System.out.println("Average position duration (sec): " + avgDurationSeconds.calculate(series, record));
+System.out.println("Average R-multiple: " + rMultiple.calculate(series, record));
 ```
+
+`SortinoRatioCriterion` is usually preferable when downside volatility matters more than upside volatility. `RMultipleCriterion` averages only closed positions with valid positive risk values from the configured risk model.
 
 Ta4j includes dozens of criteria organized by package:
 
@@ -70,7 +78,7 @@ Ta4j includes dozens of criteria organized by package:
 - `criteria.drawdown.*` – absolute, relative, duration, Monte Carlo.
 - `criteria.commissions.*` – total fees across positions.
 - `criteria.costs.*` – commissions and holding costs.
-- `criteria.position.*` – streaks, max profit/loss per position, time in market, open-position cost basis and unrealized PnL when using `LiveTradingRecord`.
+- `criteria.position.*` – streaks, max profit/loss per position, time in market, `PositionDurationCriterion` (mean/median/p95 style summaries), open-position cost basis and unrealized PnL when using `LiveTradingRecord`.
 
 Mix and match to build your own evaluation stack.
 
@@ -137,13 +145,14 @@ Saved images are JPEGs (see `FileSystemChartStorage`), so the directory you pass
 
 ## Backtesting with LiveTradingRecord
 
-When you need cost basis, unrealized PnL, or a position book in your backtest (e.g. to align with live reconciliation), run your strategy in a loop and feed a `LiveTradingRecord` instead of using `BarSeriesManager.run(strategy)` (which returns a `BaseTradingRecord`). At each bar, call `strategy.shouldEnter(index, record)` / `shouldExit(index, record)` and then `record.enter(index, price, amount)` or `record.exit(index, price, amount)`. You can then use `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`, and `record.getOpenPositions()` / `getNetOpenPosition()` for analysis. For a full walkthrough of partial fills and criteria, see [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis).
+When you need cost basis, unrealized PnL, or a position book in your backtest (e.g. to align with live reconciliation), run your strategy in a loop and feed a `LiveTradingRecord` instead of using `BarSeriesManager.run(strategy)` (which returns a `BaseTradingRecord`). At each bar, call `strategy.shouldEnter(index, record)` / `shouldExit(index, record)` and then `record.enter(index, price, amount)` or `record.exit(index, price, amount)`. You can then use `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`, and `record.getOpenPositions()` / `getNetOpenPosition()` for analysis. To enforce minimum hold time before exits, use `OpenedPositionMinimumBarCountRule(n)` for a fixed minimum or `OpenPositionDurationRule(indicator, minBars)` for dynamic thresholds. For a full walkthrough of partial fills and criteria, see [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis).
 
 ## Avoid common pitfalls
 
 - **Look-ahead bias** – Ensure your indicator windows do not peek at future bars. Ta4j indicators automatically cap their lookbacks, but custom logic must do the same.
 - **Insufficient warm-up** – Set `strategy.setUnstableBars(n)` to skip the early `n` indices when indicators have not stabilized yet (`Indicator.isStable()` helps confirm).
 - **Moving series** – When using `setMaximumBarCount`, do not reference indexes older than `series.getBeginIndex()`. Criteria referencing evicted bars will return `NaN`.
+- **Ratio criteria edge cases** – `SortinoRatioCriterion` returns `NaN` when downside deviation is zero. Guard `NaN` values before `chooseBest(...)` or top-K ranking.
 - **Transaction costs** – Always configure `TransactionCostModel` / `HoldingCostModel` on `BarSeriesManager` or pass explicit cost models to `BacktestExecutor`.
 
 ## Walk-forward optimization

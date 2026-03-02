@@ -29,6 +29,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
+| `org.ta4j.core` | **Indicator** | Core ta4j indicator interface; typed value provider over bar indexes. |
 | `org.ta4j.core.indicators.helpers` | **ClosePriceIndicator** | Returns the close price of a bar. |
 | `org.ta4j.core.indicators.helpers` | **OpenPriceIndicator** | Returns the open price of a bar. |
 | `org.ta4j.core.indicators.helpers` | **HighPriceIndicator** | Returns the high price of a bar. |
@@ -55,6 +56,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **FixedBooleanIndicator** | Fixed boolean value. |
 | `org.ta4j.core.indicators.helpers` | **FixedIndicator** | Wraps a single value as an indicator over the series length. |
 | `org.ta4j.core.indicators.helpers` | **BooleanTransformIndicator** | Converts a numeric indicator to boolean via a threshold or condition. |
+| `org.ta4j.core.indicators.helpers` | **BandIndicator** | Generic upper/lower band around a middle indicator value. |
 | `org.ta4j.core.indicators.helpers` | **CrossIndicator** | Detects crosses between two indicators (e.g. cross up/down). |
 | `org.ta4j.core.indicators.helpers` | **ConvergenceDivergenceIndicator** | Convergence/divergence between two indicators. |
 | `org.ta4j.core.indicators.helpers` | **CloseLocationValueIndicator** | CLV: where close sits in the bar range (-1 to 1). |
@@ -155,7 +157,10 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **StochasticOscillatorKIndicator** | Stochastic %K. |
 | `org.ta4j.core.indicators` | **StochasticOscillatorDIndicator** | Stochastic %D (smoothed %K). |
 | `org.ta4j.core.indicators` | **MACDIndicator** | MACD (APO): short EMA − long EMA. |
-| `org.ta4j.core.indicators` | **MACDVIndicator** | MACD with volume weighting. |
+| `org.ta4j.core.indicators` | **MACDVIndicator** | Deprecated compatibility shim for `org.ta4j.core.indicators.macd.MACDVIndicator`. |
+| `org.ta4j.core.indicators.macd` | **MACDVIndicator** | MACD-V using volume/ATR-weighted EMA inputs (ATR used in weighting term, not direct division). |
+| `org.ta4j.core.indicators.macd` | **MACDVMomentumStateIndicator** | Classifies MACD-V values into momentum states via configurable thresholds. |
+| `org.ta4j.core.indicators.macd` | **VolatilityNormalizedMACDIndicator** | Volatility-normalized MACD-V (`(EMAfast - EMAslow) / ATR * scale`), often called Spiroglou-style. |
 | `org.ta4j.core.indicators` | **PPOIndicator** | Percentage Price Oscillator (MACD as % of longer EMA). |
 | `org.ta4j.core.indicators` | **ROCIndicator** | Rate of change (price change over period). |
 | `org.ta4j.core.indicators` | **CMOIndicator** | Chande Momentum Oscillator. |
@@ -164,8 +169,10 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **CCIIndicator** | Commodity Channel Index. |
 | `org.ta4j.core.indicators` | **KRIIndicator** | Klinger Volume Oscillator (simplified or full). |
 | `org.ta4j.core.indicators` | **AwesomeOscillatorIndicator** | Awesome Oscillator (median price, 5 vs 34 period). |
+| `org.ta4j.core.indicators` | **GatorOscillatorIndicator** | Bill Williams gator oscillator derived from alligator line spreads. |
 | `org.ta4j.core.indicators` | **AccelerationDecelerationIndicator** | AC: acceleration/deceleration of momentum. |
 | `org.ta4j.core.indicators` | **TrueStrengthIndexIndicator** | TSI: double-smoothed momentum. |
+| `org.ta4j.core.indicators` | **UltimateOscillatorIndicator** | Multi-window oscillator combining short/mid/long buying pressure. |
 | `org.ta4j.core.indicators` | **SchaffTrendCycleIndicator** | Schaff Trend Cycle; MACD + stochastic-style normalization. |
 | `org.ta4j.core.indicators` | **ConnorsRSIIndicator** | Connors RSI (streak + RSI components). |
 | `org.ta4j.core.indicators` | **FisherIndicator** | Fisher transform (normalizes price to Gaussian-like). |
@@ -203,6 +210,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.aroon` | **AroonUpIndicator** | Aroon Up (periods since highest high). |
 | `org.ta4j.core.indicators.aroon` | **AroonDownIndicator** | Aroon Down (periods since lowest low). |
 | `org.ta4j.core.indicators.aroon` | **AroonOscillatorIndicator** | Aroon Up − Aroon Down. |
+| `org.ta4j.core.indicators` | **AlligatorIndicator** | Bill Williams alligator line (jaw/teeth/lips displaced SMMAs). |
 | `org.ta4j.core.indicators.ichimoku` | **IchimokuTenkanSenIndicator** | Tenkan-sen (conversion line). |
 | `org.ta4j.core.indicators.ichimoku` | **IchimokuKijunSenIndicator** | Kijun-sen (base line). |
 | `org.ta4j.core.indicators.ichimoku` | **IchimokuSenkouSpanAIndicator** | Senkou Span A (leading span A). |
@@ -214,6 +222,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.supertrend` | **SuperTrendLowerBandIndicator** | SuperTrend lower band. |
 | `org.ta4j.core.indicators.trend` | **UpTrendIndicator** | Boolean: price in uptrend (e.g. above MA). |
 | `org.ta4j.core.indicators.trend` | **DownTrendIndicator** | Boolean: price in downtrend. |
+| `org.ta4j.core.indicators` | **VortexIndicator** | Vortex (+VI, −VI, and oscillator) trend-strength/direction indicator. |
 
 **Short usage**  
 - **What it is:** ADX/DI measure trend strength and direction; Aroon and Ichimoku add structure; SuperTrend gives a single trend line.  
@@ -233,7 +242,13 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.volume` | **ChaikinMoneyFlowIndicator** | CMF: volume-weighted money flow over period. |
 | `org.ta4j.core.indicators.volume` | **ChaikinOscillatorIndicator** | Chaikin Oscillator (A/D short − long EMA). |
 | `org.ta4j.core.indicators.volume` | **MoneyFlowIndexIndicator** | MFI: volume-weighted RSI-style oscillator. |
+| `org.ta4j.core.indicators` | **MarketFacilitationIndexIndicator** | Bill Williams MFI: `(high - low) / volume` (not Money Flow Index). |
 | `org.ta4j.core.indicators.volume` | **VWAPIndicator** | Volume-weighted average price (from open). |
+| `org.ta4j.core.indicators.volume` | **AnchoredVWAPIndicator** | Anchored VWAP from a configurable start index/time anchor. |
+| `org.ta4j.core.indicators.volume` | **VWAPBandIndicator** | VWAP ± multiplier × VWAP standard deviation bands. |
+| `org.ta4j.core.indicators.volume` | **VWAPDeviationIndicator** | Absolute price deviation from VWAP (premium/discount vs value). |
+| `org.ta4j.core.indicators.volume` | **VWAPStandardDeviationIndicator** | Volume-weighted standard deviation used by VWAP-derived bands/z-scores. |
+| `org.ta4j.core.indicators.volume` | **VWAPZScoreIndicator** | Z-score of price relative to VWAP and VWAP standard deviation. |
 | `org.ta4j.core.indicators.volume` | **MVWAPIndicator** | Moving VWAP (VWAP over a rolling window). |
 | `org.ta4j.core.indicators.volume` | **NVIIndicator** | Negative Volume Index. |
 | `org.ta4j.core.indicators.volume` | **PVIIndicator** | Positive Volume Index. |
@@ -273,7 +288,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.candles` | **MorningStarIndicator** | Morning star (three-candle reversal). |
 | `org.ta4j.core.indicators.candles` | **EveningStarIndicator** | Evening star. |
 | `org.ta4j.core.indicators.candles` | **DarkCloudIndicator** | Dark cloud cover. |
+| `org.ta4j.core.indicators.candles` | **DarkCloudCoverIndicator** | Dark cloud cover candlestick pattern indicator. |
 | `org.ta4j.core.indicators.candles` | **PiercingIndicator** | Piercing line. |
+| `org.ta4j.core.indicators.candles` | **PiercingLineIndicator** | Piercing line candlestick pattern indicator. |
 | `org.ta4j.core.indicators.candles` | **BullishKickerIndicator** | Bullish kicker (gap + opposite body). |
 | `org.ta4j.core.indicators.candles` | **BearishKickerIndicator** | Bearish kicker. |
 | `org.ta4j.core.indicators.candles` | **ThreeWhiteSoldiersIndicator** | Three white soldiers. |
@@ -296,6 +313,12 @@ For an overview of indicator categories and composition patterns, see [Technical
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.supportresistance` | **TrendLineSupportIndicator** | Support level from trend line (e.g. swing lows). |
 | `org.ta4j.core.indicators.supportresistance` | **TrendLineResistanceIndicator** | Resistance level from trend line. |
+| `org.ta4j.core.indicators.supportresistance` | **BounceCountSupportIndicator** | Support estimate from clustered bounce frequency below/around price levels. |
+| `org.ta4j.core.indicators.supportresistance` | **BounceCountResistanceIndicator** | Resistance estimate from clustered bounce frequency above/around price levels. |
+| `org.ta4j.core.indicators.supportresistance` | **PriceClusterSupportIndicator** | Support levels from close-price clustering with configurable tolerance. |
+| `org.ta4j.core.indicators.supportresistance` | **PriceClusterResistanceIndicator** | Resistance levels from close-price clustering with configurable tolerance. |
+| `org.ta4j.core.indicators.supportresistance` | **VolumeProfileKDEIndicator** | Smoothed volume-at-price profile using kernel density estimation. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffPhaseIndicator** | Inferred Wyckoff phase classification from structural/volume context. |
 | `org.ta4j.core.indicators.pivotpoints` | **PivotPointIndicator** | Standard pivot point (and optionally R1/R2/S1/S2). |
 | `org.ta4j.core.indicators.pivotpoints` | **DeMarkPivotPointIndicator** | DeMark pivot points. |
 | `org.ta4j.core.indicators.pivotpoints` | **StandardReversalIndicator** | Reversal level from standard pivots. |
@@ -317,9 +340,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
-| `org.ta4j.core.indicators` | **RecentSwingHighIndicator** | Price of the most recent confirmed swing high. |
-| `org.ta4j.core.indicators` | **RecentSwingLowIndicator** | Price of the most recent confirmed swing low. |
 | `org.ta4j.core.indicators` | **RecentSwingIndicator** | Generic recent swing (e.g. value at last swing). |
+| `org.ta4j.core.indicators` | **FractalHighIndicator** | Bill Williams fractal high confirmation indicator (no look-ahead). |
+| `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |
@@ -413,6 +436,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.statistics` | **SimpleLinearRegressionIndicator** | Moving simple linear regression (slope/intercept). |
 | `org.ta4j.core.indicators.statistics` | **StandardErrorIndicator** | Standard error of regression (or estimate). |
 | `org.ta4j.core.indicators.statistics` | **SigmaIndicator** | Z-score (value in standard deviations from mean). |
+| `org.ta4j.core.indicators.statistics` | **ZScoreIndicator** | Z-score indicator. |
 | `org.ta4j.core.indicators.statistics` | **PeriodicalGrowthRateIndicator** | Period-over-period growth rate (e.g. annualized). |
 | `org.ta4j.core.indicators.numeric` | **BinaryOperationIndicator** | Binary operation (add, subtract, multiply, divide, min, max) on two indicators. |
 | `org.ta4j.core.indicators.numeric` | **UnaryOperationIndicator** | Unary operation (negate, abs, log, etc.) on one indicator. |
@@ -469,6 +493,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 |-----|-------|-----------------------------|
 | `ta4jexamples.charting.annotation` | **BarSeriesLabelIndicator** | Sparse bar-index labels for chart annotations; getValue returns label Y (e.g. price) at labeled indices and NaN elsewhere; labels() for text. |
 | `ta4jexamples.charting` | **ChannelBoundaryIndicator** | Wraps a channel (e.g. PriceChannel); extracts upper, lower, or median boundary for chart overlay; forwards Num when source is already Num. |
+| `ta4jexamples.charting` | **AnalysisCriterionIndicator** | Visualizes an `AnalysisCriterion` as an indicator for chart overlays. |
+| `ta4jexamples.indicators` | **CandlestickChartWithChopIndicator** | Example candlestick chart workflow with a Chop indicator overlay. |
 
 **Short usage**  
 - **What it is:** Charting helpers: annotation labels and channel-boundary extraction for display.  
