@@ -93,6 +93,8 @@ MACDVIndicator macdv = new MACDVIndicator(series, 12, 26, 9); // uses volume wei
 
 Indicators are cached automatically. If you mutate the most recent bar (typical in live trading), ta4j recalculates the final value on demand.
 
+If you specifically want the volatility-normalized MACD-V formulation (`(EMAfast - EMAslow) / ATR * scale`, often called Spiroglou-style), use `VolatilityNormalizedMACDIndicator` instead of `MACDVIndicator`.
+
 ### 3. Compose rules and a strategy
 
 ```java

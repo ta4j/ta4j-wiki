@@ -155,8 +155,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **StochasticOscillatorKIndicator** | Stochastic %K. |
 | `org.ta4j.core.indicators` | **StochasticOscillatorDIndicator** | Stochastic %D (smoothed %K). |
 | `org.ta4j.core.indicators` | **MACDIndicator** | MACD (APO): short EMA − long EMA. |
-| `org.ta4j.core.indicators` | **MACDVIndicator** | MACD with volume weighting. |
-| `org.ta4j.core.indicators.macd` | **VolatilityNormalizedMACDIndicator** | MACD-V formulation using volatility normalization. |
+| `org.ta4j.core.indicators` | **MACDVIndicator** | ta4j variant: MACD EMA spread with volume/ATR-weighted EMA inputs (not ATR division). |
+| `org.ta4j.core.indicators.macd` | **VolatilityNormalizedMACDIndicator** | Volatility-normalized MACD-V (`(EMAfast - EMAslow) / ATR * scale`), often called Spiroglou-style. |
 | `org.ta4j.core.indicators` | **PPOIndicator** | Percentage Price Oscillator (MACD as % of longer EMA). |
 | `org.ta4j.core.indicators` | **ROCIndicator** | Rate of change (price change over period). |
 | `org.ta4j.core.indicators` | **CMOIndicator** | Chande Momentum Oscillator. |
