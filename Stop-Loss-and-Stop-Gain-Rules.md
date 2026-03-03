@@ -19,6 +19,8 @@ Use this page as the operational guide for:
 
 These use percentage distance from entry (or favorable move for trailing variants).
 
+Percent inputs are percentage points (for example, `3` means `3%`, not `0.03`).
+
 Best when:
 
 - You want simple, interpretable risk limits.
@@ -50,6 +52,8 @@ Best when:
 - `AverageTrueRangeTrailingStopGainRule`
 
 These use a dynamic threshold based on volatility indicators (typically ATR multiplied by a coefficient).
+
+From 0.22.3, ATR-based rules also support constructors that accept a custom `ATRIndicator` directly, so you can share precomputed ATR pipelines instead of rebuilding ATR inside each rule.
 
 Best when:
 
@@ -88,6 +92,7 @@ Notes:
 
 - Keep one hard fail-safe stop even when using adaptive stops.
 - Avoid stacking many correlated stop rules unless each has a distinct purpose.
+- `TrailingStopGainRule` and `AverageTrueRangeTrailingStopGainRule` are two-stage: they activate only after reaching the initial gain threshold, then trigger on retracement from the favorable extreme.
 
 ## Using stop-price models for risk analytics
 
@@ -159,6 +164,32 @@ Practical tuning workflow:
 2. Validate on multiple volatility regimes.
 3. Compare with realistic fees/slippage.
 4. Stress test gap days and high-spread windows.
+
+## Complementary risk gating rules (0.22.2+)
+
+Use these with stop rules when you need stronger entry/exit constraints:
+
+- `RiskRewardRatioRule`
+  - Checks whether your current `price/stop/target` tuple satisfies a minimum reward-to-risk threshold.
+  - Useful before entering trades that rely on dynamic stop/target indicators.
+- `OverOrEqualIndicatorRule`
+  - Same semantics as `OverIndicatorRule`, but inclusive (`>=`) for threshold boundaries.
+  - Useful for exact trigger levels (for example, "allow signal when RSI is exactly 50").
+- `UnderOrEqualIndicatorRule`
+  - Same semantics as `UnderIndicatorRule`, but inclusive (`<=`) for threshold boundaries.
+  - Useful for exact lower bounds (for example, "allow exit when RSI is exactly 30").
+- `OrWithThresholdRule`
+  - OR composition evaluated over a rolling threshold window (current bar included).
+  - Useful when either of two confirmation signals can fire within the last `N` bars.
+
+```java
+Rule rrGate = new RiskRewardRatioRule(close, stopPrice, targetPrice, true, 2.0);
+Rule inclusiveState = new OverOrEqualIndicatorRule(rsi, 50);
+Rule inclusiveOversold = new UnderOrEqualIndicatorRule(rsi, 30);
+Rule delayedConfirm = new OrWithThresholdRule(macdCrossUp, breakoutRule, 3);
+
+Rule entryRule = rrGate.and(inclusiveState).and(inclusiveOversold.negation()).and(delayedConfirm);
+```
 
 ## Common mistakes
 

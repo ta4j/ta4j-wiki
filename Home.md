@@ -18,6 +18,7 @@ Your one-stop guide for building technical-analysis-driven trading systems in Ja
 - **Bill Williams toolkit** – Added `AlligatorIndicator`, `FractalHighIndicator` / `FractalLowIndicator`, `GatorOscillatorIndicator`, and `MarketFacilitationIndexIndicator` with a dedicated [Bill Williams Indicators](Bill-Williams-Indicators.md) guide.
 - **MACD-V momentum-state APIs** – Added momentum-state classification (`MACDVMomentumStateIndicator`, `MACDVMomentumProfile`) and rule integration helpers.
 - **New risk/quality criteria** – Added metrics like `SortinoRatioCriterion`, `PositionDurationCriterion`, and `RMultipleCriterion` for tighter backtest analysis.
+- **Threshold-aware rule composition** – Added coverage for `RiskRewardRatioRule`, `OverOrEqualIndicatorRule`, `UnderOrEqualIndicatorRule`, and `OrWithThresholdRule` in [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md).
 
 - **Unified return representation system** – Consistent formatting across all return-based criteria (multiplicative, decimal, percentage, logarithmic) via `ReturnRepresentation` and `ReturnRepresentationPolicy`
 - **New oscillators** – `TrueStrengthIndexIndicator`, `SchaffTrendCycleIndicator`, and `ConnorsRSIIndicator` expand oscillator coverage
