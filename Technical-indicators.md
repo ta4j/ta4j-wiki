@@ -1,6 +1,6 @@
 # Technical Indicators
 
-Technical indicators (a.k.a. *technicals*) transform price/volume data into structured signals that power rules and strategies. ta4j ships with 130+ indicators covering every major category plus building blocks for your own creations.
+Technical indicators (a.k.a. *technicals*) transform price/volume data into structured signals that power rules and strategies. ta4j currently ships with 247 indicator classes under `org.ta4j.core.indicators`, covering every major category plus building blocks for your own creations.
 
 **Exhaustive list:** For a full inventory of all indicators in ta4j-core and ta4j-examples (fully qualified names, class names, short descriptions, and usage notes), see [Indicators Inventory](Indicators-Inventory.md).
 
@@ -31,7 +31,7 @@ Indicator<Num> trendBias = BinaryOperationIndicator.division(fast, slow);
 Indicator<Num> blendedMomentum = BinaryOperationIndicator.add(macdv.getMacd(), netMomentum);
 ```
 
-- `BinaryOperationIndicator` / `UnaryOperationIndicator` replace the older `TransformIndicator`/`CombineIndicator` classes (removed in 0.19, enhanced in 0.21.0).
+- `BinaryOperationIndicator` / `UnaryOperationIndicator` are the preferred numeric composition APIs for new code; `CombineIndicator` remains available in `org.ta4j.core.indicators.helpers`.
 - Output indicators can feed directly into rules (`new OverIndicatorRule(trendBias, numOf(1.0))`) or become inputs to other indicators.
 
 ## Market structure workflow (VWAP + S/R + Wyckoff)
@@ -45,6 +45,8 @@ ta4j now includes a complete workflow for value, location, and phase analysis:
 Use the dedicated guide for implementation templates and tuning advice:
 
 - [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)
+
+For Donchian channels, `DonchianChannelFacade` provides fluent `lower()/upper()/middle()` numeric indicators from one constructor call; see [Indicators Inventory](Indicators-Inventory.md) for class-level details.
 
 ## Bill Williams workflow (0.22.3)
 
@@ -93,8 +95,6 @@ Sub-class `CachedIndicator<Num>` or compose existing indicators with operations.
 - When working with unconventional chart types (Renko, Heikin Ashi), prefer the dedicated builders/indicators shipped in 0.18/0.19/0.21.0—they keep the math consistent across strategies.
 - Combine price- and volume-driven indicators to reduce false positives (e.g., `new AndIndicatorRule(new OverIndicatorRule(macdv, zero), new OverIndicatorRule(vwma, close))`).
 - Document indicator usage inside strategies so others know the intent—especially if the indicator is non-standard or parameter-sensitive.
-Technicals also need to be backtested on historic data to see how effective they would have been to predict future prices. [Some examples](Usage-examples.html) are available in this sense.
-
 ### Visualizing indicators
 
 You can visualize indicators on charts using the [ChartBuilder API](Charting.md). Indicators can be displayed as overlays on price charts or as separate sub-charts:

@@ -22,6 +22,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 12. [Renko](#12-renko)
 13. [Analysis (PnL, returns, cash flow)](#13-analysis-pnl-returns-cash-flow)
 14. [Charting (ta4j-examples)](#14-charting-ta4j-examples)
+15. [Supporting public types (facades, enums, records)](#15-supporting-public-types-facades-enums-records)
 
 ---
 
@@ -132,6 +133,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.donchian` | **DonchianChannelUpperIndicator** | Highest high over the period. |
 | `org.ta4j.core.indicators.donchian` | **DonchianChannelLowerIndicator** | Lowest low over the period. |
 | `org.ta4j.core.indicators.donchian` | **DonchianChannelMiddleIndicator** | Midpoint of Donchian channel. |
+| `org.ta4j.core.indicators.donchian` | **DonchianChannelFacade** | Fluent builder that exposes cached numeric Donchian lower/upper/middle channels from one constructor call. |
 | `org.ta4j.core.indicators` | **ChandelierExitLongIndicator** | Chandelier Exit (long): highest high minus ATR-based offset. |
 | `org.ta4j.core.indicators` | **ChandelierExitShortIndicator** | Chandelier Exit (short): lowest low plus ATR-based offset. |
 | `org.ta4j.core.indicators` | **ChopIndicator** | Choppiness Index (0–100); measures trend vs range. |
@@ -506,9 +508,51 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ---
 
+## 15. Supporting public types (facades, enums, records)
+
+These types live in `org.ta4j.core.indicators` and its subpackages and are part of the public indicator API surface, even though they are not all `*Indicator` classes.
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators` | **PriceChannel** | Interface for channel-like outputs (upper/lower/median), used by channel indicators. |
+| `org.ta4j.core.indicators.aroon` | **AroonFacade** | Convenience wrapper exposing Aroon Up/Down/Oscillator values from a common setup. |
+| `org.ta4j.core.indicators.bollinger` | **BollingerBandFacade** | Convenience wrapper exposing middle/upper/lower Bollinger values together. |
+| `org.ta4j.core.indicators.donchian` | **DonchianChannelFacade** | Convenience wrapper exposing Donchian channel components from one entry point. |
+| `org.ta4j.core.indicators.keltner` | **KeltnerChannelFacade** | Convenience wrapper exposing Keltner channel components from one entry point. |
+| `org.ta4j.core.indicators.macd` | **MACDHistogramMode** | Enum controlling histogram calculation mode for MACD-V helper APIs. |
+| `org.ta4j.core.indicators.macd` | **MACDLineValues** | Record containing MACD, signal, and histogram line values as one object. |
+| `org.ta4j.core.indicators.macd` | **MACDVMomentumProfile** | Record encapsulating configurable MACD-V momentum state thresholds. |
+| `org.ta4j.core.indicators.macd` | **MACDVMomentumState** | Enum for MACD-V momentum regimes used by momentum-state indicators/rules. |
+| `org.ta4j.core.indicators.pivotpoints` | **PivotLevel** | Enum for pivot-derived levels (pivot/support/resistance variants). |
+| `org.ta4j.core.indicators.pivotpoints` | **TimeLevel** | Enum describing pivot timeframe granularity (for example day/week/month). |
+| `org.ta4j.core.indicators.elliott` | **ElliottAnalysisResult** | Record returned by `ElliottWaveAnalyzer` with scenarios, confidence, and diagnostics. |
+| `org.ta4j.core.indicators.elliott` | **ElliottChannel** | Record representing Elliott channel boundaries (`PriceChannel` implementation). |
+| `org.ta4j.core.indicators.elliott` | **ElliottConfidence** | Record capturing aggregate and component confidence values for Elliott analysis. |
+| `org.ta4j.core.indicators.elliott` | **ElliottDegree** | Enum for Elliott wave degrees (multi-timeframe wave scale). |
+| `org.ta4j.core.indicators.elliott` | **ElliottFibonacciValidator** | Validator for Elliott Fibonacci relationship checks across swings/waves. |
+| `org.ta4j.core.indicators.elliott` | **ElliottPhase** | Enum representing Elliott phase classification (impulse/corrective states). |
+| `org.ta4j.core.indicators.elliott` | **ElliottRatio** | Record representing a computed Elliott ratio and its ratio type. |
+| `org.ta4j.core.indicators.elliott` | **ElliottScenario** | Record describing one candidate Elliott scenario and associated metadata. |
+| `org.ta4j.core.indicators.elliott` | **ElliottSwing** | Record describing a swing segment used by Elliott scenario generation/scoring. |
+| `org.ta4j.core.indicators.elliott` | **ElliottSwingCompressor** | Utility that compresses/noise-filters Elliott swing sequences. |
+| `org.ta4j.core.indicators.elliott` | **ElliottTrendBias** | Record representing bullish/bearish/neutral Elliott trend-bias weighting. |
+| `org.ta4j.core.indicators.elliott` | **ScenarioType** | Enum for supported Elliott scenario families (used in pattern selection/scoring). |
+| `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceFactorCategory** | Enum categorizing confidence factors in Elliott confidence scoring. |
+| `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceFactorResult** | Record containing one factor's raw score, weighted score, and diagnostics. |
+| `org.ta4j.core.indicators.elliott.confidence` | **ElliottConfidenceContext** | Record containing context input used by Elliott confidence factors/models. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleAnalysisResult** | Record containing cycle-analysis outcomes and supporting notes. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleType** | Enum representing inferred Wyckoff cycle type. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffEvent** | Record describing a detected Wyckoff event and its properties. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffPhase** | Record representing inferred Wyckoff phase classification with confidence. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffPhaseType** | Enum for Wyckoff phase labels. |
+| `org.ta4j.core.indicators.zigzag` | **ZigZagTrend** | Enum representing ZigZag directional state. |
+
+---
+
 ## Summary
 
-- **ta4j-core** provides 200+ indicators across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis.  
+- **ta4j-core** currently provides 247 indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis.
+- The inventory also tracks supporting public types (facades, enums, records, interfaces) in indicator packages that are required for complete API coverage.
 - **ta4j-examples** adds charting-oriented indicators (labels, channel boundary).  
 - All entries above use the **fully qualified name** and **class name** and a **short description as in the ta4j codebase**.  
 - Each category includes a **short usage** block (what it is, theory, when to use, when not to use) and **room for expansion** (use cases, example code).  
