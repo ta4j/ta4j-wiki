@@ -1,22 +1,23 @@
 # Technical Indicators
 
-Technical indicators (a.k.a. *technicals*) transform price/volume data into structured signals that power rules and strategies. ta4j ships with 130+ indicators covering every major category plus building blocks for your own creations.
+Technical indicators (a.k.a. *technicals*) transform price/volume data into structured signals that power rules and strategies. ta4j ships with hundreds of indicators covering major categories plus building blocks for your own creations.
 
 **Exhaustive list:** For a full inventory of all indicators in ta4j-core and ta4j-examples (fully qualified names, class names, short descriptions, and usage notes), see [Indicators Inventory](Indicators-Inventory.md).
 
 | Category | Highlights | Docs |
 | --- | --- | --- |
-| Trend / Moving Averages | SMA, EMA, HMA, VIDYA, Jurik, Displaced variants, SuperTrend, Renko helpers. | [Moving Average Indicators](Moving-Average-Indicators.md) |
-| Momentum & Oscillators | RSI family, NetMomentum (new), MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
-| Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
-| Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Volume spikes. | Indicators package |
-| Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
+| Trend / Moving Averages | SMA, EMA, HMA, VIDYA, Jurik, displaced variants, ADX/DI, Aroon, SuperTrend, and MA-derived indicators. | [Moving Average Indicators](Moving-Average-Indicators.md) |
+| Momentum & Oscillators | RSI family, NetMomentum, MACD/MACD-V, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
+| Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Chandelier exits, Squeeze Pro. | [Bar Series & Bars](Bar-series-and-bars.md) |
+| Volume & Breadth | OBV, VWAP/VWMA/MVWAP, Accumulation/Distribution, Chaikin family, MFI, NVI/PVI, relative-volume indicators. | [Indicators Inventory](Indicators-Inventory.md) |
+| Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, trend lines, KDE volume profile, Wyckoff phase/cycle analysis. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
 | Bill Williams Toolkit | Alligator (jaw/teeth/lips), FractalHigh/Low, Gator Oscillator, Market Facilitation Index. | [Bill Williams Indicators](Bill-Williams-Indicators.md) |
 | Candle/Pattern | Hammer, Shooting Star, Three White Soldiers, DownTrend/UpTrend. | `indicators.candles` |
-| Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator` transforms. | `indicators.renko` |
-| Oscillators | TrueStrengthIndex, SchaffTrendCycle, ConnorsRSI (0.21.0), RSI family, MACD/MACDV, KST, Stochastics, CMO, ROC. | This page |
+| Wave & Swing Structure | ZigZag state/pivots/recent swings and Elliott scenario/confidence/trend-bias toolchain. | [Trendlines & Swing Points](Trendlines-and-Swing-Points.md), [Elliott Wave Indicators](Elliott-Wave-Indicators.md) |
+| Price Transformations / Numeric Ops | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator`/`NumericIndicator`. | [Indicators Inventory](Indicators-Inventory.md) |
+| Ichimoku / Pivot / Statistics | Ichimoku lines, pivot-point/reversal indicators, and statistics/regression indicators. | [Indicators Inventory](Indicators-Inventory.md) |
 
-Browse `org.ta4j.core.indicators` in your IDE for the full list—packages mirror the table above.
+Browse `org.ta4j.core.indicators` in your IDE for the full list. The table above is representative; [Indicators Inventory](Indicators-Inventory.md) is the exhaustive source of truth.
 
 ## Composition example
 
@@ -31,7 +32,7 @@ Indicator<Num> trendBias = BinaryOperationIndicator.division(fast, slow);
 Indicator<Num> blendedMomentum = BinaryOperationIndicator.add(macdv.getMacd(), netMomentum);
 ```
 
-- `BinaryOperationIndicator` / `UnaryOperationIndicator` replace the older `TransformIndicator`/`CombineIndicator` classes (removed in 0.19, enhanced in 0.21.0).
+- `BinaryOperationIndicator` / `UnaryOperationIndicator` are the preferred composition APIs. `TransformIndicator` has been removed, while `CombineIndicator` remains as a deprecated compatibility class.
 - Output indicators can feed directly into rules (`new OverIndicatorRule(trendBias, numOf(1.0))`) or become inputs to other indicators.
 
 ## Market structure workflow (VWAP + S/R + Wyckoff)
@@ -39,12 +40,23 @@ Indicator<Num> blendedMomentum = BinaryOperationIndicator.add(macdv.getMacd(), n
 ta4j now includes a complete workflow for value, location, and phase analysis:
 
 - Value: `VWAPIndicator`, `AnchoredVWAPIndicator`, `VWAPBandIndicator`, `VWAPZScoreIndicator`
-- Location: `PriceClusterSupportIndicator`, `PriceClusterResistanceIndicator`, `BounceCountSupportIndicator`, `BounceCountResistanceIndicator`, `VolumeProfileKDEIndicator`
-- Phase: `WyckoffPhaseIndicator`
+- Location: `PriceClusterSupportIndicator`, `PriceClusterResistanceIndicator`, `BounceCountSupportIndicator`, `BounceCountResistanceIndicator`, `TrendLineSupportIndicator`, `TrendLineResistanceIndicator`, `VolumeProfileKDEIndicator`
+- Phase/Cycle: `WyckoffPhaseIndicator`, `WyckoffCycleFacade`
 
 Use the dedicated guide for implementation templates and tuning advice:
 
 - [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)
+
+## Wave-structure workflow (ZigZag + Elliott)
+
+ta4j includes a complete swing/structure toolchain for pattern-based analysis:
+
+- Swing extraction: `ZigZagStateIndicator`, `RecentZigZagSwingHighIndicator`, `RecentZigZagSwingLowIndicator`
+- Elliott interpretation: `ElliottWaveFacade`, `ElliottScenarioIndicator`, `ElliottTrendBiasIndicator`, `ElliottConfidenceScorer`
+
+Use:
+- [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
+- [Elliott Wave Indicators](Elliott-Wave-Indicators.md)
 
 ## Bill Williams workflow (0.22.3)
 
@@ -73,10 +85,11 @@ Indicators should be evaluated the same way strategies are—prefer realistic da
 
 ## Caching & stability
 
-- Every indicator extends `CachedIndicator`, so once a value is computed (except for the most recent bar) it is reused.
-- Mutating the latest bar (common with streaming data) invalidates just that slot; the rest stays cached.
-- Use `indicator.getCountOfUnstableBars()` / `indicator.isStable(index)` to understand when the values become reliable (and pass that number to `strategy.setUnstableBars(...)`).
-- When using moving `BarSeries` via `setMaximumBarCount`, cached entries older than the oldest remaining bar disappear. Always guard against `NaN` if you try to access evicted indexes.
+- Most implementations use `CachedIndicator`/`RecursiveCachedIndicator`; some thin wrappers extend `AbstractIndicator` and delegate to cached components (for example `ATRIndicator`, `KRIIndicator`).
+- Latest-bar values are cached with mutation-aware invalidation; when the current bar changes, only that slot is recomputed.
+- Use `indicator.getCountOfUnstableBars()` for warm-up size. For per-index checks, use `index >= indicator.getCountOfUnstableBars()`; for whole-series checks, use `indicator.isStable()`.
+- For strategies, pass warm-up via `strategy.setUnstableBars(...)`.
+- With moving `BarSeries` (`setMaximumBarCount`), evicted bars and their cache entries are not recoverable.
 
 ## Creating custom indicators
 
@@ -84,7 +97,7 @@ Sub-class `CachedIndicator<Num>` or compose existing indicators with operations.
 
 - Accept dependencies via constructor injections (`Indicator<Num> base`) rather than pulling directly from a `BarSeries`.
 - Respect the `Num` abstraction: use `Num` arithmetic (`plus`, `minus`, etc.) and produce values via the series `NumFactory`.
-- Override `getUnstableBars()` / `isStable()` when your indicator requires warm-up bars (e.g., multi-stage EMAs).
+- Override `getCountOfUnstableBars()` when your indicator requires warm-up bars (e.g., multi-stage EMA pipelines).
 - If you need state across indices, store it in the indicator (ta4j handles thread safety by design if you limit state to the calculation path).
 
 ## Tips
@@ -93,7 +106,7 @@ Sub-class `CachedIndicator<Num>` or compose existing indicators with operations.
 - When working with unconventional chart types (Renko, Heikin Ashi), prefer the dedicated builders/indicators shipped in 0.18/0.19/0.21.0—they keep the math consistent across strategies.
 - Combine price- and volume-driven indicators to reduce false positives (e.g., `new AndIndicatorRule(new OverIndicatorRule(macdv, zero), new OverIndicatorRule(vwma, close))`).
 - Document indicator usage inside strategies so others know the intent—especially if the indicator is non-standard or parameter-sensitive.
-Technicals also need to be backtested on historic data to see how effective they would have been to predict future prices. [Some examples](Usage-examples.html) are available in this sense.
+Technicals also need to be backtested on historic data to see how effective they would have been in predicting future prices. [Some examples](Usage-examples.md#playing-with-indicators) are available for this.
 
 ### Visualizing indicators
 
@@ -110,9 +123,3 @@ chartWorkflow.builder()
     .withLineColor(Color.ORANGE)
     .display();
 ```
-
-### Caching mechanism
-
-Some indicators need recursive calls and/or values from the previous bars in order to calculate their last value. For that reason, a caching mechanism has been implemented for all the indicators provided by ta4j. This system avoids calculating the same value twice. Therefore, if a value has been already calculated it is retrieved from cache the next time it is requested. **Values for the last Bar will not be cached**. This allows you to modify the last bar of the BarSeries by adding price/trades to it and to recalculate results with indicators.
-
-**Warning!** If a maximum bar count has been set for the related bar Series, then the results calculated for evicted bars are evicted too. They also cannot be recomputed since the related bars have been removed. That being said, moving bar Series should not be used when you need to access long-term past bars.

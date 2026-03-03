@@ -30,6 +30,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core` | **Indicator** | Core ta4j indicator interface; typed value provider over bar indexes. |
+| `org.ta4j.core.indicators` | **AbstractIndicator** | Base class for indicator implementations; provides common defaults (for example stability contract). |
+| `org.ta4j.core.indicators` | **CachedIndicator** | Caching base indicator with mutation-aware latest-bar invalidation. |
+| `org.ta4j.core.indicators` | **RecursiveCachedIndicator** | CachedIndicator variant for recursive calculations. |
 | `org.ta4j.core.indicators.helpers` | **ClosePriceIndicator** | Returns the close price of a bar. |
 | `org.ta4j.core.indicators.helpers` | **OpenPriceIndicator** | Returns the open price of a bar. |
 | `org.ta4j.core.indicators.helpers` | **HighPriceIndicator** | Returns the high price of a bar. |
@@ -38,10 +41,10 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **MedianPriceIndicator** | Median price (high + low) / 2. |
 | `org.ta4j.core.indicators.helpers` | **TRIndicator** | True Range: max(high−low, |high−prevClose|, |low−prevClose|). |
 | `org.ta4j.core.indicators.helpers` | **VolumeIndicator** | Returns the volume of a bar. |
-| `org.ta4j.core.indicators.helpers` | **ClosePriceDifferenceIndicator** | Difference between current and previous close (extends DifferenceIndicator). |
+| `org.ta4j.core.indicators.helpers` | **ClosePriceDifferenceIndicator** | Deprecated: difference between current and previous close (use `DifferenceIndicator` + `ClosePriceIndicator`). |
 | `org.ta4j.core.indicators.helpers` | **ClosePriceRatioIndicator** | Ratio of current close to previous close. |
 | `org.ta4j.core.indicators.helpers` | **DifferenceIndicator** | Difference between two indicators or consecutive values. |
-| `org.ta4j.core.indicators.helpers` | **DifferencePercentageIndicator** | Percentage difference between two indicators. |
+| `org.ta4j.core.indicators.helpers` | **DifferencePercentageIndicator** | Deprecated: percentage difference between two indicators (use `PercentageChangeIndicator`). |
 | `org.ta4j.core.indicators.helpers` | **GainIndicator** | Positive price changes (gains) from the source indicator. |
 | `org.ta4j.core.indicators.helpers` | **LossIndicator** | Absolute value of negative price changes (losses). |
 | `org.ta4j.core.indicators.helpers` | **HighestValueIndicator** | Highest value of the source indicator over a bar count. |
@@ -50,7 +53,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **SumIndicator** | Sum of the source indicator over a bar count. |
 | `org.ta4j.core.indicators.helpers` | **AverageIndicator** | Average (mean) of the source indicator over a bar count. |
 | `org.ta4j.core.indicators.helpers` | **RunningTotalIndicator** | Running sum of the source indicator. |
-| `org.ta4j.core.indicators.helpers` | **CombineIndicator** | Combines two indicators with a binary operator (e.g. add, subtract). |
+| `org.ta4j.core.indicators.helpers` | **CombineIndicator** | Deprecated compatibility wrapper; combine via `BinaryOperationIndicator`. |
 | `org.ta4j.core.indicators.helpers` | **ConstantIndicator** | Constant value at every index. |
 | `org.ta4j.core.indicators.helpers` | **FixedNumIndicator** | Fixed numeric value; useful for testing or thresholds. |
 | `org.ta4j.core.indicators.helpers` | **FixedBooleanIndicator** | Fixed boolean value. |
@@ -105,6 +108,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.averages` | **ZLEMAIndicator** | Zero-lag exponential moving average. |
 | `org.ta4j.core.indicators.averages` | **ATMAIndicator** | Asymmetric triangular moving average. |
 | `org.ta4j.core.indicators.averages` | **KiJunV2Indicator** | Kihon (Ichimoku-style) midpoint of high-low range over period. |
+| `org.ta4j.core.indicators.averages` | **AbstractEMAIndicator** | Shared EMA-style smoothing base with stable NaN/reset behavior. |
 
 **Short usage**  
 - **What it is:** Smoothing of price (or other series) over a window; type varies (simple, exponential, weighted, adaptive).  
@@ -238,6 +242,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.volume` | **OnBalanceVolumeIndicator** | OBV: cumulative volume signed by close direction. |
+| `org.ta4j.core.indicators.volume` | **AbstractVWAPIndicator** | Base class for VWAP-derived indicators sharing VWAP accumulation logic. |
 | `org.ta4j.core.indicators.volume` | **AccumulationDistributionIndicator** | A/D: cumulative volume weighted by CLV. |
 | `org.ta4j.core.indicators.volume` | **ChaikinMoneyFlowIndicator** | CMF: volume-weighted money flow over period. |
 | `org.ta4j.core.indicators.volume` | **ChaikinOscillatorIndicator** | Chaikin Oscillator (A/D short − long EMA). |
@@ -272,6 +277,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.candles` | **DojiIndicator** | True when bar is doji (open ≈ close). |
+| `org.ta4j.core.indicators.candles` | **AbstractMarubozuIndicator** | Base implementation for marubozu-style candlestick pattern indicators. |
 | `org.ta4j.core.indicators.candles` | **RealBodyIndicator** | Size of real body (|close − open|). |
 | `org.ta4j.core.indicators.candles` | **UpperShadowIndicator** | Upper shadow (high − max(open, close)). |
 | `org.ta4j.core.indicators.candles` | **LowerShadowIndicator** | Lower shadow (min(open, close) − low). |
@@ -313,13 +319,17 @@ For an overview of indicator categories and composition patterns, see [Technical
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.supportresistance` | **TrendLineSupportIndicator** | Support level from trend line (e.g. swing lows). |
 | `org.ta4j.core.indicators.supportresistance` | **TrendLineResistanceIndicator** | Resistance level from trend line. |
+| `org.ta4j.core.indicators.supportresistance` | **AbstractTrendLineIndicator** | Base class for trend-line support/resistance indicators. |
 | `org.ta4j.core.indicators.supportresistance` | **BounceCountSupportIndicator** | Support estimate from clustered bounce frequency below/around price levels. |
 | `org.ta4j.core.indicators.supportresistance` | **BounceCountResistanceIndicator** | Resistance estimate from clustered bounce frequency above/around price levels. |
+| `org.ta4j.core.indicators.supportresistance` | **AbstractBounceCountIndicator** | Base class for bounce-count support/resistance indicators. |
 | `org.ta4j.core.indicators.supportresistance` | **PriceClusterSupportIndicator** | Support levels from close-price clustering with configurable tolerance. |
 | `org.ta4j.core.indicators.supportresistance` | **PriceClusterResistanceIndicator** | Resistance levels from close-price clustering with configurable tolerance. |
+| `org.ta4j.core.indicators.supportresistance` | **AbstractPriceClusterIndicator** | Base class for price-cluster support/resistance indicators. |
 | `org.ta4j.core.indicators.supportresistance` | **VolumeProfileKDEIndicator** | Smoothed volume-at-price profile using kernel density estimation. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffPhaseIndicator** | Inferred Wyckoff phase classification from structural/volume context. |
 | `org.ta4j.core.indicators.pivotpoints` | **PivotPointIndicator** | Standard pivot point (and optionally R1/R2/S1/S2). |
+| `org.ta4j.core.indicators.pivotpoints` | **AbstractPivotPointIndicator** | Base class for session-aware pivot-point indicators. |
 | `org.ta4j.core.indicators.pivotpoints` | **DeMarkPivotPointIndicator** | DeMark pivot points. |
 | `org.ta4j.core.indicators.pivotpoints` | **StandardReversalIndicator** | Reversal level from standard pivots. |
 | `org.ta4j.core.indicators.pivotpoints` | **DeMarkReversalIndicator** | DeMark reversal levels. |
@@ -341,8 +351,11 @@ For an overview of indicator categories and composition patterns, see [Technical
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators` | **RecentSwingIndicator** | Generic recent swing (e.g. value at last swing). |
+| `org.ta4j.core.indicators` | **AbstractRecentSwingIndicator** | Base class for recent swing indicators. |
 | `org.ta4j.core.indicators` | **FractalHighIndicator** | Bill Williams fractal high confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
+| `org.ta4j.core.indicators` | **AbstractFractalConfirmationIndicator** | Base class for confirmed fractal indicators. |
+| `org.ta4j.core.indicators` | **AbstractRecentFractalSwingIndicator** | Base class for recent fractal swing indicators. |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |

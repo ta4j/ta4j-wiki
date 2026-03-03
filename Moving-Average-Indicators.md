@@ -42,6 +42,7 @@ Moving averages are versatile tools used in a variety of ways:
 |--------------|-----------------------------------------------|----------------------------|--------------------------------|
 | ATMA         | Asymmetric Triangular Moving Average          | ATMAIndicator              | Specialized Moving Average     |
 | DEMA         | Double Exponential Moving Average             | DoubleEMAIndicator         | Exponential Moving Average     |
+| DFMA         | Distance From Moving Average                  | DistanceFromMAIndicator    | MA-Derived Indicator           |
 | DMA          | Displaced Moving Average                      | DMAIndicator               | Specialized Moving Average     |
 | EDMA         | Exponential Displaced Moving Average          | EDMAIndicator              | Exponential Moving Average     |
 | EMA          | Exponential Moving Average                    | EMAIndicator               | Exponential Moving Average     |
@@ -58,14 +59,16 @@ Moving averages are versatile tools used in a variety of ways:
 | SMMA         | Smoothed Moving Average                       | SMMAIndicator              | Smoothed Moving Average        |
 | TEMA         | Triple Exponential Moving Average             | TripleEMAIndicator         | Exponential Moving Average     |
 | TMA          | Triangular Moving Average                     | TMAIndicator               | Simple Moving Average          |
-| VIDYA        | Chandes Variable Index Dynamic Moving Average | VIDYAIndicator             | Adaptive Moving Average        |
+| VIDYA        | Chande's Variable Index Dynamic Moving Average | VIDYAIndicator            | Adaptive Moving Average        |
 | VWMA         | Volume Weighted Moving Average                | VWMAIndicator              | Weighted Moving Average        |
-| WilderMA     | Wilders Moving Average                        | WildersMAIndicator         | Smoothed Moving Average        |
+| WilderMA     | Wilder's Moving Average                       | WildersMAIndicator         | Smoothed Moving Average        |
 | WMA          | Weighted Moving Average                       | WMAIndicator               | Weighted Moving Average        |
 | ZLEMA        | Zero Lag Exponential Moving Average           | ZLEMAIndicator             | Exponential Moving Average     |
 
 
 ## Classification of Moving Averages
+
+Most moving-average classes are in `org.ta4j.core.indicators.averages` (moved in commit `55a4eec8`, 2024-12-04). `DistanceFromMAIndicator` remains in `org.ta4j.core.indicators`.
 
 ### 1. Simple Moving Averages
 - These averages assign equal weight to all data points in the period.
@@ -128,6 +131,13 @@ Moving averages are versatile tools used in a variety of ways:
   - ATMA (Asymmetric Triangular Moving Average)
   - KiJunV2 (Kihon Moving Average)
   - DMA (Displaced Moving Average)
+
+---
+
+### 8. MA-Derived Indicators
+- These indicators use one or more moving averages as an internal baseline.
+- **Indicators**:
+  - DFMA (Distance From Moving Average)
 
 
 
