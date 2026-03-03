@@ -38,6 +38,8 @@ Moving averages are versatile tools used in a variety of ways:
 
 ## Moving Averages in TA4J
 
+Package: `org.ta4j.core.indicators.averages` (ta4j `0.22.4-SNAPSHOT`).
+
 | Abbreviation | Full Name                                     | Indicator Name             | Moving Average Type            |
 |--------------|-----------------------------------------------|----------------------------|--------------------------------|
 | ATMA         | Asymmetric Triangular Moving Average          | ATMAIndicator              | Specialized Moving Average     |
@@ -51,7 +53,7 @@ Moving averages are versatile tools used in a variety of ways:
 | KiJunV2      | Kihon Moving Average                          | KiJunV2Indicator           | Specialized Moving Average     |
 | LSMA         | Least Squares Moving Average                  | LSMAIndicator              | Polynomial-Based Moving Average|
 | LWMA         | Linear Weighted Moving Average                | LWMAIndicator              | Weighted Moving Average        |
-| MCGinley     | McGinley Moving Average                       | MCGinleyMAIndicator        | Adaptive Moving Average        |
+| McGinley     | McGinley Moving Average                       | MCGinleyMAIndicator        | Adaptive Moving Average        |
 | MMA          | Modified Moving Average                       | MMAIndicator               | Exponential Moving Average     |
 | SMA          | Simple Moving Average                         | SMAIndicator               | Simple Moving Average          |
 | SGMA         | Savitzky-Golay Moving Average                 | SGMAIndicator              | Polynomial-Based Moving Average|
@@ -60,9 +62,13 @@ Moving averages are versatile tools used in a variety of ways:
 | TMA          | Triangular Moving Average                     | TMAIndicator               | Simple Moving Average          |
 | VIDYA        | Chandes Variable Index Dynamic Moving Average | VIDYAIndicator             | Adaptive Moving Average        |
 | VWMA         | Volume Weighted Moving Average                | VWMAIndicator              | Weighted Moving Average        |
-| WilderMA     | Wilders Moving Average                        | WildersMAIndicator         | Smoothed Moving Average        |
+| WildersMA    | Wilders Moving Average                        | WildersMAIndicator         | Smoothed Moving Average        |
 | WMA          | Weighted Moving Average                       | WMAIndicator               | Weighted Moving Average        |
 | ZLEMA        | Zero Lag Exponential Moving Average           | ZLEMAIndicator             | Exponential Moving Average     |
+
+Notes:
+- `AbstractEMAIndicator` is an internal base class used by EMA-family implementations, not a standalone trading indicator.
+- In the last ~120 days no new moving-average indicator classes were added in this package; warmup/unstable behavior was updated in ta4j commit `d0ef59e7` ("Update Indicator Unstable Counts").
 
 
 ## Classification of Moving Averages

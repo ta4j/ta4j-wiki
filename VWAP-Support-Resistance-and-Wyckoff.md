@@ -35,11 +35,15 @@ Combined, they answer:
   weighted price clustering in a rolling lookback.
 - `BounceCountSupportIndicator` / `BounceCountResistanceIndicator`:
   bounce-frequency-driven zones.
+- `TrendLineSupportIndicator` / `TrendLineResistanceIndicator`:
+  linear regression trendline support/resistance over rolling windows.
 
 ### Wyckoff family
 
 - `WyckoffPhaseIndicator`: phase inference engine (cycle + phase + confidence + latest event index).
 - `WyckoffPhase`: record with cycle type, phase type, confidence, and latest event index.
+- `WyckoffCycleFacade`: unified entry point wrapping phase indicator plus cycle-level helpers.
+- `WyckoffCycleAnalysis` / `WyckoffCycleAnalysisResult`: multi-degree cycle analysis utilities.
 - `WyckoffEventDetector`, `WyckoffStructureTracker`, `WyckoffVolumeProfile`:
   internal components used by the phase indicator.
 
@@ -65,6 +69,8 @@ PriceClusterSupportIndicator support = new PriceClusterSupportIndicator(close, v
         num.numOf("0.25"), num.numOf("0.5"));
 PriceClusterResistanceIndicator resistance = new PriceClusterResistanceIndicator(close, volume, 150,
         num.numOf("0.25"), num.numOf("0.5"));
+TrendLineSupportIndicator trendSupport = new TrendLineSupportIndicator(series, 2, 80);
+TrendLineResistanceIndicator trendResistance = new TrendLineResistanceIndicator(series, 2, 80);
 VolumeProfileKDEIndicator profile = new VolumeProfileKDEIndicator(close, volume, 150, num.numOf("0.5"));
 
 // 3) Phase context (Wyckoff)
@@ -74,7 +80,18 @@ WyckoffPhaseIndicator wyckoff = WyckoffPhaseIndicator.builder(series)
         .withTolerances(num.numOf("0.02"), num.numOf("0.05"))
         .withVolumeThresholds(num.numOf("1.6"), num.numOf("0.7"))
         .build();
+
+// Optional: facade API for cycle + phase access
+WyckoffCycleFacade wyckoffFacade = WyckoffCycleFacade.builder(series)
+        .withSwingConfiguration(2, 2, 1)
+        .withVolumeWindows(5, 20)
+        .withTolerances(num.numOf("0.02"), num.numOf("0.05"))
+        .withVolumeThresholds(num.numOf("1.6"), num.numOf("0.7"))
+        .build();
 ```
+
+Recent code drift note (last ~120 days):
+- ta4j commit `39194498` introduced/expanded this stack materially (VWAP derivatives, support/resistance families, and Wyckoff cycle facade/analysis). The map above reflects the current class surface in `org.ta4j.core.indicators.volume`, `supportresistance`, and `wyckoff`.
 
 ## Backtesting how-to
 
