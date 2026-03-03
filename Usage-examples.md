@@ -66,7 +66,7 @@ Strategy examples that use charting:
 - **[DayOfWeekStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/DayOfWeekStrategy.java)** – combines calendar rules with indicator signals.
 - **[HourOfDayStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/HourOfDayStrategy.java)** / **[MinuteOfHourStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/MinuteOfHourStrategy.java)** – intraday calendar-time strategies using hour/minute rules.
 - **[NetMomentumStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java)** – showcases the Net Momentum indicator (introduced in 0.19).
-- **[MACDVMomentumStateStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/MACDVMomentumStateStrategy.java)** – demonstrates volatility-normalized MACD-V momentum states with chart overlays (added in 2026).
+- **[MACDVMomentumStateStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/MACDVMomentumStateStrategy.java)** – demonstrates volatility-normalized MACD-V momentum states with chart overlays (0.22.x+).
 - **[UnstableIndicatorStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/UnstableIndicatorStrategy.java)** – demonstrates how to handle indicators that require long warm-up periods.
 - **[WalkForward](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/walkforward/WalkForward.java)** – complete walk-forward optimization loop.
 
@@ -95,7 +95,7 @@ Strategy examples that use charting:
 ## Bots & live trading
 
 - **[TradingBotOnMovingBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingBarSeries.java)** – continuously updates a moving bar series and reacts to strategy signals.
-- **[WyckoffCycleIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/wyckoff/WyckoffCycleIndicatorSuiteDemo.java)** – one-shot and streaming Wyckoff cycle analysis demo (added in 2026).
+- **[WyckoffCycleIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/wyckoff/WyckoffCycleIndicatorSuiteDemo.java)** – one-shot and streaming Wyckoff cycle analysis demo (0.22.x+).
 - **ConcurrentBarSeries for live trading**: Since 0.22.2, use `ConcurrentBarSeries` for thread-safe bar ingestion in multi-threaded live trading scenarios. See [Live Trading](Live-trading.md) and [Bar Series & Bars](Bar-series-and-bars.md#concurrent-bar-series-for-multi-threaded-scenarios) for comprehensive documentation and examples.
 - **LiveTradingRecord (partial fills, cost basis, position book)**: For bots that receive partial fills or need per-lot cost basis and unrealized PnL, use `LiveTradingRecord` with `recordFill(ExecutionFill)` or `enter`/`exit`. See the [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis) for a step-by-step code guide and criteria (`OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`).
 

@@ -114,7 +114,7 @@ Notes:
 - These averages reduce short-term fluctuations to produce a smoother trendline.
 - **Indicators**:
   - SMMA (Smoothed Moving Average)
-  - WilderMA (Wilder’s Moving Average)
+  - WildersMA (Wilder’s Moving Average)
 
 ---
 

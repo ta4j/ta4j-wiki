@@ -99,6 +99,8 @@ The `ta4j-examples` module includes a benchmark (`DecimalNumPrecisionPerformance
 
 To measure precision impact on your specific use case, run the benchmark:
 
+Run this command from the ta4j repository root so the `ta4j-examples` module is resolvable. The benchmark entrypoint is `ta4jexamples.num.DecimalNumPrecisionPerformanceTest`.
+
 ```bash
 mvn -pl ta4j-examples -Dexec.mainClass=ta4jexamples.num.DecimalNumPrecisionPerformanceTest exec:java
 ```

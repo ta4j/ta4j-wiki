@@ -75,6 +75,13 @@ The Elliott Wave indicators in ta4j are built on several key principles:
 5. **Degree-Aware**: The system supports multiple wave degrees, allowing analysis across different timeframes.
 6. **Resilient to Edge Cases**: Indicators gracefully handle insufficient data, returning `NaN` values rather than throwing exceptions.
 
+### Internal Implementation Boundary
+
+Some Elliott package classes are internal implementation details (for example, scenario-rule/scoring internals used to build ranked alternatives).
+
+- These internals are intentionally not surfaced in general wiki pages.
+- This dedicated Elliott page is the right place to discuss Elliott internals when needed.
+
 ### Component Hierarchy
 
 The Elliott Wave system in ta4j follows a layered architecture:
@@ -648,9 +655,6 @@ if (scenario.expectsCompletion()) {
     System.out.println("Wave structure approaching completion");
 }
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-read_file
-
 ### Scenario Types
 
 The `ScenarioType` enum classifies the pattern structure:
