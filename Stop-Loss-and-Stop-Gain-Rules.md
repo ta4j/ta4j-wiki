@@ -98,6 +98,15 @@ Several rules implement:
 
 This lets you query stop prices directly (for example in risk budgeting or custom position sizing flows) without duplicating threshold math.
 
+You can also call static helpers for deterministic threshold calculations in custom flows:
+
+```java
+Num hardLoss = StopLossRule.stopLossPrice(entryPrice, lossPercent, true);
+Num hardGain = StopGainRule.stopGainPrice(entryPrice, gainPercent, true);
+```
+
+> Rationale (drift sync): stop model interfaces and helper methods are now first-class in `org.ta4j.core.rules.StopLossRule` / `StopGainRule`, and ATR-based stop constructors were expanded in commits `89cd2271` and `1fa097ef`.
+
 ## Live trading usage patterns
 
 ### 1) Match your reference price to execution reality

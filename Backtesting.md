@@ -14,6 +14,13 @@ BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);
 ```
 
+For short-first strategies, set `TradeType.SELL` on the strategy and `run(strategy)` will honor it:
+
+```java
+Strategy shortFirst = new BaseStrategy("short-first", entryRule, exitRule, Trade.TradeType.SELL);
+TradingRecord shortRecord = manager.run(shortFirst); // uses strategy.getStartingType()
+```
+
 ```java
 BacktestExecutor executor = new BacktestExecutor(series);
 BacktestExecutionResult result = executor.executeWithRuntimeReport(
@@ -32,8 +39,10 @@ List<TradingStatement> ranked = result.getTopStrategies(
 ## Get useful results
 
 - `TradingRecord` – chronological trades with entry/exit prices, costs, exposure, and net/gross PnL. Pass it into any criterion or build a `BaseTradingStatement`.
-- `BacktestExecutionResult` – wraps a `TradingRecord` plus execution metrics (runtime, bars processed, memory estimates). Great for profiling slow strategies.
+- `BacktestExecutionResult` – wraps the backtested `BarSeries`, ordered `TradingStatement` results, and a `BacktestRuntimeReport` (runtime metrics). Use it for batch ranking and runtime profiling.
 - `BacktestRuntimeReport` – aggregated stats from a `BacktestExecutor` run, used by the progress listener hook.
+
+> Rationale (drift sync): `BacktestExecutionResult` is defined as `BacktestExecutionResult(BarSeries, List<TradingStatement>, BacktestRuntimeReport)` in `org.ta4j.core.backtest.BacktestExecutionResult`, and criterion-score attachment behavior landed in commit `3fd8e9b8`.
 
 ## Backtesting VWAP, support/resistance, and Wyckoff stacks
 
@@ -81,6 +90,15 @@ Ta4j includes dozens of criteria organized by package:
 - `criteria.position.*` – streaks, max profit/loss per position, time in market, `PositionDurationCriterion` (mean/median/p95 style summaries), open-position cost basis and unrealized PnL when using `LiveTradingRecord`.
 
 Mix and match to build your own evaluation stack.
+
+You can standardize how returns are represented in reports:
+
+```java
+ReturnRepresentationPolicy.setDefaultRepresentation(ReturnRepresentation.DECIMAL);
+AnalysisCriterion netPct = new NetReturnCriterion(ReturnRepresentation.PERCENTAGE);
+```
+
+> Rationale (drift sync): return-format APIs are explicit in `org.ta4j.core.criteria.ReturnRepresentation` and `ReturnRepresentationPolicy` (commit `736db117`).
 
 ## Compare strategies
 
