@@ -75,6 +75,13 @@ The Elliott Wave indicators in ta4j are built on several key principles:
 5. **Degree-Aware**: The system supports multiple wave degrees, allowing analysis across different timeframes.
 6. **Resilient to Edge Cases**: Indicators gracefully handle insufficient data, returning `NaN` values rather than throwing exceptions.
 
+### Internal Implementation Boundary
+
+Some Elliott package classes are internal implementation details (for example, scenario-rule/scoring internals used to build ranked alternatives).
+
+- These internals are intentionally not surfaced in general wiki pages.
+- This dedicated Elliott page is the right place to discuss Elliott internals when needed.
+
 ### Component Hierarchy
 
 The Elliott Wave system in ta4j follows a layered architecture:
@@ -130,6 +137,12 @@ ElliottSwingIndicator (alternating swings)
 - You need confidence metrics for risk management
 - You want to track multiple wave counts simultaneously
 - You need explicit invalidation price levels for stop placement
+
+### Change tracking relevant to this guide
+
+- This guide covers the stable Elliott API surface used in the `0.22.x` line (`ElliottTrendBias`, `ElliottTrendBiasIndicator`, scenario sets, analyzer/facade workflows, and confidence scoring behavior).
+- Confidence scoring applies softer penalties outside preferred extension ranges (rather than hard pass/fail), so marginally overextended wave-3/wave-5 structures are down-weighted instead of treated as binary invalid.
+- For release-by-release history, see [Release Notes](Release-notes.md).
 
 ---
 
@@ -642,9 +655,6 @@ if (scenario.expectsCompletion()) {
     System.out.println("Wave structure approaching completion");
 }
 ```
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-read_file
-
 ### Scenario Types
 
 The `ScenarioType` enum classifies the pattern structure:
@@ -823,6 +833,9 @@ The `ElliottConfidenceScorer` evaluates each scenario against five weighted fact
 | Alternation Quality | 15% | Degree of pattern/depth alternation between waves 2 and 4 |
 | Channel Adherence | 15% | Whether price stays within projected channel boundaries |
 | Structure Completeness | 15% | How many expected waves are confirmed |
+
+Implementation note:
+- The default scoring is continuous, not binary. In particular, extension ratios are down-weighted when they drift outside preferred wave-3/wave-5 zones, which improves ranking separation between "acceptable" and "best-fit" scenarios.
 
 ### The ElliottConfidence Record
 

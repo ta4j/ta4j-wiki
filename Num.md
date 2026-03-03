@@ -14,7 +14,7 @@ Take a look at the [usage examples](Usage-examples.md) to see `Num` and `BaseBar
 Every calculation faces the precision vs. speed trade-off:
 
 - **DecimalNum** stores values as `BigDecimal` with a **default precision of 16 digits** and **default rounding mode of HALF_UP** (changed from 32 digits in 0.19 for better performance). You can configure the default precision/rounding globally via `DecimalNum.configureDefaultPrecision(int)` or `DecimalNum.configureDefaultMathContext(MathContext)`, or request a factory with a specific precision/rounding mode (`DecimalNumFactory.getInstance(new MathContext(34, RoundingMode.HALF_EVEN))`). Higher precision reduces rounding error but increases CPU cost, GC pressure, and memory footprint because BigDecimal allocates new objects for every arithmetic call.
-- **DoubleNum** uses binary floating point. It’s fast and allocation-free but inherits IEEE-754 quirks. For example:
+- **DoubleNum** uses binary floating point. It’s fast but inherits IEEE-754 quirks. For example:
 
   ```java
   System.out.println(1.0 - 9 * 0.1); // prints 0.09999999999999998
@@ -99,9 +99,10 @@ The `ta4j-examples` module includes a benchmark (`DecimalNumPrecisionPerformance
 
 To measure precision impact on your specific use case, run the benchmark:
 
-```java
-// Run the precision performance benchmark
-ta4jexamples.num.DecimalNumPrecisionPerformanceTest.main(new String[0]);
+Run this command from the ta4j repository root so the `ta4j-examples` module is resolvable. The benchmark entrypoint is `ta4jexamples.num.DecimalNumPrecisionPerformanceTest`.
+
+```bash
+mvn -pl ta4j-examples -Dexec.mainClass=ta4jexamples.num.DecimalNumPrecisionPerformanceTest exec:java
 ```
 
 The benchmark outputs CSV data showing:
@@ -145,6 +146,18 @@ series.addBar(bar);
 ```
 
 **Important:** A `BarSeries` has a fixed numeric backend. Mixing different `Num` types on the same series (e.g., creating a `DoubleNum` literal and feeding it into a `DecimalNum` series) will throw or produce undefined behavior—always go through `numFactory()`.
+
+For null/NaN guards in custom code, use the static helpers on `Num`:
+
+```java
+if (Num.isValid(value)) {
+    // safe to consume value
+}
+
+if (Num.isNaNOrNull(value)) {
+    // skip or fallback
+}
+```
 
 ## Implementing your own Num
 If you need a custom numeric type (decimal128, fixed-point integers, GPU-backed tensors, etc.), implement the `Num` interface plus a matching `NumFactory`. As long as the factory can produce `zero()`, `one()`, and `numOf(...)`, the rest of ta4j will treat it like any other `Num`.

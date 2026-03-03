@@ -27,13 +27,13 @@ List<TradingStatement> ranked = result.getTopStrategies(
         new NetReturnCriterion());
 ```
 
-*What this does:* the first block runs a single strategy through the traditional `BarSeriesManager`. The second block spins up `BacktestExecutor`, runs a batch of strategies while collecting runtime telemetry, and then ranks the resulting `TradingStatement`s by ROMAD and net return. For a full working sample see [`ta4jexamples.backtesting.TopStrategiesExampleBacktest`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TopStrategiesExampleBacktest.java).
+*What this does:* the first block runs a single strategy through the traditional `BarSeriesManager`. The second block spins up `BacktestExecutor`, runs a batch of strategies while collecting runtime telemetry, and then ranks the resulting `TradingStatement`s by ROMAD and net return. For a maintained batch-ranking example, see [`ta4jexamples.backtesting.BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java).
 
 ## Get useful results
 
 - `TradingRecord` – chronological trades with entry/exit prices, costs, exposure, and net/gross PnL. Pass it into any criterion or build a `BaseTradingStatement`.
-- `BacktestExecutionResult` – wraps a `TradingRecord` plus execution metrics (runtime, bars processed, memory estimates). Great for profiling slow strategies.
-- `BacktestRuntimeReport` – aggregated stats from a `BacktestExecutor` run, used by the progress listener hook.
+- `BacktestExecutionResult` – wraps the evaluated `TradingStatement` list plus a `BacktestRuntimeReport`; use it to keep both ranking data and runtime context together.
+- `BacktestRuntimeReport` – aggregated timing stats from a `BacktestExecutor` run (overall/min/max/average/median and per-strategy runtimes).
 
 ## Backtesting VWAP, support/resistance, and Wyckoff stacks
 
@@ -77,8 +77,8 @@ Ta4j includes dozens of criteria organized by package:
 - `criteria.pnl.*` – differentiate net vs. gross results.
 - `criteria.drawdown.*` – absolute, relative, duration, Monte Carlo.
 - `criteria.commissions.*` – total fees across positions.
-- `criteria.costs.*` – commissions and holding costs.
-- `criteria.position.*` – streaks, max profit/loss per position, time in market, `PositionDurationCriterion` (mean/median/p95 style summaries), open-position cost basis and unrealized PnL when using `LiveTradingRecord`.
+- `criteria.risk.*` – risk-model-based evaluation such as `RMultipleCriterion`.
+- `org.ta4j.core.criteria` (top-level package) – ratio/return criteria, `PositionDurationCriterion`, open-position cost basis and unrealized PnL criteria, plus position streak/count criteria.
 
 Mix and match to build your own evaluation stack.
 
@@ -102,7 +102,7 @@ List<TradingStatement> topFive = batch.getTopStrategies(5, romad, net);
 
 ## Visualize your backtests
 
-After you have a `TradingRecord`, you can render candlesticks, trades, and indicator overlays using the `ChartMaker` helper that lives in the `ta4j-examples` module.
+After you have a `TradingRecord`, you can render candlesticks, trades, and indicator overlays using `ChartWorkflow` + `ChartBuilder` from `ta4j-examples`.
 
 ### Using the Fluent Builder API (Recommended)
 
@@ -110,38 +110,28 @@ The builder API provides a clean, composable way to create and display charts:
 
 ```java
 TradingRecord record = manager.run(strategy);
-ChartMaker chartMaker = new ChartMaker("target/charts");
+ChartWorkflow chartWorkflow = new ChartWorkflow("target/charts");
 
 ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
 SMAIndicator sma = new SMAIndicator(closePrice, 50);
 EMAIndicator ema = new EMAIndicator(closePrice, 200);
 
-chartMaker.builder()
-    .withTradingRecord(series, strategy.getName(), record)
-    .addIndicators(sma, ema)
-    .withAnalysisCriterion(series, record, new MaximumDrawdownCriterion())
-    .build()
-    .display()
-    .save("my-strategy");
+ChartPlan plan = chartWorkflow.builder()
+    .withSeries(series)
+    .withTradingRecordOverlay(record)
+    .withIndicatorOverlay(sma)
+    .withIndicatorOverlay(ema)
+    .toPlan();
+
+chartWorkflow.display(plan);
+chartWorkflow.save(plan, "my-strategy");
 ```
 
 See the [Charting](Charting.md) guide for comprehensive documentation and more examples.
 
-### Legacy API
+### Convenience workflow methods
 
-The original methods remain available for backward compatibility:
-
-```java
-ChartMaker charts = new ChartMaker("target/charts");
-charts.displayTradingRecordChart(
-        series,
-        strategy.getName(),
-        record,
-        new SMAIndicator(new ClosePriceIndicator(series), 50),
-        new EMAIndicator(new ClosePriceIndicator(series), 200));
-```
-
-Saved images are JPEGs (see `FileSystemChartStorage`), so the directory you pass to the constructor ends up with files like `mySeries_2023-01-01_to_2024-05-01_timestamp.jpg`. `ChartMaker` composes JFreeChart visualizations through pluggable display and storage backends, so you can pop up Swing windows, stream bytes, or save those JPEGs after each backtest. Explore [`ta4jexamples.charting.ChartMaker`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/charting/ChartMaker.java) and the [`ta4jexamples.strategies.NetMomentumStrategy`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java) sample, which loads data, runs a strategy, and drops charts into `ta4j-examples/log/charts`.
+If you prefer less builder wiring, `ChartWorkflow` also exposes convenience methods like `createTradingRecordChart(...)`, `display(...)`, and `save(...)`. Saved images are JPEGs (see `FileSystemChartStorage`) with generated names derived from series metadata. For a full end-to-end strategy + chart flow, see [`ta4jexamples.strategies.NetMomentumStrategy`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java).
 
 ## Backtesting with LiveTradingRecord
 
@@ -153,7 +143,7 @@ When you need cost basis, unrealized PnL, or a position book in your backtest (e
 - **Insufficient warm-up** – Set `strategy.setUnstableBars(n)` to skip the early `n` indices when indicators have not stabilized yet (`Indicator.isStable()` helps confirm).
 - **Moving series** – When using `setMaximumBarCount`, do not reference indexes older than `series.getBeginIndex()`. Criteria referencing evicted bars will return `NaN`.
 - **Ratio criteria edge cases** – `SortinoRatioCriterion` returns `NaN` when downside deviation is zero. Guard `NaN` values before `chooseBest(...)` or top-K ranking.
-- **Transaction costs** – Always configure `TransactionCostModel` / `HoldingCostModel` on `BarSeriesManager` or pass explicit cost models to `BacktestExecutor`.
+- **Transaction costs** – Always configure explicit `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) on `BarSeriesManager` or `BacktestExecutor`.
 
 ## Walk-forward optimization
 

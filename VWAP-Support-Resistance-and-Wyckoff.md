@@ -35,11 +35,15 @@ Combined, they answer:
   weighted price clustering in a rolling lookback.
 - `BounceCountSupportIndicator` / `BounceCountResistanceIndicator`:
   bounce-frequency-driven zones.
+- `TrendLineSupportIndicator` / `TrendLineResistanceIndicator`:
+  linear regression trendline support/resistance over rolling windows.
 
 ### Wyckoff family
 
 - `WyckoffPhaseIndicator`: phase inference engine (cycle + phase + confidence + latest event index).
 - `WyckoffPhase`: record with cycle type, phase type, confidence, and latest event index.
+- `WyckoffCycleFacade`: unified entry point wrapping phase indicator plus cycle-level helpers.
+- `WyckoffCycleAnalysis` / `WyckoffCycleAnalysisResult`: multi-degree cycle analysis utilities.
 - `WyckoffEventDetector`, `WyckoffStructureTracker`, `WyckoffVolumeProfile`:
   internal components used by the phase indicator.
 
@@ -65,6 +69,8 @@ PriceClusterSupportIndicator support = new PriceClusterSupportIndicator(close, v
         num.numOf("0.25"), num.numOf("0.5"));
 PriceClusterResistanceIndicator resistance = new PriceClusterResistanceIndicator(close, volume, 150,
         num.numOf("0.25"), num.numOf("0.5"));
+TrendLineSupportIndicator trendSupport = new TrendLineSupportIndicator(series, 2, 80);
+TrendLineResistanceIndicator trendResistance = new TrendLineResistanceIndicator(series, 2, 80);
 VolumeProfileKDEIndicator profile = new VolumeProfileKDEIndicator(close, volume, 150, num.numOf("0.5"));
 
 // 3) Phase context (Wyckoff)
@@ -74,7 +80,24 @@ WyckoffPhaseIndicator wyckoff = WyckoffPhaseIndicator.builder(series)
         .withTolerances(num.numOf("0.02"), num.numOf("0.05"))
         .withVolumeThresholds(num.numOf("1.6"), num.numOf("0.7"))
         .build();
+
+// Optional high-level alternative: use the facade when you want cycle + phase context
+// and trading-range helpers from one entrypoint.
+WyckoffCycleFacade wyckoffFacade = WyckoffCycleFacade.builder(series)
+        .withSwingConfiguration(2, 2, 1)
+        .withVolumeWindows(5, 20)
+        .withTolerances(num.numOf("0.02"), num.numOf("0.05"))
+        .withVolumeThresholds(num.numOf("1.6"), num.numOf("0.7"))
+        .build();
+
+// Facade helpers
+WyckoffPhase facadePhase = wyckoffFacade.phase(series.getEndIndex());
+Num rangeLow = wyckoffFacade.tradingRangeLow(series.getEndIndex());
+Num rangeHigh = wyckoffFacade.tradingRangeHigh(series.getEndIndex());
 ```
+
+Recent code drift note:
+- In ta4j `0.22.3` (commit `39194498`), this stack was expanded materially (VWAP derivatives, support/resistance families, and Wyckoff cycle facade/analysis). The map above reflects the current class surface in `org.ta4j.core.indicators.volume`, `supportresistance`, and `wyckoff`.
 
 ## Backtesting how-to
 
@@ -97,17 +120,21 @@ strategy.setUnstableBars(unstableBars);
 ```java
 int i = series.getEndIndex();
 Num price = close.getValue(i);
-WyckoffPhase phase = wyckoff.getValue(i);
+WyckoffPhase phase = wyckoff.getValue(i);           // low-level indicator path
+WyckoffPhase cyclePhase = wyckoffFacade.phase(i);   // high-level facade path
+Num cycleRangeLow = wyckoffFacade.tradingRangeLow(i);
 
 boolean inAccumulationAdvance = phase.cycleType() == WyckoffCycleType.ACCUMULATION
         && (phase.phaseType() == WyckoffPhaseType.PHASE_D || phase.phaseType() == WyckoffPhaseType.PHASE_E)
         && phase.confidence() >= 0.75;
+boolean cycleAgrees = cyclePhase.cycleType() == WyckoffCycleType.ACCUMULATION;
 
 boolean aboveValue = price.isGreaterThan(vwap.getValue(i));
 boolean notOverextended = zScore.getValue(i).isLessThan(num.numOf("2.0"));
 boolean nearSupport = price.minus(support.getValue(i)).abs().isLessThanOrEqual(num.numOf("0.5"));
+boolean nearCycleRangeLow = price.minus(cycleRangeLow).abs().isLessThanOrEqual(num.numOf("0.5"));
 
-if (inAccumulationAdvance && aboveValue && notOverextended && nearSupport) {
+if (inAccumulationAdvance && cycleAgrees && aboveValue && notOverextended && nearSupport && nearCycleRangeLow) {
     // candidate long condition
 }
 ```
