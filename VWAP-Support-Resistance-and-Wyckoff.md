@@ -81,17 +81,23 @@ WyckoffPhaseIndicator wyckoff = WyckoffPhaseIndicator.builder(series)
         .withVolumeThresholds(num.numOf("1.6"), num.numOf("0.7"))
         .build();
 
-// Optional: facade API for cycle + phase access
+// Optional high-level alternative: use the facade when you want cycle + phase context
+// and trading-range helpers from one entrypoint.
 WyckoffCycleFacade wyckoffFacade = WyckoffCycleFacade.builder(series)
         .withSwingConfiguration(2, 2, 1)
         .withVolumeWindows(5, 20)
         .withTolerances(num.numOf("0.02"), num.numOf("0.05"))
         .withVolumeThresholds(num.numOf("1.6"), num.numOf("0.7"))
         .build();
+
+// Facade helpers
+WyckoffPhase facadePhase = wyckoffFacade.phase(series.getEndIndex());
+Num rangeLow = wyckoffFacade.tradingRangeLow(series.getEndIndex());
+Num rangeHigh = wyckoffFacade.tradingRangeHigh(series.getEndIndex());
 ```
 
-Recent code drift note (last ~120 days):
-- ta4j commit `39194498` introduced/expanded this stack materially (VWAP derivatives, support/resistance families, and Wyckoff cycle facade/analysis). The map above reflects the current class surface in `org.ta4j.core.indicators.volume`, `supportresistance`, and `wyckoff`.
+Recent code drift note:
+- In ta4j `0.22.3` (commit `39194498`), this stack was expanded materially (VWAP derivatives, support/resistance families, and Wyckoff cycle facade/analysis). The map above reflects the current class surface in `org.ta4j.core.indicators.volume`, `supportresistance`, and `wyckoff`.
 
 ## Backtesting how-to
 
@@ -114,17 +120,21 @@ strategy.setUnstableBars(unstableBars);
 ```java
 int i = series.getEndIndex();
 Num price = close.getValue(i);
-WyckoffPhase phase = wyckoff.getValue(i);
+WyckoffPhase phase = wyckoff.getValue(i);           // low-level indicator path
+WyckoffPhase cyclePhase = wyckoffFacade.phase(i);   // high-level facade path
+Num cycleRangeLow = wyckoffFacade.tradingRangeLow(i);
 
 boolean inAccumulationAdvance = phase.cycleType() == WyckoffCycleType.ACCUMULATION
         && (phase.phaseType() == WyckoffPhaseType.PHASE_D || phase.phaseType() == WyckoffPhaseType.PHASE_E)
         && phase.confidence() >= 0.75;
+boolean cycleAgrees = cyclePhase.cycleType() == WyckoffCycleType.ACCUMULATION;
 
 boolean aboveValue = price.isGreaterThan(vwap.getValue(i));
 boolean notOverextended = zScore.getValue(i).isLessThan(num.numOf("2.0"));
 boolean nearSupport = price.minus(support.getValue(i)).abs().isLessThanOrEqual(num.numOf("0.5"));
+boolean nearCycleRangeLow = price.minus(cycleRangeLow).abs().isLessThanOrEqual(num.numOf("0.5"));
 
-if (inAccumulationAdvance && aboveValue && notOverextended && nearSupport) {
+if (inAccumulationAdvance && cycleAgrees && aboveValue && notOverextended && nearSupport && nearCycleRangeLow) {
     // candidate long condition
 }
 ```

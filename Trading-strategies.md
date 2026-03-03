@@ -56,8 +56,9 @@ This configuration fires an **entry** when at least two of the following hold on
 2. MACD crosses above its signal line (momentum confirmation), or
 3. The Renko brick detector sees an upside breakout.
 
-On top of that vote, the Net Momentum indicator must be above zero so entries only happen when breadth is positive.  
-The **exit** rule triggers if MACD crosses below its signal line, price falls 3% from the entry (`StopLossRule`), or price rallies 5% (`StopGainRule`).
+On top of that vote, the Net Momentum indicator must be above zero so entries only happen when breadth is positive.
+The **exit** side first evaluates `timedMomentumExit`, an `OrWithThresholdRule` over a 3-bar window: it triggers when either MACD crosses below its signal line or the Net Momentum slope rule (`InSlopeRule(netMomentum, 3, -10)`) is satisfied within that same 3-bar window.
+That combined rule is then OR'd with `StopLossRule(closePrice, numOf(3))` and `StopGainRule(closePrice, numOf(5))` as hard risk/profit boundaries.
 
 For the full stop toolkit (fixed %, fixed amount, trailing, volatility, ATR) and live-trading usage guidance, see [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md).
 

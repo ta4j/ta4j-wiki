@@ -38,7 +38,7 @@ Moving averages are versatile tools used in a variety of ways:
 
 ## Moving Averages in TA4J
 
-Package: `org.ta4j.core.indicators.averages` (ta4j `0.22.4-SNAPSHOT`).
+Package: `org.ta4j.core.indicators.averages` (ta4j `0.22.3`).
 
 | Abbreviation | Full Name                                     | Indicator Name             | Moving Average Type            |
 |--------------|-----------------------------------------------|----------------------------|--------------------------------|
@@ -68,7 +68,7 @@ Package: `org.ta4j.core.indicators.averages` (ta4j `0.22.4-SNAPSHOT`).
 
 Notes:
 - `AbstractEMAIndicator` is an internal base class used by EMA-family implementations, not a standalone trading indicator.
-- In the last ~120 days no new moving-average indicator classes were added in this package; warmup/unstable behavior was updated in ta4j commit `d0ef59e7` ("Update Indicator Unstable Counts").
+- As of ta4j `0.22.3` (commit `d0ef59e7`), no new moving-average indicator classes were added in this package; warmup/unstable behavior was updated in that release line.
 
 
 ## Classification of Moving Averages

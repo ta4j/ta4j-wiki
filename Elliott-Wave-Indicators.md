@@ -138,11 +138,11 @@ ElliottSwingIndicator (alternating swings)
 - You want to track multiple wave counts simultaneously
 - You need explicit invalidation price levels for stop placement
 
-### Recent changes relevant to this guide (last ~120 days)
+### Change tracking relevant to this guide
 
-- Commit `d6cb699f` expanded Elliott swing utility coverage and strengthened metadata/comparator usage.
-- Commit `bebb758e` added the analyzer/facade trend-bias pipeline (`ElliottTrendBias`, `ElliottTrendBiasIndicator`, analyzer trend-bias output) and expanded pluggable confidence/swing infrastructure.
-- Confidence scoring now applies softer scoring outside preferred extension ranges (rather than hard pass/fail), so marginally overextended wave-3/wave-5 structures are penalized instead of treated as binary invalid.
+- This guide covers the stable Elliott API surface used in the `0.22.x` line (`ElliottTrendBias`, `ElliottTrendBiasIndicator`, scenario sets, analyzer/facade workflows, and confidence scoring behavior).
+- Confidence scoring applies softer penalties outside preferred extension ranges (rather than hard pass/fail), so marginally overextended wave-3/wave-5 structures are down-weighted instead of treated as binary invalid.
+- For release-by-release history, see [Release Notes](Release-notes.md).
 
 ---
 
