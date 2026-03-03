@@ -354,7 +354,7 @@ Here's a complete example from the ADX strategy:
 
 ```java
 // Build and run strategy
-BarSeries series = CsvTradesLoader.loadBitstampSeries();
+BarSeries series = BitStampCsvTradesFileBarSeriesDataSource.loadBitstampSeries();
 Strategy strategy = ADXStrategy.buildStrategy(series);
 BarSeriesManager seriesManager = new BarSeriesManager(series);
 TradingRecord tradingRecord = seriesManager.run(strategy);
@@ -531,7 +531,7 @@ chartWorkflow.displayChart(chart);
 Create a comprehensive performance dashboard with multiple analysis criteria:
 
 ```java
-BarSeries series = CsvTradesLoader.loadBitstampSeries();
+BarSeries series = BitStampCsvTradesFileBarSeriesDataSource.loadBitstampSeries();
 Strategy strategy = MyStrategy.buildStrategy(series);
 BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);

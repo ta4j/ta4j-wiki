@@ -10,8 +10,8 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 ## Bar series & `Num`
 
 - **[BuildBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/barSeries/BuildBarSeries.java)** – demonstrates bar builders, sub-series, and moving windows.
-- **[CsvBarsDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/CsvBarsDataSource.java)** / **[BitstampCsvTradesDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/BitstampCsvTradesDataSource.java)** – ingest historical OHLCV data.
-- **[AdaptiveJsonBarsSerializer](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/AdaptiveJsonBarsSerializer.java)** – parse Coinbase/Binance OHLC JSON payloads (introduced in 0.19).
+- **[CsvFileBarSeriesDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/CsvFileBarSeriesDataSource.java)** / **[BitStampCsvTradesFileBarSeriesDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/BitStampCsvTradesFileBarSeriesDataSource.java)** – ingest historical OHLCV and trade-level CSV data.
+- **[JsonFileBarSeriesDataSource](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/datasources/JsonFileBarSeriesDataSource.java)** – parse Coinbase/Binance OHLC JSON payloads via the adaptive JSON type adapter.
 - **[CompareNumTypes](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/CompareNumTypes.java)** – compare `DecimalNum` vs `DoubleNum` implementations
 - **[DecimalNumPrecisionPerformanceTest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/num/DecimalNumPrecisionPerformanceTest.java)** – benchmark precision vs. performance trade-offs for `DecimalNum` (see [Num](Num.md#performance-characteristics) for details)
 
@@ -71,8 +71,8 @@ Strategy examples that use charting:
 
 - **[SimpleMovingAverageBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageBacktest.java)** / **[SimpleMovingAverageRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageRangeBacktest.java)** – baseline moving-average crossover tests.
 - **[MovingAverageCrossOverRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/MovingAverageCrossOverRangeBacktest.java)** – parameter sweeps over SMA periods.
-- **[MultiStrategyBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/MultiStrategyBacktest.java)** – evaluate several strategies across the same dataset.
-- **[TopStrategiesExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtest/TopStrategiesExample.java)** – uses the `BacktestExecutor` (introduced in 0.19) to keep a rolling leaderboard of strategies.
+- **[BacktestPerformanceTuningHarness](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java)** – benchmark indicator-heavy backtests and optimization settings on larger datasets.
+- **[YahooFinanceBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/YahooFinanceBacktest.java)** / **[CoinbaseBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/CoinbaseBacktest.java)** – run backtests with HTTP-sourced market data.
 - **[CashFlowToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/CashFlowToChart.java)** and **[BuyAndSellSignalsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/BuyAndSellSignalsToChart.java)** – visualize equity curves and trade signals.
 - **[TradeCost](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/TradeCost.java)** – study how transaction/holding costs impact returns.
 - **[StrategyExecutionLogging](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/logging/StrategyExecutionLogging.java)** – trace rule evaluations line-by-line.
@@ -92,6 +92,7 @@ Strategy examples that use charting:
 ## Bots & live trading
 
 - **[TradingBotOnMovingBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingBarSeries.java)** – continuously updates a moving bar series and reacts to strategy signals.
+- **[MACDVMomentumStateStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/MACDVMomentumStateStrategy.java)** – demonstrates MACD-V momentum-state strategy wiring for regime-aware entries/exits.
 - **ConcurrentBarSeries for live trading**: Since 0.22.2, use `ConcurrentBarSeries` for thread-safe bar ingestion in multi-threaded live trading scenarios. See [Live Trading](Live-trading.md) and [Bar Series & Bars](Bar-series-and-bars.md#concurrent-bar-series-for-multi-threaded-scenarios) for comprehensive documentation and examples.
 - **LiveTradingRecord (partial fills, cost basis, position book)**: For bots that receive partial fills or need per-lot cost basis and unrealized PnL, use `LiveTradingRecord` with `recordFill(ExecutionFill)` or `enter`/`exit`. See the [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis) for a step-by-step code guide and criteria (`OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`).
 
