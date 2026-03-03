@@ -36,7 +36,7 @@ Options to consider:
 
 - **Builders** – `TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, and the new `AmountBarBuilder` aggregate trades into bars by elapsed time, tick count, volume, or quote currency size respectively.
 - **Begin vs. end timestamps** – Since 0.18 you can build bars anchored on begin time (`timePeriod` + `beginTime`) or end time. Use whichever matches your data source.
-- **Split series** – `series.getSubSeries(start, end)` and `series.split(...)` are handy for walk-forward tests or training/testing splits.
+- **Split series** – `series.getSubSeries(start, end)` is the standard way to create train/test or walk-forward slices.
 - **Data Sources** – The `ta4j-examples` module includes ready-made data sources for loading historical data from APIs (Yahoo Finance, Coinbase) and files (CSV, JSON). See [Data Sources](Data-Sources.md) for comprehensive documentation.
 
 ## Working with live data
@@ -63,8 +63,8 @@ As intrabar updates stream in:
 
 ```java
 liveSeries.addPrice(100.9);          // updates close + high/low if needed
-liveSeries.addTrade(liveSeries.numFactory().numOf(100),
-        liveSeries.numFactory().numOf(2)); // updates volume + close
+liveSeries.addTrade(liveSeries.numFactory().numOf(2),
+        liveSeries.numFactory().numOf(100)); // volume first, then price
 liveSeries.addBar(updatedBar, true); // replace the last bar entirely
 ```
 
@@ -94,6 +94,9 @@ ConcurrentBarSeries concurrentSeries = new ConcurrentBarSeriesBuilder()
 The recommended approach for real-time data feeds is to use `ingestTrade()` methods, which let the configured `BarBuilder` handle bar rollovers automatically:
 
 ```java
+// Configure the trade builder before ingestion (required)
+concurrentSeries.tradeBarBuilder().timePeriod(Duration.ofMinutes(1));
+
 // Simple trade ingestion (no side/liquidity data)
 concurrentSeries.ingestTrade(
     Instant.now(),
