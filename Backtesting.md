@@ -145,22 +145,75 @@ When you need cost basis, unrealized PnL, or a position book in your backtest (e
 - **Ratio criteria edge cases** – `SortinoRatioCriterion` returns `NaN` when downside deviation is zero. Guard `NaN` values before `chooseBest(...)` or top-K ranking.
 - **Transaction costs** – Always configure explicit `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) on `BarSeriesManager` or `BacktestExecutor`.
 
-## Walk-forward optimization
+## Walk-forward testing (canonical API)
 
-Use the helper methods in `ta4jexamples.walkforward.WalkForward` to slice the series into alternating training/testing windows:
+Use the core backtesting APIs for walk-forward runs. This keeps setup, execution, and criterion evaluation aligned with normal backtests.
+
+| Driver | When to use | Returns |
+| --- | --- | --- |
+| `BarSeriesManager.runWalkForward(...)` | One strategy, direct workflow, minimal wiring. | `StrategyWalkForwardExecutionResult` |
+| `BacktestExecutor.executeWalkForward(...)` | Executor-centric workflow where you still want walk-forward only. | `StrategyWalkForwardExecutionResult` |
+| `BacktestExecutor.executeWithWalkForward(...)` | You want classic backtest + walk-forward in one call. | `BacktestExecutor.BacktestAndWalkForwardResult` |
+
+### Step-by-step with `BarSeriesManager`
 
 ```java
-List<BarSeries> trainingSlices = WalkForward.splitSeries(series, Duration.ofDays(120), Duration.ofDays(90));
+BarSeriesManager manager = new BarSeriesManager(series);
+WalkForwardConfig config = WalkForwardConfig.defaultConfig(series); // or a fixed baseline config
 
-for (BarSeries training : trainingSlices) {
-    BarSeries testing = WalkForward.subseries(series, training.getEndIndex() + 1, Duration.ofDays(30));
-    Strategy tuned = tuneStrategy(training);
-    TradingRecord forwardResult = new BarSeriesManager(testing).run(tuned);
-    // evaluate and store the outcome
-}
+StrategyWalkForwardExecutionResult walkForward = manager.runWalkForward(
+        strategy,
+        strategy.getStartingType(),
+        series.numFactory().one(),
+        config);
 ```
 
-See the [Walk Forward example](Usage-examples.md#strategy-patterns) for a turnkey implementation.
+Class flow during execution:
+
+1. `BarSeriesManager` creates a `StrategyWalkForwardExecutor`.
+2. `StrategyWalkForwardExecutor` uses `AnchoredExpandingWalkForwardSplitter` to produce `WalkForwardSplit`s.
+3. Each fold runs through `BarSeriesManager.run(...)` over the fold test window, producing a fold `TradingRecord`.
+4. `TradingStatementGenerator` creates fold `TradingStatement`s.
+5. Output is packaged into `StrategyWalkForwardExecutionResult` with fold records/statements and a `WalkForwardRuntimeReport`.
+
+### Evaluate folds with `AnalysisCriterion` (same style as backtest)
+
+```java
+AnalysisCriterion net = new NetReturnCriterion();
+
+List<Num> allFoldScores = walkForward.criterionValues(net);
+List<Num> inSampleScores = walkForward.inSampleCriterionValues(net);
+List<Num> outOfSampleScores = walkForward.outOfSampleCriterionValues(net);
+Optional<Num> holdoutScore = walkForward.holdoutCriterionValue(net);
+Map<String, Num> foldScoreById = walkForward.criterionValuesByFold(net);
+```
+
+This is the same criterion model as standard backtests: `criterion.calculate(series, tradingRecord)`.
+
+### Using `BacktestExecutor` for symmetry
+
+```java
+BacktestExecutor executor = new BacktestExecutor(series);
+
+// Walk-forward only
+StrategyWalkForwardExecutionResult wfOnly = executor.executeWalkForward(strategy, config);
+
+// Backtest + walk-forward together
+BacktestExecutor.BacktestAndWalkForwardResult combined = executor.executeWithWalkForward(strategy, config);
+BacktestExecutionResult backtest = combined.backtest();
+StrategyWalkForwardExecutionResult walkForwardFromCombined = combined.walkForward();
+```
+
+### About `ta4jexamples.walkforward.WalkForward`
+
+`ta4jexamples.walkforward.WalkForward` now demonstrates the canonical core approach shown above:
+
+1. Build a series-aware `WalkForwardConfig`.
+2. Run each strategy through `BarSeriesManager.runWalkForward(...)`.
+3. Rank strategies by fold-level out-of-sample criterion values.
+4. Execute `BacktestExecutor.executeWithWalkForward(...)` for a one-call backtest + walk-forward comparison.
+
+For custom manual slicing experiments you can still use plain `BarSeries#getSubSeries(...)`, but the maintained example now focuses on the core walk-forward APIs.
 
 ## Debugging slow or flaky backtests
 
