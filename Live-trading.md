@@ -104,7 +104,8 @@ System.out.println("Open position cost basis: " + costBasis.calculate(series, re
 System.out.println("Unrealized PnL: " + unrealizedPnL.calculate(series, record));
 ```
 
-For persistence and auditing, store `record.getTrades()` together with open-position state (`getOpenPositions()` / `getNetOpenPosition()`), then rebuild with `rehydrate(...)` on restart.
+For persistence and auditing, store `record.getTrades()` together with open-position state (`getOpenPositions()` / `getNetOpenPosition()`).
+On restart, deserialize the `LiveTradingRecord` and call `rehydrate(...)` to restore transient cost-model state, or replay persisted fills with `recordExecutionFill(...)` / `recordFill(...)` to rebuild positions explicitly.
 
 ## Feeding the series
 

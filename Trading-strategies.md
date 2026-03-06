@@ -105,7 +105,7 @@ For a maintained end-to-end example, see `ta4jexamples.strategies.MACDVMomentumS
 When strategy behavior should depend on trading session structure, combine rule logic with time-based gates:
 
 ```java
-DateTimeIndicator time = new DateTimeIndicator(series);
+DateTimeIndicator time = new DateTimeIndicator(series, Bar::getEndTime);
 Rule sessionWindow = new TimeRangeRule(
         List.of(new TimeRangeRule.TimeRange(LocalTime.of(9, 30), LocalTime.of(16, 0))),
         time);
@@ -115,6 +115,7 @@ Rule entryMinute = new MinuteOfHourRule(time, 5);
 Rule entryRule = signalRule.and(sessionWindow).and(entryHour).and(entryMinute);
 ```
 
+These rules evaluate against UTC hour/minute values from the indicator's `Instant`. For exchange-local sessions, normalize timestamps to your target timezone before they reach the series, or provide a transformed time indicator that emits the desired session-aligned `Instant`.
 These rules are useful for opening-range breakouts, avoiding illiquid session tails, and separating overnight vs regular-hours behavior.
 
 ## Build a strategy
