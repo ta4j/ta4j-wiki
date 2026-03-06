@@ -70,10 +70,10 @@ LiveTradingRecord record = new LiveTradingRecord(
 NumFactory num = series.numFactory();
 
 // Two buy fills (e.g. from broker)
-record.recordExecutionFill(new LiveTrade(
+record.recordFill(new LiveTrade(
     0, Instant.now(), num.numOf(100.0), num.numOf(0.5), num.zero(),
     ExecutionSide.BUY, "order-1", null));
-record.recordExecutionFill(new LiveTrade(
+record.recordFill(new LiveTrade(
     1, Instant.now(), num.numOf(101.0), num.numOf(0.5), num.zero(),
     ExecutionSide.BUY, "order-2", null));
 
@@ -83,7 +83,7 @@ OpenPosition net = record.getNetOpenPosition();
 // net.amount(), net.averageEntryPrice(), net.costBasis(), etc.
 
 // Exit (e.g. one full exit at current price – FIFO matches against first lot)
-record.recordExecutionFill(new LiveTrade(
+record.recordFill(new LiveTrade(
     2, Instant.now(), num.numOf(102.0), num.numOf(1.0), num.zero(),
     ExecutionSide.SELL, "order-3", null));
 ```
