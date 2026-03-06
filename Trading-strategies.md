@@ -27,8 +27,8 @@ Key points:
 - `Rule#isSatisfied(int index)` is stateless. Pass the `TradingRecord` when the rule depends on open positions or previous signals.
 - Composition is fluent (`and`, `or`, `xor`, `negation`), making it easy to express “enter when fast SMA crosses slow SMA **and** RSI recovers above 40.”
 - For windowed boolean composition across the last `N` bars, use `AndWithThresholdRule` / `OrWithThresholdRule` (introduced in 0.22.2). These are explicit rule classes rather than overloads on `and(...)` / `or(...)`.
-- Since 0.19 you can use `VoteRule` to require agreement between multiple rules (e.g., "at least 3 out of 5 oscillators must agree"). In 0.21.0, return representation is unified across all criteria for consistent formatting.
-- `InSlopeRule` is satisfied when the slope of one indicator is within a boundary of another (e.g. for trend strength or momentum alignment).
+- Since 0.19 you can use `VoteRule` to require agreement between multiple rules (e.g., "at least 3 out of 5 oscillators must agree"). Return-format control is handled in criteria via `ReturnRepresentation` / `ReturnRepresentationPolicy` (`@since 0.20`).
+- `InSlopeRule` is satisfied when the indicator slope (current minus prior value over `nthPrevious` bars) is within configured min/max slope bounds.
 
 ## Compose richer logic
 
@@ -47,8 +47,8 @@ Rule timedMomentumExit = new OrWithThresholdRule(
         new InSlopeRule(netMomentum, 3, series.numFactory().numOf("-10")),
         3);
 Rule exitRule = timedMomentumExit
-        .or(new StopLossRule(closePrice, numOf(3)))
-        .or(new StopGainRule(closePrice, numOf(5)));
+        .or(new StopLossRule(closePrice, series.numFactory().numOf(3)))
+        .or(new StopGainRule(closePrice, series.numFactory().numOf(5)));
 ```
 
 This configuration fires an **entry** when at least two of the following hold on the same bar:
@@ -58,7 +58,7 @@ This configuration fires an **entry** when at least two of the following hold on
 
 On top of that vote, the Net Momentum indicator must be above zero so entries only happen when breadth is positive.
 The **exit** side first evaluates `timedMomentumExit`, an `OrWithThresholdRule` over a 3-bar window: it triggers when either MACD crosses below its signal line or the Net Momentum slope rule (`InSlopeRule(netMomentum, 3, -10)`) is satisfied within that same 3-bar window.
-That combined rule is then OR'd with `StopLossRule(closePrice, numOf(3))` and `StopGainRule(closePrice, numOf(5))` as hard risk/profit boundaries.
+That combined rule is then OR'd with `StopLossRule(closePrice, series.numFactory().numOf(3))` and `StopGainRule(closePrice, series.numFactory().numOf(5))` as hard risk/profit boundaries.
 
 For the full stop toolkit (fixed %, fixed amount, trailing, volatility, ATR) and live-trading usage guidance, see [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md).
 
@@ -195,3 +195,9 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 - Encapsulate repeated rule snippets into helper methods or custom `Rule` implementations—readability matters when strategies grow complex.
 - Keep entry/exit rules symmetric when building short strategies; for short-only operation, construct your strategy with starting type `TradeType.SELL`.
 - When mixing timeframes or data sources, align them into the same `BarSeries` (or into multiple series managed by your own coordinator) to avoid implicit look-ahead.
+
+## Maintainer rationale notes
+
+- Clarified `InSlopeRule` semantics to match the actual implementation in `org.ta4j.core.rules.InSlopeRule` (difference vs. `PreviousValueIndicator`, optional min/max bounds).
+- Kept threshold/voting composition guidance aligned with `AndWithThresholdRule` / `OrWithThresholdRule` (commit `5e5acc99`) and `VoteRule` (commit `cca0bb02`).
+- Kept MACD-V regime examples aligned with `MomentumStateRule` and `MACDVMomentumStateStrategy` updates (commit `161f7656`).

@@ -36,8 +36,27 @@ Options to consider:
 
 - **Builders** – `TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, and the new `AmountBarBuilder` aggregate trades into bars by elapsed time, tick count, volume, or quote currency size respectively.
 - **Begin vs. end timestamps** – Since 0.18 you can build bars anchored on begin time (`timePeriod` + `beginTime`) or end time. Use whichever matches your data source.
-- **Split series** – `series.getSubSeries(start, end)` is the standard way to create train/test or walk-forward slices.
+- **Split series** – `series.getSubSeries(start, end)` is the standard way to create train/test or walk-forward slices. The resulting series inherits the source max-bar-count setting.
 - **Data Sources** – The `ta4j-examples` module includes ready-made data sources for loading historical data from APIs (Yahoo Finance, Coinbase) and files (CSV, JSON). See [Data Sources](Data-Sources.md) for comprehensive documentation.
+
+## Aggregating an existing series into alternate bar types
+
+When you already have a time-based series and want alternate bar constructions for analysis, use the aggregator package.
+
+```java
+BarAggregator renko = new RenkoBarAggregator(2.0, 2);
+BarSeries renkoSeries = new BaseBarSeriesAggregator(renko)
+        .aggregate(series, "btc_renko");
+```
+
+Common choices:
+
+- `DurationBarAggregator` for higher timeframe rollups.
+- `RangeBarAggregator` for fixed price-range bars.
+- `VolumeBarAggregator` for volume-threshold bars.
+- `RenkoBarAggregator` for brick-based trend views.
+
+Note: range/volume/Renko aggregators assume contiguous, ordered source bars.
 
 ## Working with live data
 
@@ -175,7 +194,7 @@ Note: Side and liquidity data are optional—exchanges may not provide this info
 `ConcurrentBarSeries` uses `ReentrantReadWriteLock` to provide:
 - **Multiple concurrent readers**: Read operations (getters, indicator evaluation) can proceed in parallel
 - **Exclusive writers**: Write operations (bar ingestion, modifications) are serialized
-- **Safe iteration**: All read methods return defensive copies or use read locks internally
+- **Safe access patterns**: Read operations are lock-protected, and `getBarData()` returns an immutable snapshot (`List.copyOf(...)`)
 
 Example concurrent usage:
 
@@ -217,6 +236,12 @@ executorService.submit(() -> {
 - Maximum bar count settings
 
 Transient locks are reinitialized on deserialization, and the trade bar builder is recreated lazily on the next ingestion call.
+
+## Rationale Notes (2026-03-06)
+
+- Added aggregator guidance because ta4j now includes `RangeBarAggregator`, `VolumeBarAggregator`, and `RenkoBarAggregator` (`org.ta4j.core.aggregator.*`), introduced in commit `3d6ca7b7`.
+- Clarified sub-series behavior to match `BaseBarSeries#getSubSeries(...)` and `ConcurrentBarSeries#getSubSeries(...)`, which carry forward max-bar-count behavior.
+- Clarified concurrency wording to match `ConcurrentBarSeries#getBarData()` (immutable snapshot return) and lock usage (`ReentrantReadWriteLock` in `ConcurrentBarSeries`), added in commit `dc759436`.
 
 ### When to use ConcurrentBarSeries
 

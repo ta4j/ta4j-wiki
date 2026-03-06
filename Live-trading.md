@@ -229,8 +229,8 @@ executorService.submit(() -> {
             trade.getTime(),
             trade.getVolume(),
             trade.getPrice(),
-            trade.getSide(),
-            trade.getLiquidity()
+            mapSide(trade),       // map broker payload -> RealtimeBar.Side
+            mapLiquidity(trade)   // map broker payload -> RealtimeBar.Liquidity
         );
     }
 });
@@ -291,3 +291,8 @@ For the full implementation playbook, see [VWAP, Support/Resistance, and Wyckoff
 - **[TradingBotOnMovingBarSeries](Usage-examples.md#bots--live-trading)** – minimal bot loop using a moving bar series.
 - [Backtesting](Backtesting.md) – explains how to test cost models and execution assumptions before deploying.
 - [Bar Series & Bars](Bar-series-and-bars.md) – details data ingestion, moving windows, and live updates.
+
+### Sync rationale (2026-03-06)
+
+- Clarified the `ConcurrentBarSeries.ingestTrade(...)` live loop example to use explicit side/liquidity mapping helpers so broker DTOs can be adapted to `RealtimeBar.Side` / `RealtimeBar.Liquidity`.
+- Verified `LiveTradingRecord`, `ExecutionFill`, `ExecutionMatchPolicy`, and open-position criteria references against commit `b112d34b`; verified `ConcurrentBarSeries` guidance against commit `dc759436`.

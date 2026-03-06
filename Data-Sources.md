@@ -590,3 +590,8 @@ The ta4j data sources provide a unified, domain-driven API for loading historica
 - **Common Features:** Domain-driven interface, automatic pagination, response caching, unit testing support
 
 All data sources implement `BarSeriesDataSource`, making it easy to switch between sources or support multiple sources in your application.
+
+### Sync rationale (2026-03-06)
+
+- Confirmed this page against `BarSeriesDataSource`, `YahooFinanceHttpBarSeriesDataSource`, and `CoinbaseHttpBarSeriesDataSource` in `ta4j-examples`, including `loadSeriesInstance(...)` and cache-enabled constructors introduced/expanded in commit `b112d34b`.
+- Kept interval and pagination guidance aligned with provider enums (`YahooFinanceInterval`, `CoinbaseInterval`) and current implementation defaults.

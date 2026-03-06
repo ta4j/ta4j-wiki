@@ -4,6 +4,17 @@
 
 Refactor `BarSeriesDataSource` implementations to separate data retrieval (I/O) from data parsing/transformation. This will improve maintainability, testability, and allow for better composition and reuse of components.
 
+## Status Snapshot (2026-03-06)
+
+Status: design remains proposed; current ta4j-examples architecture is still `BarSeriesDataSource` + concrete HTTP/file datasource hierarchies.
+
+Current baseline:
+- File path family: `ta4jexamples.datasources.file.AbstractFileBarSeriesDataSource`.
+- HTTP path family: `ta4jexamples.datasources.http.AbstractHttpBarSeriesDataSource`.
+- Source-specific implementations like `CoinbaseHttpBarSeriesDataSource`, `YahooFinanceHttpBarSeriesDataSource`, `CsvFileBarSeriesDataSource`, and `JsonFileBarSeriesDataSource`.
+
+The proposed `DataRetrievalClient` and `DataFormatMapper` interfaces are not yet present in `ta4j-examples`.
+
 ## Architecture Decision: File Search & Caching Location
 
 **DECISION: File search and caching logic should live in `DataRetrievalClient` (Option A)**
@@ -269,6 +280,11 @@ ta4j-examples/src/main/java/ta4jexamples/datasources/
 ├── JsonFileBarSeriesDataSource.java (refactored - composes client + mapper)
 └── BitStampCsvTradesFileBarSeriesDataSource.java (refactored - composes client + mapper)
 ```
+
+## Rationale Notes (2026-03-06)
+
+- Verified against current classes in `ta4j-examples/src/main/java/ta4jexamples/datasources/**`.
+- Confirmed this refactor has not landed in recent history up to commit `6cce8809`.
 
 ### Component Responsibilities
 
@@ -691,4 +707,3 @@ Once refactoring is complete, consider:
 3. Adding streaming clients (WebSocket, SSE, etc.)
 4. Adding more mapper formats (Parquet, Avro, etc.)
 5. Adding request/response interceptors for logging, metrics, etc.
-

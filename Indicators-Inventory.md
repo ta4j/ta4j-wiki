@@ -418,7 +418,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 **Short usage**  
 - **What it is:** Elliott Wave structure (swings, count, channel, ratios, projection, invalidation, phase, scenarios, confluence); trend bias across scenarios; pluggable analyzer with swing detectors and confidence profiles.  
 - **Theory:** Elliott Wave Theory models market structure in impulsive and corrective waves with Fibonacci relationships.  
-- **When to use:** When applying Elliott-based rules or targets; use confluence, invalidation, and trend bias for robustness; use ElliottWaveAnalyzer for one-shot analysis with custom detectors.  
+- **When to use:** When applying Elliott-based rules or targets; use confluence, invalidation, and trend bias for robustness; use ElliottWaveAnalyzer for one-shot analysis with custom detectors.
 - **When not to use:** When wave rules or degree are not clearly defined; interpretation is subjective.  
 - *Future: use cases, example code.*  
 - See also: [Elliott Wave Indicators](Elliott-Wave-Indicators.md).
@@ -551,7 +551,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 
 ## Summary
 
-- **ta4j-core** currently provides 247 indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis.
+- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis.
 - The inventory also tracks supporting public types (facades, enums, records, interfaces) in indicator packages that are required for complete API coverage.
 - **ta4j-examples** adds charting-oriented indicators (labels, channel boundary).  
 - All entries above use the **fully qualified name** and **class name** and a **short description as in the ta4j codebase**.  
