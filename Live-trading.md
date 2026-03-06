@@ -57,7 +57,7 @@ if (strategy.shouldEnter(endIndex, record)) {
 
 **2. Partial fills and position book**
 
-When you receive fills from the broker one-by-one, record each fill with `recordFill(ExecutionFill)`. Use `ExecutionSide.BUY` / `ExecutionSide.SELL` and optional fee, order id, and correlation id. The record applies FIFO (or your configured `ExecutionMatchPolicy`) and maintains open lots.
+When you receive fills from the broker one-by-one, record each fill with `recordExecutionFill(ExecutionFill)` (or `recordFill(LiveTrade)`). Use `ExecutionSide.BUY` / `ExecutionSide.SELL` and optional fee, order id, and correlation id. The record applies FIFO (or your configured `ExecutionMatchPolicy`) and maintains open lots.
 
 ```java
 LiveTradingRecord record = new LiveTradingRecord(
@@ -70,11 +70,11 @@ LiveTradingRecord record = new LiveTradingRecord(
 NumFactory num = series.numFactory();
 
 // Two buy fills (e.g. from broker)
-record.recordFill(new ExecutionFill(
-    Instant.now(), num.numOf(100.0), num.numOf(0.5), num.zero(),
+record.recordFill(new LiveTrade(
+    0, Instant.now(), num.numOf(100.0), num.numOf(0.5), num.zero(),
     ExecutionSide.BUY, "order-1", null));
-record.recordFill(new ExecutionFill(
-    Instant.now(), num.numOf(101.0), num.numOf(0.5), num.zero(),
+record.recordFill(new LiveTrade(
+    1, Instant.now(), num.numOf(101.0), num.numOf(0.5), num.zero(),
     ExecutionSide.BUY, "order-2", null));
 
 // Open position: two lots, average cost and total amount available
@@ -83,8 +83,8 @@ OpenPosition net = record.getNetOpenPosition();
 // net.amount(), net.averageEntryPrice(), net.costBasis(), etc.
 
 // Exit (e.g. one full exit at current price – FIFO matches against first lot)
-record.recordFill(new ExecutionFill(
-    Instant.now(), num.numOf(102.0), num.numOf(1.0), num.zero(),
+record.recordFill(new LiveTrade(
+    2, Instant.now(), num.numOf(102.0), num.numOf(1.0), num.zero(),
     ExecutionSide.SELL, "order-3", null));
 ```
 
@@ -104,7 +104,8 @@ System.out.println("Open position cost basis: " + costBasis.calculate(series, re
 System.out.println("Unrealized PnL: " + unrealizedPnL.calculate(series, record));
 ```
 
-Use `record.snapshot()` to capture a point-in-time view of positions and trades for persistence or auditing.
+For persistence and auditing, store `record.getTrades()` together with open-position state (`getOpenPositions()` / `getNetOpenPosition()`).
+On restart, deserialize the `LiveTradingRecord` and call `rehydrate(...)` to restore transient cost-model state, or replay persisted fills with `recordExecutionFill(...)` / `recordFill(...)` to rebuild positions explicitly.
 
 ## Feeding the series
 

@@ -104,6 +104,16 @@ Several rules implement:
 
 This lets you query stop prices directly (for example in risk budgeting or custom position sizing flows) without duplicating threshold math.
 
+For fixed-percentage and fixed-distance calculations, you can also use helper methods from `StopLossRule` / `StopGainRule` directly:
+
+```java
+Num stopLoss = StopLossRule.stopLossPrice(entryPrice, numOf(2), true);
+Num stopGain = StopGainRule.stopGainPrice(entryPrice, numOf(4), true);
+Num trailingGain = StopGainRule.trailingStopGainPrice(highestPrice, numOf(1.5), true);
+```
+
+If you evaluate strategy quality in risk units, pair your stop model with `RMultipleCriterion` (for example, `new RMultipleCriterion(new StopLossPositionRiskModel(5))`) so research and stop geometry stay aligned.
+
 ## Live trading usage patterns
 
 ### 1) Match your reference price to execution reality
