@@ -146,6 +146,9 @@ series.addBar(bar);
 ```
 
 **Important:** A `BarSeries` has a fixed numeric backend. Mixing different `Num` types on the same series (e.g., creating a `DoubleNum` literal and feeding it into a `DecimalNum` series) will throw or produce undefined behavior—always go through `numFactory()`.
+**Important:** A `BarSeries` has a fixed numeric backend. Mixing different `Num` types on the same series (e.g., creating a `DoubleNum` literal and feeding it into a `DecimalNum` series) is rejected by runtime guards (`IllegalArgumentException` in series/bar ingestion paths). Always go through `numFactory()`.
+
+If you build a series from pre-existing bars and do not set `withNumFactory(...)`, `BaseBarSeriesBuilder` derives the series numeric backend from the first bar (`bars.getFirst().numFactory()`). Set `withNumFactory(...)` explicitly if you want strict control instead of inference.
 
 For null/NaN guards in custom code, use the static helpers on `Num`:
 
@@ -161,3 +164,9 @@ if (Num.isNaNOrNull(value)) {
 
 ## Implementing your own Num
 If you need a custom numeric type (decimal128, fixed-point integers, GPU-backed tensors, etc.), implement the `Num` interface plus a matching `NumFactory`. As long as the factory can produce `zero()`, `one()`, and `numOf(...)`, the rest of ta4j will treat it like any other `Num`.
+
+## Rationale Notes (2026-03-06)
+
+- Precision defaults and configuration were verified against `DecimalNum`/`DecimalNumFactory` updates from commit `83a4f4fc` (`DEFAULT_PRECISION=16`, configurable default `MathContext`).
+- The mixed-`Num` runtime behavior is documented based on guard rails in `BaseBarSeries#addBar(...)`, `ConcurrentBarSeries#ingestTrade(...)`, and builder consistency checks in `BaseBarSeriesBuilder#build()`.
+- Added num-factory inference note based on `BaseBarSeriesBuilder#build()` behavior introduced via commit `0af7c717`.

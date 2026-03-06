@@ -4,6 +4,15 @@ Status: Draft
 Target: ta4j-core (serialization)
 Feature branch: codex/serialization-versioned-spec
 
+## Status Snapshot (2026-03-06)
+
+Status: still draft/proposed.
+
+Current baseline:
+- Serialization support exists via `ComponentSerialization`, `RuleSerialization`, and `StrategySerialization`.
+- There is no public `toVersionedJson(...)` / `fromVersionedJson(...)` API yet.
+- Canonical field ordering support exists internally in `ComponentSerialization` for descriptor stability, but not as a full versioned envelope contract.
+
 ## Summary
 Introduce a versioned, canonical JSON format for ta4j rule/strategy (and indicator) serialization. The change is
 additive: new versioned APIs coexist with existing JSON payloads, and legacy (versionless) payloads remain readable.
@@ -191,3 +200,7 @@ Phase 2 (Optional):
 - Legacy (versionless) payloads still load.
 - README documents the versioned format and API.
 
+## Rationale Notes (2026-03-06)
+
+- Verified against `org.ta4j.core.serialization.ComponentSerialization`, `RuleSerialization`, and `StrategySerialization`.
+- Confirmed no landed `toVersionedJson`/`fromVersionedJson` APIs in current ta4j-core history up to commit `6cce8809`.

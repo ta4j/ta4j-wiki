@@ -31,7 +31,7 @@ List<TradingStatement> ranked = result.getTopStrategies(
 
 ## Get useful results
 
-- `TradingRecord` – chronological trades with entry/exit prices, costs, exposure, and net/gross PnL. Pass it into any criterion or build a `BaseTradingStatement`.
+- `TradingRecord` – chronological trades/positions plus configured transaction and holding cost models. Pass it into criteria directly, or generate a `TradingStatement` for richer reports.
 - `BacktestExecutionResult` – wraps the evaluated `TradingStatement` list plus a `BacktestRuntimeReport`; use it to keep both ranking data and runtime context together.
 - `BacktestRuntimeReport` – aggregated timing stats from a `BacktestExecutor` run (overall/min/max/average/median and per-strategy runtimes).
 
@@ -51,7 +51,7 @@ AnalysisCriterion net = new NetReturnCriterion();
 AnalysisCriterion buyHold = new VersusEnterAndHoldCriterion(new NetReturnCriterion());
 AnalysisCriterion romad = new ReturnOverMaxDrawdownCriterion();
 AnalysisCriterion sharpe = new SharpeRatioCriterion();
-AnalysisCriterion sortino = new SortinoRatioCriterion(0.05, SamplingFrequency.DAILY, Annualization.ANNUALIZED, ZoneOffset.UTC);
+AnalysisCriterion sortino = new SortinoRatioCriterion(0.05, SamplingFrequency.DAY, Annualization.ANNUALIZED, ZoneOffset.UTC);
 AnalysisCriterion drawdownRisk = new MonteCarloMaximumDrawdownCriterion();
 AnalysisCriterion commissions = new CommissionsImpactPercentageCriterion();
 AnalysisCriterion totalFees = new TotalFeesCriterion();
@@ -147,20 +147,27 @@ When you need cost basis, unrealized PnL, or a position book in your backtest (e
 
 ## Walk-forward optimization
 
-Use the helper methods in `ta4jexamples.walkforward.WalkForward` to slice the series into alternating training/testing windows:
+Current ta4j walk-forward APIs center around `WalkForwardConfig` and the built-in execution methods on `BarSeriesManager` / `BacktestExecutor`:
 
 ```java
-List<BarSeries> trainingSlices = WalkForward.splitSeries(series, Duration.ofDays(120), Duration.ofDays(90));
+WalkForwardConfig config = WalkForwardConfig.defaultConfig(series);
+BarSeriesManager manager = new BarSeriesManager(series);
 
-for (BarSeries training : trainingSlices) {
-    BarSeries testing = WalkForward.subseries(series, training.getEndIndex() + 1, Duration.ofDays(30));
-    Strategy tuned = tuneStrategy(training);
-    TradingRecord forwardResult = new BarSeriesManager(testing).run(tuned);
-    // evaluate and store the outcome
-}
+StrategyWalkForwardExecutionResult wf = manager.runWalkForward(strategy, config);
+List<Num> outOfSample = wf.outOfSampleCriterionValues(new GrossReturnCriterion());
 ```
 
-See the [Walk Forward example](Usage-examples.md#strategy-patterns) for a turnkey implementation.
+```java
+WalkForwardConfig config = WalkForwardConfig.defaultConfig(series);
+BacktestExecutor executor = new BacktestExecutor(series);
+
+BacktestExecutor.BacktestAndWalkForwardResult combined =
+        executor.executeWithWalkForward(strategy, config);
+```
+
+This gives you reproducible fold geometry, holdout support, and one-shot comparison between plain backtest and walk-forward outcomes.
+
+See the maintained [`ta4jexamples.walkforward.WalkForward`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/walkforward/WalkForward.java) example for a complete setup.
 
 ## Debugging slow or flaky backtests
 
@@ -190,6 +197,11 @@ The harness supports three execution modes:
 1. **Run Once (default)**: Execute a single backtest with specified parameters. Useful for quick performance checks or production runs with known optimal settings.
 2. **Tune In-Process**: Run multiple backtests with varying parameters to find optimal settings. Tests different strategy counts, bar counts, and maximum bar count hints systematically.
 3. **Tune Across Heaps**: Fork child JVMs with different heap sizes to test memory configuration impact. Each child JVM runs a full tuning cycle.
+
+## Maintainer rationale notes
+
+- Updated walk-forward examples to current APIs based on `org.ta4j.core.walkforward.WalkForwardConfig`, `BarSeriesManager#runWalkForward(...)`, and `BacktestExecutor#executeWithWalkForward(...)` (`0.22.4`; refreshed in commit `279d9056`).
+- Kept existing backtest ranking/runtime sections intact because `BacktestExecutor#executeWithRuntimeReport(...)` and `BacktestExecutionResult#getTopStrategies(...)` remain the supported batch workflow (`@since 0.19` in `BacktestExecutor`).
 
 ### Quick Start
 

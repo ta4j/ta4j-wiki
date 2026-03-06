@@ -82,15 +82,14 @@ Strategy examples that use charting:
 
 ## Elliott Wave analysis
 
-- **[ElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveAnalysis.java)** – comprehensive Elliott Wave analysis with scenario-based confidence scoring, chart visualization, and wave pivot labels. Supports command-line arguments for loading data from Yahoo Finance or Coinbase, or uses a default dataset if no arguments provided. See [Elliott Wave Indicators](Elliott-Wave-Indicators.md) for detailed documentation.
-- **[BTCUSDElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/BTCUSDElliottWaveAnalysis.java)** – example Elliott Wave analysis for Bitcoin (BTC-USD) using Coinbase data with PRIMARY degree.
-- **[ETHUSDElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ETHUSDElliottWaveAnalysis.java)** – example Elliott Wave analysis for Ethereum (ETH-USD) using Coinbase data.
-- **[SP500ElliottWaveAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/SP500ElliottWaveAnalysis.java)** – example Elliott Wave analysis for S&P 500 Index (^GSPC) using Yahoo Finance data.
-- **[ElliottWaveAdaptiveSwingAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveAdaptiveSwingAnalysis.java)** (0.22.2+) – Elliott Wave analysis using the adaptive ZigZag swing detector (volatility-adaptive reversal). Demonstrates pluggable swing detection and one-shot analysis via `ElliottWaveAnalyzer`.
-- **[ElliottWavePatternProfileDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWavePatternProfileDemo.java)** (0.22.2+) – demonstrates confidence profiles and scenario-type–aware confidence models for different Elliott pattern types.
-- **[ElliottWaveTrendBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveTrendBacktest.java)** (0.22.2+) – backtests and walk-forward tests Elliott Wave trend bias predictions over multiple datasets (e.g. ETH-USD, AAPL).
-- **[HighRewardElliottWaveBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/HighRewardElliottWaveBacktest.java)** (0.22.2+) – runs the HighRewardElliottWaveStrategy on ossified data and prints performance metrics.
-- **[HighRewardElliottWaveStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/HighRewardElliottWaveStrategy.java)** (0.22.2+) – named strategy that trades high-confidence impulse scenarios (wave 3 or 5) with trend and momentum confirmation; uses pluggable swing detectors and custom confidence profiles.
+- **[ElliottWaveIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveIndicatorSuiteDemo.java)** – consolidated Elliott Wave demo with scenario scoring, chart overlays, and optional live/ossified data loading.
+- **[ElliottWavePresetDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWavePresetDemo.java)** – launcher for `ossified` presets (`btc`, `eth`, `sp500`) and `live` runs (Coinbase/YahooFinance).
+- **[ElliottWaveMultiDegreeAnalysisDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWaveMultiDegreeAnalysisDemo.java)** (0.22.4+) – cross-degree scenario validation and reranking for stronger trend-bias decisions.
+- **[ElliottWaveAdaptiveSwingAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWaveAdaptiveSwingAnalysis.java)** (0.22.2+) – adaptive ZigZag swing detection demo with pluggable detector settings.
+- **[ElliottWavePatternProfileDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWavePatternProfileDemo.java)** (0.22.2+) – scenario-type confidence profile tuning demo.
+- **[ElliottWaveTrendBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/ElliottWaveTrendBacktest.java)** (0.22.2+) – trend-bias walk-forward/backtest harness for Elliott outputs.
+- **[HighRewardElliottWaveBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/HighRewardElliottWaveBacktest.java)** (0.22.2+) – backtest harness for `HighRewardElliottWaveStrategy`.
+- **[HighRewardElliottWaveStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/HighRewardElliottWaveStrategy.java)** (0.22.2+) – named strategy targeting high-confidence impulse scenarios.
 
 ## Bots & live trading
 
@@ -100,3 +99,8 @@ Strategy examples that use charting:
 - **LiveTradingRecord (partial fills, cost basis, position book)**: For bots that receive partial fills or need per-lot cost basis and unrealized PnL, use `LiveTradingRecord` with `recordFill(ExecutionFill)` or `enter`/`exit`. See the [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis) for a step-by-step code guide and criteria (`OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`).
 
 Have a favorite workflow or integration that is not covered yet? Contributions to `ta4j-examples` are welcome—new examples make the wiki even more actionable.
+
+### Sync rationale (2026-03-06)
+
+- Updated Elliott example links to current classes after the reorganization in commit `279d9056` (`ElliottWaveIndicatorSuiteDemo`, `ElliottWavePresetDemo`, `demo/*`, `backtest/*`).
+- Retained live-trading pointers for `ConcurrentBarSeries` and `LiveTradingRecord` aligned with commit `b112d34b`.

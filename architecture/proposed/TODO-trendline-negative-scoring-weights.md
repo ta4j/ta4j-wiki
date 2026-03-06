@@ -1,6 +1,10 @@
 Trendline scoring weights: support negative biases
 ==================================================
 
+Status snapshot (2026-03-06)
+- Status: still proposed.
+- Current `ScoringWeights` behavior in `AbstractTrendLineIndicator` enforces each weight in `[0,1]` and total sum of `1.0`; negative weights are not currently allowed.
+
 Context
 - Area: `ta4j-core/src/main/java/org/ta4j/core/indicators/supportresistance/AbstractTrendLineIndicator`.
 - Current rules: `ScoringWeights` fields (`touchCountWeight`, `touchesExtremeWeight`, `outsideCountWeight`, `averageDeviationWeight`, `anchorRecencyWeight`) must each be in `[0, 1]` and must sum to `1.0`. Factor scores are all in `[0, 1]`; composite score is the weighted sum. Tie-breaks prefer higher score, then higher touchCount, then fewer outsideCount, etc.
@@ -45,3 +49,7 @@ Definition of done
 - Tie-break policy decided and implemented consistently with weight signs.
 - Validation, Javadoc, and wiki updated; descriptors persist raw weights.
 - New tests cover negative weights, zero-sum rejection, tie-break behavior, and compatibility with existing defaults.
+
+Rationale notes (2026-03-06)
+- Verified against `org.ta4j.core.indicators.supportresistance.AbstractTrendLineIndicator` (`ScoringWeights` validation and weighted-score path).
+- Last substantial trendline scoring additions were shipped in commits `b814436b` and `39194498`; negative-bias scoring remains open.

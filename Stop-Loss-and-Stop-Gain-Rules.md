@@ -53,7 +53,7 @@ Best when:
 
 These use a dynamic threshold based on volatility indicators (typically ATR multiplied by a coefficient).
 
-From 0.22.3, ATR-based rules also support constructors that accept a custom `ATRIndicator` directly, so you can share precomputed ATR pipelines instead of rebuilding ATR inside each rule.
+From 0.22.3, ATR-based rules support constructors that accept a custom `ATRIndicator` directly (including trailing variants), so you can share precomputed ATR pipelines instead of rebuilding ATR inside each rule.
 
 Best when:
 
@@ -93,6 +93,7 @@ Notes:
 - Keep one hard fail-safe stop even when using adaptive stops.
 - Avoid stacking many correlated stop rules unless each has a distinct purpose.
 - `TrailingStopGainRule` and `AverageTrueRangeTrailingStopGainRule` are two-stage: they activate only after reaching the initial gain threshold, then trigger on retracement from the favorable extreme.
+- `AverageTrueRangeTrailingStopGainRule` requires a positive ATR coefficient; invalid values fail fast with `IllegalArgumentException`.
 
 ## Using stop-price models for risk analytics
 
@@ -212,3 +213,9 @@ See also:
 - [Trading Strategies](Trading-strategies.md)
 - [Live Trading](Live-trading.md)
 - [Backtesting](Backtesting.md)
+
+## Maintainer rationale notes
+
+- Stop-rule family coverage mirrors the expanded hierarchy added in commit `89cd2271` (`BaseVolatility*`, fixed-amount, trailing, and stop-price model interfaces).
+- ATR constructor guidance reflects commit `1fa097ef` and current `AverageTrueRange*` constructors that accept `ATRIndicator` directly.
+- Added positive-coefficient note for `AverageTrueRangeTrailingStopGainRule` based on its input validation in `requirePositiveAtrCoefficient(...)`.
