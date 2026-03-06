@@ -34,6 +34,7 @@ List<TradingStatement> ranked = result.getTopStrategies(
 - `TradingRecord` – chronological trades/positions plus configured transaction and holding cost models. Pass it into criteria directly, or generate a `TradingStatement` for richer reports.
 - `BacktestExecutionResult` – wraps the evaluated `TradingStatement` list plus a `BacktestRuntimeReport`; use it to keep both ranking data and runtime context together.
 - `BacktestRuntimeReport` – aggregated timing stats from a `BacktestExecutor` run (overall/min/max/average/median and per-strategy runtimes).
+- `BacktestExecutor#executeAndKeepTopK(...)` – streaming top-K mode for large sweeps; keeps only top strategies by criteria instead of materializing every statement in memory.
 
 ## Backtesting VWAP, support/resistance, and Wyckoff stacks
 
@@ -71,6 +72,7 @@ System.out.println("Average R-multiple: " + rMultiple.calculate(series, record))
 ```
 
 `SortinoRatioCriterion` is usually preferable when downside volatility matters more than upside volatility. `RMultipleCriterion` averages only closed positions with valid positive risk values from the configured risk model.
+For ratio criteria, prefer explicit configuration for reproducibility across environments: `SamplingFrequency`, `Annualization`, and (when relevant) `OpenPositionHandling`.
 
 Ta4j includes dozens of criteria organized by package:
 
@@ -98,6 +100,18 @@ BacktestExecutionResult batch = executor.executeWithRuntimeReport(
         candidates,
         series.numFactory().numOf(1));
 List<TradingStatement> topFive = batch.getTopStrategies(5, romad, net);
+```
+
+For very large candidate sets, stream and keep only the best N during execution:
+
+```java
+BacktestExecutionResult topOnly = executor.executeAndKeepTopK(
+        candidates,
+        series.numFactory().numOf(1),
+        Trade.TradeType.BUY,
+        romad,
+        20,
+        ProgressCompletion.logging("wiki.backtesting.topk"));
 ```
 
 ## Visualize your backtests
