@@ -56,7 +56,7 @@ Common choices:
 - `VolumeBarAggregator` for volume-threshold bars.
 - `RenkoBarAggregator` for brick-based trend views.
 
-Note: range/volume/Renko aggregators require contiguous, evenly spaced source bars.
+Note: range/volume/Renko aggregators assume contiguous, ordered source bars.
 
 ## Working with live data
 

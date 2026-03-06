@@ -141,7 +141,7 @@ ElliottSwingIndicator (alternating swings)
 ### Change tracking relevant to this guide
 
 - Commit `bebb758e` (2026-02-12, #1435) is the baseline for the current confidence/trend-bias model used here (`ElliottTrendBias`, `ElliottTrendBiasIndicator`, `ElliottConfidenceScorer`, and `elliott.confidence` factors).
-- Commit `279d9056` (2026-03-05, #1448) expanded the Elliott workflow with automatic multi-timeframe analysis (`ElliottWaveAnalysisRunner`, `ElliottWaveAnalysisResult`, and updated `ElliottWaveAnalyzer`/`ElliottWaveFacade` integration).
+- Commit `279d9056` (2026-03-05, #1448) expanded the Elliott workflow with automatic multi-timeframe analysis (for example `ElliottWaveAnalyzer`, `ElliottAnalysisResult`, and updated `ElliottWaveFacade` integration).
 - Confidence scoring uses soft penalties outside preferred extension ranges (instead of hard pass/fail), so mildly overextended wave-3/wave-5 structures are down-weighted rather than discarded.
 - For release-by-release history, see [Release Notes](Release-notes.md).
 
