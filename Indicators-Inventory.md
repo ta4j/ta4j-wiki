@@ -542,10 +542,16 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 | `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceFactorResult** | Record containing one factor's raw score, weighted score, and diagnostics. |
 | `org.ta4j.core.indicators.elliott.confidence` | **ElliottConfidenceContext** | Record containing context input used by Elliott confidence factors/models. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleAnalysisResult** | Record containing cycle-analysis outcomes and supporting notes. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleAnalysis** | One-shot multi-degree Wyckoff analysis entry point for complete cycle snapshots. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleFacade** | Facade that wires Wyckoff cycle indicators and exposes per-bar phase/range helpers. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleType** | Enum representing inferred Wyckoff cycle type. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffEvent** | Record describing a detected Wyckoff event and its properties. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffEventDetector** | Structural/volume event detector used by Wyckoff phase and cycle pipelines. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffPhase** | Record representing inferred Wyckoff phase classification with confidence. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffPhaseType** | Enum for Wyckoff phase labels. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffStructureTracker** | Tracks trading-range structure from recent fractal swing highs/lows. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffVolumeProfile** | Relative-volume profile (climax/dry-up context) for Wyckoff event detection. |
+| `org.ta4j.core.indicators.zigzag` | **ZigZagState** | Immutable ZigZag state snapshot used by `ZigZagStateIndicator`. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagTrend** | Enum representing ZigZag directional state. |
 
 ---
