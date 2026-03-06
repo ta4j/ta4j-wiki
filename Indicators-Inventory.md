@@ -515,6 +515,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators` | **PriceChannel** | Interface for channel-like outputs (upper/lower/median), used by channel indicators. |
+| `org.ta4j.core.indicators` | **IndicatorUtils** | Utility helpers for indicator composition contracts (same-series validation and numeric invalid checks). |
 | `org.ta4j.core.indicators.aroon` | **AroonFacade** | Convenience wrapper exposing Aroon Up/Down/Oscillator values from a common setup. |
 | `org.ta4j.core.indicators.bollinger` | **BollingerBandFacade** | Convenience wrapper exposing middle/upper/lower Bollinger values together. |
 | `org.ta4j.core.indicators.donchian` | **DonchianChannelFacade** | Convenience wrapper exposing Donchian channel components from one entry point. |
