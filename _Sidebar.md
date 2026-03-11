@@ -1,6 +1,9 @@
 ## Start Here
 - [Home](Home.md)
 - [Getting Started](Getting-started.md)
+- [Backtesting](Backtesting.md)
+- [Live Trading](Live-trading.md)
+- [Usage Examples](Usage-examples.md)
 - [FAQ](FAQ.md)
 - [Release Notes](Release-notes.md)
 
@@ -21,13 +24,9 @@
 - [Trading Strategies](Trading-strategies.md)
 - [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting](Backtesting.md)
+- [Live Trading](Live-trading.md)
 - [Charting](Charting.md)
 - [Usage Examples](Usage-examples.md)
-
-## Deploy & Operate
-- [Live Trading](Live-trading.md)
-- [Backtesting › Analysis & Logging](Usage-examples.md#backtesting--analytics)
-- [Bots & Automation](Usage-examples.md#bots--live-trading)
 
 ## Project & Community
 - [How to Contribute](How-to-contribute.md)

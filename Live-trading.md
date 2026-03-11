@@ -1,293 +1,207 @@
 # Live Trading
 
-> ⚠️ **Early days:** ta4j’s live-trading story is still evolving. The APIs below are intentionally bare bones and require custom glue (data ingestion, order routing, resilience) on your side. Treat this as a starting point rather than a fully featured framework.
+ta4j gives you the strategy, series, and trading-record primitives for live systems. It does **not** replace your exchange adapter, order router, risk controls, or persistence layer, but it now lets you use the same `BaseTradingRecord` class across historical, paper, and live execution paths.
 
-ta4j is not just for backtests—its abstractions map directly onto production trading bots. This page outlines how to bootstrap a live engine, keep your `BarSeries` synchronized with the exchange, and execute trades responsibly.
+## What ta4j Handles, And What You Still Own
 
-## Architecture overview
+ta4j gives you:
 
-1. **Initialization** – load recent history to warm up indicators, build your [bar series](Bar-series-and-bars.md), and instantiate the [strategy](Trading-strategies.md).
-2. **Event loop** – append/update bars, evaluate entry/exit rules at `series.getEndIndex()`, and send orders to your broker.
-3. **State persistence** – serialize strategies, parameters, and trading records so the bot can restart without losing context.
+- `BarSeries` and `ConcurrentBarSeries` for market state
+- indicators, rules, and `Strategy` evaluation
+- `BaseTradingRecord` for position and fill state
+- criteria and statements for reporting
 
-## Initialization checklist
+You still own:
 
-- **Fetch historical bars** (at least as many as the highest indicator lookback). Without this, the first signals may be garbage.
-- **Choose a `Num` implementation** consistent with your broker’s precision (decimal for FX/crypto, double for faster equity bots).
-- **Set `setMaximumBarCount(n)`** to cap memory while keeping enough bars to cover every indicator period.
-- **Wire costs** – configure `TransactionCostModel` and `HoldingCostModel` on your `BarSeriesManager` or strategy runner so live metrics align with backtest assumptions.
+- historical backfill and websocket ingestion
+- order routing and retry logic
+- account reconciliation
+- persistence, recovery, and operational alerting
+
+## Choose The Live Execution Path
+
+| Situation | Recommended path | Why |
+| --- | --- | --- |
+| Single-threaded bot with synchronous fills | `BaseBarSeries` + `BaseTradingRecord` | Simple loop, minimal moving pieces |
+| Multi-threaded ingestion and evaluation | `ConcurrentBarSeries` + `BaseTradingRecord` | Thread-safe reads and writes |
+| Partial fills, fee capture, broker order IDs, or reconciliation | `BaseTradingRecord.recordFill(...)` or `recordExecutionFill(new TradeFill(...))` | Preserve the exact fill stream |
+| Legacy adapter that still exposes `LiveTradingRecord` or `ExecutionFill` | Keep temporarily, migrate when practical | Compatibility only in 0.22.x |
+
+For new code, start with `BaseTradingRecord`. `LiveTradingRecord` is a deprecated compatibility facade over the same underlying model.
+
+## Initialize Market State And Trading State
+
+Single-threaded setup:
 
 ```java
-BarSeries liveSeries = new BaseBarSeriesBuilder()
-        .withName("binance_eth_usd_live")
-        .withNumFactory(DecimalNumFactory.getInstance())
+BarSeries series = new BaseBarSeriesBuilder()
+        .withName("eth-usd-live")
         .build();
 
-liveSeries.setMaximumBarCount(500);
-bootstrapWithRecentBars(liveSeries, exchangeClient);
-
-Strategy strategy = strategyFactory.apply(liveSeries);
-TradingRecord tradingRecord = new BaseTradingRecord();
+BaseTradingRecord tradingRecord = new BaseTradingRecord(
+        strategy.getStartingType(),
+        ExecutionMatchPolicy.FIFO,
+        RecordedTradeCostModel.INSTANCE,
+        new ZeroCostModel(),
+        null,
+        null);
 ```
 
-### Choosing a trading record
-
-- **`BaseTradingRecord`**: Simple list of positions (one entry + one exit per position). Use for backtests or live bots where every fill is treated as a single trade and you do not need per-lot cost basis or unrealized PnL. `BarSeriesManager.run(strategy)` returns a `BaseTradingRecord`.
-- **`LiveTradingRecord`**: Supports partial fills, multiple lots per position, configurable execution matching (e.g. FIFO), and optional cost models. Use when you need cost basis, unrealized PnL, or a position book for live reconciliation. Thread-safe for concurrent ingestion and evaluation. See release notes for `Position`, `OpenPosition`, `Trade`, `PositionBook`, and related criteria (`OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`).
-
-### Walkthrough: LiveTradingRecord with partial fills and cost basis
-
-When your broker reports partial fills or you want per-lot cost basis and unrealized PnL, use `LiveTradingRecord` instead of `BaseTradingRecord`. The following examples show the same API for simple enter/exit, then how to record individual fills and read the position book.
-
-**1. Simple enter/exit (same as BaseTradingRecord)**
-
-You can use `enter(index, price, amount)` and `exit(index, price, amount)` exactly like `BaseTradingRecord`. Each call records a single fill; the record stays compatible with all criteria and with `BarSeriesManager` if you drive it manually.
+Concurrent setup:
 
 ```java
-LiveTradingRecord record = new LiveTradingRecord(Trade.TradeType.BUY);
-Num price = series.getBar(endIndex).getClosePrice();
-Num amount = series.numFactory().numOf(1);
+ConcurrentBarSeries series = new ConcurrentBarSeriesBuilder()
+        .withName("eth-usd-live")
+        .withMaxBarCount(1000)
+        .build();
 
-if (strategy.shouldEnter(endIndex, record)) {
-    record.enter(endIndex, price, amount);
-} else if (strategy.shouldExit(endIndex, record)) {
-    record.exit(endIndex, price, amount);
+BaseTradingRecord tradingRecord = new BaseTradingRecord(
+        strategy.getStartingType(),
+        ExecutionMatchPolicy.FIFO,
+        RecordedTradeCostModel.INSTANCE,
+        new ZeroCostModel(),
+        null,
+        null);
+```
+
+Use `RecordedTradeCostModel` when your broker already tells you the actual fee for each fill. That is the pattern the CF live stack uses.
+
+## Feed The Series
+
+If you have raw trades, let `ConcurrentBarSeries` aggregate them:
+
+```java
+series.ingestTrade(
+        trade.timestamp(),
+        trade.volume(),
+        trade.price());
+```
+
+If your venue sends completed or partial candles, ingest bars directly:
+
+```java
+Bar candle = series.barBuilder()
+        .timePeriod(Duration.ofMinutes(1))
+        .endTime(candleCloseTime)
+        .openPrice(open)
+        .highPrice(high)
+        .lowPrice(low)
+        .closePrice(close)
+        .volume(volume)
+        .build();
+
+series.ingestStreamingBar(candle);
+```
+
+## Evaluate On Bar Close, Record On Fill
+
+This is the most important live-trading rule in the current stack:
+
+- Strategy evaluation answers "should I try to trade?"
+- The trading record answers "what actually filled?"
+
+Do not mutate the record when you merely emit an order intent if your exchange can reject, partially fill, or delay that order.
+
+```java
+int endIndex = series.getEndIndex();
+Num lastPrice = series.getBar(endIndex).getClosePrice();
+Num amount = series.numFactory().one();
+
+if (strategy.shouldEnter(endIndex, tradingRecord)) {
+    orderRouter.submitBuy(lastPrice, amount);
+} else if (strategy.shouldExit(endIndex, tradingRecord)) {
+    orderRouter.submitSell(lastPrice, amount);
 }
 ```
 
-**2. Partial fills and position book**
+### Walkthrough: broker-confirmed fills with `BaseTradingRecord`
 
-When you receive fills from the broker one-by-one, record each fill with `recordFill(ExecutionFill)`. Use `ExecutionSide.BUY` / `ExecutionSide.SELL` and optional fee, order id, and correlation id. The record applies FIFO (or your configured `ExecutionMatchPolicy`) and maintains open lots.
+<a id="walkthrough-livetradingrecord-with-partial-fills-and-cost-basis"></a>
+
+When the broker confirms a fill, write that fill into the record. You can use either a prebuilt `BaseTrade` or the lighter `TradeFill` DTO.
+
+Using `BaseTrade`:
 
 ```java
-LiveTradingRecord record = new LiveTradingRecord(
-    Trade.TradeType.BUY,
-    ExecutionMatchPolicy.FIFO,
-    new ZeroCostModel(),
-    new ZeroCostModel(),
-    null, null);
+BaseTrade fill = new BaseTrade(
+        0,
+        Instant.now(),
+        series.numFactory().numOf("42100"),
+        series.numFactory().numOf("0.50"),
+        series.numFactory().numOf("4.21"),
+        ExecutionSide.BUY,
+        "order-123",
+        "decision-123");
 
-NumFactory num = series.numFactory();
-
-// Two buy fills (e.g. from broker)
-record.recordFill(new ExecutionFill(
-    Instant.now(), num.numOf(100.0), num.numOf(0.5), num.zero(),
-    ExecutionSide.BUY, "order-1", null));
-record.recordFill(new ExecutionFill(
-    Instant.now(), num.numOf(101.0), num.numOf(0.5), num.zero(),
-    ExecutionSide.BUY, "order-2", null));
-
-// Open position: two lots, average cost and total amount available
-List<OpenPosition> openPositions = record.getOpenPositions();
-OpenPosition net = record.getNetOpenPosition();
-// net.amount(), net.averageEntryPrice(), net.costBasis(), etc.
-
-// Exit (e.g. one full exit at current price – FIFO matches against first lot)
-record.recordFill(new ExecutionFill(
-    Instant.now(), num.numOf(102.0), num.numOf(1.0), num.zero(),
-    ExecutionSide.SELL, "order-3", null));
+tradingRecord.recordFill(fill);
 ```
 
-**3. Cost basis and unrealized PnL with criteria**
-
-After you have a `BarSeries` and a `LiveTradingRecord` (from live fills or from a custom backtest loop), you can measure cost basis and unrealized PnL with the same criteria used for analysis:
+Using `TradeFill`:
 
 ```java
-BarSeries series = ...;   // your bar series
-LiveTradingRecord record = ...;  // populated via enter/exit or recordFill
-int endIndex = series.getEndIndex();
+TradeFill fill = new TradeFill(
+        endIndex,
+        Instant.now(),
+        series.numFactory().numOf("42100"),
+        series.numFactory().numOf("0.50"),
+        series.numFactory().numOf("4.21"),
+        ExecutionSide.BUY,
+        "order-123",
+        "decision-123");
+
+tradingRecord.recordExecutionFill(fill);
+```
+
+Both paths preserve metadata such as side, fee, order ID, and correlation ID.
+
+## Open-Position Metrics And Reconciliation
+
+Because `BaseTradingRecord` now exposes lot-aware views directly, you can inspect open positions and live PnL without switching to a separate record type:
+
+```java
+OpenPosition netOpenPosition = tradingRecord.getNetOpenPosition();
+List<OpenPosition> lots = tradingRecord.getOpenPositions();
 
 AnalysisCriterion costBasis = new OpenPositionCostBasisCriterion();
 AnalysisCriterion unrealizedPnL = new OpenPositionUnrealizedProfitCriterion();
 
-System.out.println("Open position cost basis: " + costBasis.calculate(series, record));
-System.out.println("Unrealized PnL: " + unrealizedPnL.calculate(series, record));
+System.out.println("Cost basis: " + costBasis.calculate(series, tradingRecord));
+System.out.println("Unrealized PnL: " + unrealizedPnL.calculate(series, tradingRecord));
 ```
 
-Use `record.snapshot()` to capture a point-in-time view of positions and trades for persistence or auditing.
+This is also the surface used by downstream systems for dashboards and snapshots.
 
-## Feeding the series
+## CF Integration Pattern
 
-### Using ConcurrentBarSeries (recommended for live trading)
+CF is a concrete example of how the unified ta4j live stack fits into a fuller trading system:
 
-For live trading with concurrent access, `ConcurrentBarSeries` provides thread-safe trade ingestion:
+- `Ta4jStrategyEngine` and `MarketInputStrategyEngine` evaluate ta4j strategies on closed bars.
+- `MarketInputsFactory` publishes `ConcurrentBarSeries` instances and a shared `TradingRecord` into the input graph.
+- `LiveTradingRecordFillListener` writes confirmed execution fills into `BaseTradingRecord`.
+- `PaperTradingLedger` uses the same `BaseTradingRecord` update path during paper execution.
+- `LiveTradingRecordSnapshotCodec` persists snapshots but restores unified `BaseTradingRecord` instances.
+- `TradingRecordPerformanceSnapshotProvider` calculates ta4j criteria such as total fees and open-position cost basis from that same record.
 
-#### Streaming trade ingestion
+The important practical result is that CF no longer needs one record type for backtests and another for live execution. The same ta4j trading record now survives through decisioning, fills, persistence, and analytics.
 
-The recommended approach is to use `ingestTrade()` methods, which automatically aggregate trades into bars:
+## Persistence And Recovery
 
-```java
-// Simple trade ingestion
-concurrentSeries.ingestTrade(
-    trade.getTime(),
-    trade.getVolume(),
-    trade.getPrice()
-);
+At minimum, persist:
 
-// With side and liquidity classification (for RealtimeBar analytics)
-concurrentSeries.ingestTrade(
-    trade.getTime(),
-    trade.getVolume(),
-    trade.getPrice(),
-    trade.getSide() == TradeSide.BUY ? RealtimeBar.Side.BUY : RealtimeBar.Side.SELL,
-    trade.getLiquidity() == TradeLiquidity.TAKER ? RealtimeBar.Liquidity.TAKER : RealtimeBar.Liquidity.MAKER
-);
-```
+- the strategy or strategy descriptor
+- the latest processed bar or timestamp
+- the serialized trading-record snapshot
+- any broker-side identifiers needed to de-duplicate orders after restart
 
-The `ingestTrade()` methods automatically:
-- Aggregate trades into bars using the configured `BarBuilder`
-- Handle bar rollovers when thresholds are met
-- Update the latest bar in-place or append new bars
-- Maintain thread safety throughout
+If you rebuild the series on startup, make sure its bar index alignment still matches the recovered fills before you resume strategy evaluation.
 
-#### Streaming bar ingestion
+## Examples And References
 
-For pre-aggregated candles (e.g., from WebSocket feeds):
+- **[TradingBotOnMovingBarSeries](Usage-examples.md#bots--live-trading)** - Minimal manual bot loop
+- **[Backtesting](Backtesting.md)** - Historical and replay-style execution patterns
+- **[Bar Series & Bars](Bar-series-and-bars.md)** - Bar ingestion and aggregation details
+- **[Usage Examples](Usage-examples.md)** - Runnable examples in `ta4j-examples`
 
-```java
-Bar candle = concurrentSeries.barBuilder()
-        .timePeriod(Duration.ofMinutes(1))
-        .endTime(candleData.closeTime())
-        .openPrice(candleData.open())
-        .highPrice(candleData.high())
-        .lowPrice(candleData.low())
-        .closePrice(candleData.close())
-        .volume(candleData.volume())
-        .build();
+## Compatibility Note
 
-StreamingBarIngestResult result = concurrentSeries.ingestStreamingBar(candle);
-// result.action() indicates: APPENDED, REPLACED_LAST, or REPLACED_HISTORICAL
-```
-
-### Using BaseBarSeries (single-threaded)
-
-For single-threaded scenarios, you can still use the traditional approach:
-
-```java
-Bar bar = liveSeries.barBuilder()
-        .timePeriod(Duration.ofMinutes(1))
-        .endTime(candle.closeTime())
-        .openPrice(candle.open())
-        .highPrice(candle.high())
-        .lowPrice(candle.low())
-        .closePrice(candle.close())
-        .volume(candle.volume())
-        .build();
-
-liveSeries.addBar(bar);
-```
-
-When updates arrive before the bar closes:
-
-```java
-liveSeries.addTrade(liveSeries.numFactory().numOf(trade.volume()),
-        liveSeries.numFactory().numOf(trade.price()));
-
-// Or replace the last bar entirely if the exchange sends a revised candle
-liveSeries.addBar(replacementBar, true);
-```
-
-## Evaluating and executing
-
-### Stop-rule playbook for live trading
-
-ta4j now includes fixed, trailing, fixed-amount, volatility-scaled, and ATR-based stop loss/gain rules. For selection guidance, configuration patterns, and deployment pitfalls, use:
-
-- [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
-
-Live-specific recommendation:
-
-- Keep a hard fail-safe stop (`StopLossRule` or `FixedAmountStopLossRule`) even if your primary stop is volatility-adaptive.
-- Align rule reference prices with the broker's actual trigger source (last trade vs bid/ask vs mark/index).
-- Add replace throttling when using trailing stops in fast markets.
-
-### Single-threaded evaluation
-
-```java
-int endIndex = liveSeries.getEndIndex();
-Num price = liveSeries.getBar(endIndex).getClosePrice();
-
-if (strategy.shouldEnter(endIndex, tradingRecord)) {
-    orderService.submitBuy(price, desiredQuantity());
-    tradingRecord.enter(endIndex, price, desiredQuantity());
-} else if (strategy.shouldExit(endIndex, tradingRecord)) {
-    orderService.submitSell(price, openQuantity());
-    tradingRecord.exit(endIndex, price, openQuantity());
-}
-```
-
-### Multi-threaded evaluation with ConcurrentBarSeries
-
-With `ConcurrentBarSeries`, you can safely evaluate strategies in a separate thread while another thread ingests data:
-
-```java
-// Thread 1: Ingest trades (runs continuously)
-executorService.submit(() -> {
-    while (running) {
-        Trade trade = websocket.receiveTrade();
-        concurrentSeries.ingestTrade(
-            trade.getTime(),
-            trade.getVolume(),
-            trade.getPrice(),
-            trade.getSide(),
-            trade.getLiquidity()
-        );
-    }
-});
-
-// Thread 2: Evaluate strategy (runs on a schedule or trigger)
-executorService.submit(() -> {
-    while (running) {
-        int endIndex = concurrentSeries.getEndIndex();
-        if (endIndex < 0) continue; // No bars yet
-        
-        Num price = concurrentSeries.getBar(endIndex).getClosePrice();
-        
-        if (strategy.shouldEnter(endIndex, tradingRecord)) {
-            orderService.submitBuy(price, desiredQuantity());
-            tradingRecord.enter(endIndex, price, desiredQuantity());
-        } else if (strategy.shouldExit(endIndex, tradingRecord)) {
-            orderService.submitSell(price, openQuantity());
-            tradingRecord.exit(endIndex, price, openQuantity());
-        }
-        
-        Thread.sleep(100); // Or use a scheduled executor
-    }
-});
-```
-
-Guidelines:
-
-- Always check that `tradingRecord.isOpened()`/`isClosed()` lines up with your broker state. If an order is partially filled, delay updating the record until the fill completes.
-- Consider using ta4j’s `TradeExecutionModel` implementations to simulate your broker’s order semantics before going live.
-- Wrap the evaluation + execution block in robust error handling to avoid missing bars while recovering from exchange hiccups.
-- With `ConcurrentBarSeries`, multiple threads can safely read from the series concurrently (e.g., parallel strategy evaluation, indicator calculation).
-- Use `ConcurrentBarSeries` when you need thread-safe access; it provides read/write locks internally.
-
-## Live workflow for VWAP, support/resistance, and Wyckoff
-
-For the full implementation playbook, see [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md). In live routing:
-
-- Prefer closed-bar evaluation when combining VWAP bands, S/R zones, and Wyckoff phases to avoid intrabar churn.
-- Block trading until the maximum unstable window across all active indicators is fully elapsed.
-- Use anchored VWAP reset signals for session boundaries or structural events when regime context changes.
-- Require confluence (for example: Wyckoff confidence + VWAP alignment + S/R proximity) before placing orders.
-- Persist last processed bar, latest phase transition index, and active anchor context for restart-safe execution.
-
-## Persistence & recovery
-
-- **Strategy state** – Serialize strategies via `StrategySerialization.toJson(strategy)` or keep `NamedStrategy` descriptors in configuration. This ensures bots can reload the exact same logic after restarts.
-- **Trading record** – Persist open positions, last processed bar timestamp, and PnL so you can resume without double-counting trades.
-- **Bar snapshots** – If your infrastructure allows, periodically snapshot the latest `BarSeries` to disk or cache so warm restarts skip the backfill step.
-
-## Monitoring & alerting
-
-- Pipe trade events and key indicators to your logging/metrics stack—`StrategyExecutionLogging` from `ta4j-examples` is a good starting point.
-- Track runtime stats (latency per bar, frequency of signals) to detect stalls early.
-- Consider running a parallel backtest (e.g., via `BacktestExecutor`) on the most recent data to ensure live behavior matches expectations.
-
-## Examples & references
-
-- **[TradingBotOnMovingBarSeries](Usage-examples.md#bots--live-trading)** – minimal bot loop using a moving bar series.
-- [Backtesting](Backtesting.md) – explains how to test cost models and execution assumptions before deploying.
-- [Bar Series & Bars](Bar-series-and-bars.md) – details data ingestion, moving windows, and live updates.
+`LiveTradingRecord` and `ExecutionFill` are still present in 0.22.x so older integrations can migrate without a sudden compile break, but the recommended path for new live code is `BaseTradingRecord` plus `TradeFill` or `BaseTrade`.

@@ -41,7 +41,7 @@ Thoughts, suggestions, contributions, etc toward any of these items would be gre
 
 | New Features
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|**TradingRecord QoL -** Enhance TradingRecord to allow multiple, open positions. Model funds/principal.                                        |
+|~~**TradingRecord QoL -**~~ ✅ **Largely completed in 0.22.x** – `BaseTradingRecord` now covers multiple open lots, execution matching, confirmed-fill ingestion, open-position analytics, and shared live/backtest usage. Funds and principal modeling still belong in downstream client applications rather than ta4j core. |
 |**Order book models & analysis -** New model classes representing order books along with tools to analyze them.                                |
 |**Options models & analysis -** New model classes representing options contracts along with tools to analyze them.                             |
 |**Futures models & analysis -** New model classes representing futures contracts along with tools to analyze them.                             |

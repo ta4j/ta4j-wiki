@@ -1,6 +1,6 @@
 # Trading Strategies
 
-A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and take advantage of features introduced in 0.19 and enhanced in 0.21.0.
+A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and run the same logic across quick backtests, batch optimization, and live or paper adapters built on the unified `BaseTradingRecord` stack.
 
 ## Trading rules
 
@@ -117,6 +117,34 @@ TradingRecord record = manager.run(strategy);
 
 The same strategy class can be used in [backtests](Backtesting.md) and [live trading](Live-trading.md) contexts.
 
+## Execution models and trading records
+
+The strategy itself stays the same; the execution path around it is what changes.
+
+```java
+BaseTradingRecord providedRecord = new BaseTradingRecord(
+        strategy.getStartingType(),
+        ExecutionMatchPolicy.FIFO,
+        new ZeroCostModel(),
+        new ZeroCostModel(),
+        series.getBeginIndex(),
+        series.getEndIndex());
+
+BarSeriesManager manager = new BarSeriesManager(
+        series,
+        new ZeroCostModel(),
+        new ZeroCostModel(),
+        new TradeOnCurrentCloseModel());
+
+manager.run(strategy, providedRecord, series.numFactory().one(), series.getBeginIndex(), series.getEndIndex());
+```
+
+- Use the default `BarSeriesManager` setup when next-bar-open fills match your strategy assumptions.
+- Switch to `TradeOnCurrentCloseModel` when you want closed-bar live bots and backtests to line up more closely.
+- Reach for `SlippageExecutionModel` or `StopLimitExecutionModel` when you need explicit execution realism instead of idealized fills.
+- Provide your own `BaseTradingRecord` when you want one record model across replays, walk-forward runs, live fills, and downstream persistence.
+- In live or paper trading, the strategy should still evaluate `shouldEnter(...)` / `shouldExit(...)` against the current record, but the record itself should only be updated from confirmed fills.
+
 ## Parameterizing and Named strategies
 
 For reusable presets, implement `NamedStrategy`. The new registry system keeps constructor discovery fast and supports permutations:
@@ -184,8 +212,9 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 
 ## Execution context tips
 
-- **Backtesting** – Inject custom `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) or a custom `TradeExecutionModel` into `BarSeriesManager` to simulate slippage and commissions accurately.
-- **Live trading** – Feed real-time bars into a moving `BarSeries`, call `strategy.shouldEnter(index, record)` / `shouldExit(...)`, then execute trades through your broker (see [Live Trading](Live-trading.md)).
+- **Backtesting** – Inject custom `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) or a custom `TradeExecutionModel` into `BarSeriesManager` to simulate commissions, slippage, close-bar fills, or stop-limit behavior accurately.
+- **Parity replays** – Use `BarSeriesManager.run(strategy, providedRecord, ...)` or `TradingRecordParityBacktest` when you want the exact same `BaseTradingRecord` configuration used across test and live-facing code.
+- **Live trading** – Feed real-time bars into a moving `BarSeries`, call `strategy.shouldEnter(index, record)` / `shouldExit(...)`, send the order to your broker, then append the confirmed `TradeFill` or `Trade` back onto `BaseTradingRecord` (see [Live Trading](Live-trading.md)).
 - **Diagnostics** – Mirror the approach in `ta4jexamples.logging.StrategyExecutionLogging` to trace which rule triggered each trade.
 
 ## Best practices
