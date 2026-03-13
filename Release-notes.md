@@ -7,6 +7,7 @@ Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangel
 - **One fill model for new code**: New integrations should use `TradeFill` directly with `BaseTradingRecord.recordExecutionFill(...)` instead of building fresh work on top of `ExecutionFill`.
 - **One record stack for live and backtests**: New flows should target `BaseTrade` and `BaseTradingRecord`, which now cover the shared execution model across historical, replay, paper, and live adapters.
 - **Open-position analytics live on the record itself**: Build against `TradingRecord#getOpenPositions()` and `getNetOpenPosition()` rather than a separate position-ledger abstraction.
+- **Lot bookkeeping now stays inside `BaseTradingRecord`**: You still get FIFO, LIFO, average-cost, and specific-id matching, but the standalone `PositionBook` type is now internal. Callers should go through `BaseTradingRecord` and `TradingRecord` for recording fills, reading closed positions, inspecting per-lot open positions, and querying net exposure.
 
 Migration note: on the 0.22.x branch you may still encounter `LiveTradingRecord` as a deprecated compatibility facade while downstream projects migrate. New code should already target `BaseTradingRecord`, `BaseTrade`, and `TradeFill`.
 
@@ -18,7 +19,7 @@ Migration note: on the 0.22.x branch you may still encounter `LiveTradingRecord`
 
 ### Changed
 - **Bring your own trading record in backtests**: `BarSeriesManager` now runs directly against caller-provided `TradingRecord` instances (`run(strategy, tradingRecord[, amount, start, end])`) and can also be configured with a default `TradingRecordFactory`. That makes parity-style runs with `BaseTradingRecord` straightforward.
-- **Trade-first fill flow across live and backtests**: `BaseTradingRecord#recordFill(...)` and `PositionBook#recordEntry(...)` / `recordExit(...)` now work directly with `Trade`, so adapters can stay implementation-agnostic while preserving live/backtest parity.
+- **Trade-first fill flow across live and backtests**: `BaseTradingRecord#recordFill(...)` now works directly with `Trade`, while internals still materialize `BaseTrade` and lot bookkeeping as needed so adapters can stay implementation-agnostic and live/backtest parity stays intact.
 - **Stop-limit/live parity hardening**: `StopLimitExecutionModel` now expires stale pending orders before new signals, commits partial expiry fills onto unified `BaseTradingRecord` exit flows, and preserves rejection metadata for any unfilled remainder.
 
 ### Fixed
