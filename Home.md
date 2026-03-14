@@ -2,51 +2,43 @@
 
 # Welcome to the ta4j Wiki
 
-Your one-stop guide for building technical-analysis-driven trading systems in Java. This refresh focuses on making the content approachable for newcomers while preserving the depth power users expect.
+ta4j gives you the building blocks for technical-analysis-driven systems in Java: bar series, indicators, rules, strategies, reports, and a unified trading-record model that now spans backtests, paper trading, and live execution.
+
+## What’s Newer On Current Master
+
+- **Configurable backtest execution models**: `BarSeriesManager` and `BacktestExecutor` can now stay on the default next-open model or switch to current-close, slippage, or stop-limit execution.
+- **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
+- **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
 
 ## Start Here
 
-1. **Install ta4j** – Grab the coordinates from the [Getting Started guide](Getting-started.md#install-ta4j) and run the quick sanity check project.
-2. **Learn the building blocks** – Understand [bar series](Bar-series-and-bars.md), [Num implementations](Num.md), and [how indicators compose](Technical-indicators.md).
-3. **Build your first strategy** – Follow the step-by-step tutorial in [Getting Started](Getting-started.md#walkthrough-build-your-first-strategy) and validate it by [backtesting](Backtesting.md).
-4. **Iterate & deploy** – Explore [Trading Strategies](Trading-strategies.md) for composition patterns, [Backtesting](Backtesting.md) for performance diagnostics, and [Live Trading](Live-trading.md) for operational concerns.
+1. **Install ta4j** - Follow [Getting Started](Getting-started.md#install-ta4j) to build from the current branch or wire the latest release into your project.
+2. **Learn the building blocks** - Read [Bar Series & Bars](Bar-series-and-bars.md), [Num](Num.md), and [Technical Indicators](Technical-indicators.md).
+3. **Build your first strategy** - Use the walkthrough in [Getting Started](Getting-started.md#walkthrough-build-your-first-strategy).
+4. **Choose the right execution path** - Use [Backtesting](Backtesting.md) for `BarSeriesManager` and `BacktestExecutor`, then [Live Trading](Live-trading.md) for event-driven loops.
 
-## What's New in 0.21.0
+## Unified Trading Stack At A Glance
 
-### Latest highlights (0.22.3)
+| Scenario | Recommended path | Core classes |
+| --- | --- | --- |
+| Quick historical validation | `BarSeriesManager` | `BarSeriesManager`, `BaseTradingRecord`, `TradeExecutionModel` |
+| Parameter sweeps and leaderboards | `BacktestExecutor` | `BacktestExecutor`, `WeightedCriterion`, `BacktestRuntimeReport` |
+| Deterministic replay with a preconfigured record | `BarSeriesManager.run(..., tradingRecord, ...)` | `BaseTradingRecord`, `ExecutionMatchPolicy` |
+| Live or paper execution with asynchronous fills | Manual loop | `Strategy`, `TradingRecord`, `TradeFill`, `Trade.fromFills(...)`, `ConcurrentBarSeries` |
+| Older live adapter compatibility | Temporary bridge only | `LiveTradingRecord`, `ExecutionFill` |
 
-- **Bill Williams toolkit** – Added `AlligatorIndicator`, `FractalHighIndicator` / `FractalLowIndicator`, `GatorOscillatorIndicator`, and `MarketFacilitationIndexIndicator` with a dedicated [Bill Williams Indicators](Bill-Williams-Indicators.md) guide.
-- **MACD-V momentum-state APIs** – Added momentum-state classification (`MACDVMomentumStateIndicator`, `MACDVMomentumProfile`) and rule integration helpers.
-- **New risk/quality criteria** – Added metrics like `SortinoRatioCriterion`, `PositionDurationCriterion`, and `RMultipleCriterion` for tighter backtest analysis.
-- **Threshold-aware rule composition** – Added coverage for `RiskRewardRatioRule`, `OverOrEqualIndicatorRule`, `UnderOrEqualIndicatorRule`, and `OrWithThresholdRule` in [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md).
+The key change is simple: new code no longer needs a split "backtest record" versus "live record" mental model. `BaseTradingRecord` already supports classic `enter` / `exit` operations, fill-aware updates, open-lot views, recorded fees, and open-position criteria.
 
-- **Unified return representation system** – Consistent formatting across all return-based criteria (multiplicative, decimal, percentage, logarithmic) via `ReturnRepresentation` and `ReturnRepresentationPolicy`
-- **New oscillators** – `TrueStrengthIndexIndicator`, `SchaffTrendCycleIndicator`, and `ConnorsRSIIndicator` expand oscillator coverage
-- **Helper indicators** – `PercentRankIndicator`, `DifferenceIndicator`, and `StreakIndicator` for advanced indicator composition
-- **High-precision improvements** – `DecimalNumFactory#exp` now uses configured `MathContext` for better precision in exponential calculations
-- **Market-structure stack guide** – New [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) covering backtesting and live-trading usage patterns
+## Where To Go Next
 
-### Previous highlights (0.19)
-
-- **Fast, observable backtests** with `BacktestExecutor`, execution-time tracing, and streaming top-K selection for large strategy grids
-- **Strategy portability** thanks to `StrategySerialization`, JSON round-trips, and compact `NamedStrategy` descriptors
-- **Expanded indicator toolbox**: Renko brick detectors, MACDV, Net Momentum, vote-based rules, Amount bars, begin-time builders, and more
-- **Richer analytics** including commission impact, drawdown Monte Carlo simulations, streak metrics, and capital utilization insights
-- **Trendline and swing point analysis suite** – Automated support/resistance detection with fractal and ZigZag swing indicators
-- **Unified data source interface** – Consistent API for loading data from files, Yahoo Finance, Coinbase, and more
-
-Read the curated [Release Notes](Release-notes.md) for every addition plus migration guidance.
-
-## How the Wiki Is Organized
-
-- **Start Here** – [Getting Started](Getting-started.md), [FAQ](FAQ.md), and [Release Notes](Release-notes.md) get you productive quickly.
-- **Core Concepts** – Deep dives into [Bar Series & Bars](Bar-series-and-bars.md), [Num](Num.md), [Technical Indicators](Technical-indicators.md), and [Moving Averages](Moving-Average-Indicators.md).
-- **Build Strategies** – Compose rules with [Trading Strategies](Trading-strategies.md), evaluate them through [Backtesting](Backtesting.md), and inspect [Usage Examples](Usage-examples.md).
-- **Deploy & Operate** – Run bots via [Live Trading](Live-trading.md), inspect logs, and leverage the [ta4j-examples](https://github.com/ta4j/ta4j/tree/master/ta4j-examples) project.
-- **Project & Community** – Learn how to [contribute](How-to-contribute.md), follow the [Branching model](Branching-model.md), peek at the [Roadmap](Roadmap-and-Tasks.md), or [report issues](Found-a-bug.md).
+- **[Getting Started](Getting-started.md)** - First strategy, first backtest, and first live-style loop
+- **[Backtesting](Backtesting.md)** - When to use `BarSeriesManager`, `BacktestExecutor`, or a manual simulation loop
+- **[Live Trading](Live-trading.md)** - `ConcurrentBarSeries`, broker-confirmed fills, persistence, and downstream integration patterns
+- **[Usage Examples](Usage-examples.md)** - Runnable examples like `Quickstart`, `TradingRecordParityBacktest`, `TradeFillRecordingExample`, and `SimpleMovingAverageRangeBacktest`
+- **[Release Notes](Release-notes.md)** - Migration details and version history
 
 ## Community
 
-- Chat with the team on the [ta4j Discord](https://discord.gg/HX9MbWZ).
-- Share insights on GitHub Discussions and issues in the [main repository](https://github.com/ta4j/ta4j).
-- If you improve or clarify anything, please send a PR or open an issue—this wiki is maintained by the community for the community.
+- Chat on the [ta4j Discord](https://discord.gg/HX9MbWZ)
+- Explore the [ta4j repository](https://github.com/ta4j/ta4j) and its `ta4j-examples` module
+- Open a PR or issue when you spot drift, missing examples, or confusing behavior

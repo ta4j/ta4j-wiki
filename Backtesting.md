@@ -1,372 +1,204 @@
 # Backtesting
 
-Backtesting estimates how a strategy would have performed historically. In ta4j this is the core workflow: load a `BarSeries`, pick a Strategy, and measure the resulting `TradingRecord` with analysis criteria.
+Backtesting estimates how a strategy would have behaved over historical data. In current ta4j, the default building blocks are:
 
-## Pick the right driver
+- `BarSeriesManager` for one strategy over one series
+- `BacktestExecutor` for many strategies over one series
+- `BaseTradingRecord` as the trading-state object underneath both backtest and live-style flows
 
-| Driver | When to use | Highlights |
+## Choose The Right Backtest Driver
+
+| Need | Recommended path | Notes |
 | --- | --- | --- |
-| `BarSeriesManager` | Quick explorations or single strategies. | Minimal setup, returns a `TradingRecord` immediately. |
-| `BacktestExecutor` (introduced in 0.19) | Large parameter sweeps, grid searches, inventorying many strategies. | Parallel execution, runtime telemetry, streaming top-K filtering, progress callbacks. |
+| One strategy, minimal setup | `BarSeriesManager.run(strategy)` | Creates a fresh `BaseTradingRecord` through the manager's configured factory and defaults to next-open execution |
+| One strategy with a preconfigured record | `BarSeriesManager.run(strategy, tradingRecord, ...)` | Reuse a record instance or keep a custom `ExecutionMatchPolicy` / fee setup |
+| Many strategies or tuning | `BacktestExecutor` | Builds on the same next-open default, collects `TradingStatement`s, and adds telemetry plus ranking helpers |
+| Event-driven or fill-driven replay | Manual loop + `BaseTradingRecord` | Use when fills do not happen exactly where the default execution model would place them |
+| Older live-oriented adapters | `LiveTradingRecord` | Compatibility facade only; not recommended for new backtests |
+
+The main thing to keep in mind is that you do **not** need a manual loop just to get open-lot views, recorded fees, or open-position criteria. `BaseTradingRecord` already exposes `getCurrentPosition()`, `getOpenPositions()`, and recorded-fee-aware metrics.
+
+## Default Path: `BarSeriesManager`
+
+For a normal single-strategy backtest, start here:
 
 ```java
 BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);
+
+System.out.println("Closed positions: " + record.getPositionCount());
+System.out.println("Open position? " + record.getCurrentPosition().isOpened());
 ```
+
+`BarSeriesManager` handles the bar-by-bar loop, applies the configured `TradeExecutionModel`, and returns the resulting trading record.
+
+If you also need specific cost models or execution semantics, configure them on the manager:
+
+```java
+BarSeriesManager manager = new BarSeriesManager(
+        series,
+        new LinearTransactionCostModel(0.001),
+        new ZeroCostModel(),
+        new TradeOnNextOpenModel());
+```
+
+## Provide Your Own `BaseTradingRecord`
+
+Recent ta4j versions let `BarSeriesManager` run directly against a record you provide. That is the right choice when you want to preserve a specific match policy, start and end window, or recorded-fee behavior.
+
+```java
+BaseTradingRecord record = new BaseTradingRecord(
+        strategy.getStartingType(),
+        ExecutionMatchPolicy.FIFO,
+        new ZeroCostModel(),
+        new ZeroCostModel(),
+        series.getBeginIndex(),
+        series.getEndIndex());
+
+BarSeriesManager manager = new BarSeriesManager(series);
+manager.run(strategy, record, series.numFactory().one(), series.getBeginIndex(), series.getEndIndex());
+```
+
+If you want every default `run(...)` overload to create your preferred record shape, provide a custom trading-record factory to the manager constructor.
+
+The maintained parity example for this flow is [`TradingRecordParityBacktest`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradingRecordParityBacktest.java), which compares:
+
+- the plain default `BarSeriesManager` run
+- a run against a provided `BaseTradingRecord`
+- a manager configured with a custom trading-record factory
+
+## Batch Runs With `BacktestExecutor`
+
+When you want to rank many strategies, switch to `BacktestExecutor`:
 
 ```java
 BacktestExecutor executor = new BacktestExecutor(series);
 BacktestExecutionResult result = executor.executeWithRuntimeReport(
         strategies,
-        series.numFactory().numOf(1),
+        series.numFactory().one(),
         Trade.TradeType.BUY,
         ProgressCompletion.logging("wiki.backtesting"));
-List<TradingStatement> ranked = result.getTopStrategies(
+
+List<TradingStatement> topRuns = result.getTopStrategiesWeighted(
         20,
-        new ReturnOverMaxDrawdownCriterion(),
-        new NetReturnCriterion());
+        WeightedCriterion.of(new NetProfitCriterion(), 7.0),
+        WeightedCriterion.of(new ReturnOverMaxDrawdownCriterion(), 3.0));
 ```
 
-*What this does:* the first block runs a single strategy through the traditional `BarSeriesManager`. The second block spins up `BacktestExecutor`, runs a batch of strategies while collecting runtime telemetry, and then ranks the resulting `TradingStatement`s by ROMAD and net return. For a maintained batch-ranking example, see [`ta4jexamples.backtesting.BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java).
+Use `BacktestExecutor` when you care about:
 
-## Get useful results
+- strategy leaderboards
+- normalized weighted ranking such as "net profit + RoMaD"
+- progress callbacks
+- runtime telemetry (`BacktestRuntimeReport`)
+- batched execution for large candidate sets
 
-- `TradingRecord` – chronological trades/positions plus configured transaction and holding cost models. Pass it into criteria directly, or generate a `TradingStatement` for richer reports.
-- `BacktestExecutionResult` – wraps the evaluated `TradingStatement` list plus a `BacktestRuntimeReport`; use it to keep both ranking data and runtime context together.
-- `BacktestRuntimeReport` – aggregated timing stats from a `BacktestExecutor` run (overall/min/max/average/median and per-strategy runtimes).
-- `BacktestExecutor#executeAndKeepTopK(...)` – streaming top-K mode for large sweeps; keeps only top strategies by criteria instead of materializing every statement in memory.
+You have the same execution-wiring flexibility here as in `BarSeriesManager`: use `new BacktestExecutor(series, tradeExecutionModel)` for the common slippage/stop-limit case, or pass a preconfigured `BarSeriesManager` when you want a custom `TradingRecordFactory` or other manager-level defaults to flow through every batch run.
 
-## Backtesting VWAP, support/resistance, and Wyckoff stacks
+Choose the ranking style that matches the job:
 
-For a complete walkthrough, see [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md). For backtests specifically:
+- `getTopStrategies(...)` for simple lexicographic ranking by one or more criteria
+- `getTopStrategiesWeighted(...)` plus `WeightedCriterion.of(...)` when you want normalized weighted scoring across different metrics
+- `executeAndKeepTopK(...)` when the candidate set is so large that you want streaming top-K retention with one primary criterion instead of materializing every statement
 
-- Compute a single unstable-window gate from all dependencies and apply it with `strategy.setUnstableBars(...)`.
-- Use confluence conditions (value + location + phase) instead of single-indicator triggers.
-- Tune `lookbackLength`, `bandwidth`, and tolerance values with out-of-sample validation, not in-sample only.
-- Model fees and slippage; these signals often trigger near crowded liquidity zones where execution quality dominates edge.
+## When A Manual Loop Is The Right Tool
 
-## Measure what matters
+Manual loops still matter, but for a narrower reason than before. Use them when execution itself is the thing you are modeling:
+
+- partial fills
+- broker-confirmed fills arriving later
+- venue-specific matching or lot handling
+- replaying historical executions instead of synthetic ta4j trades
+
+Deterministic custom loop:
 
 ```java
-AnalysisCriterion net = new NetReturnCriterion();
-AnalysisCriterion buyHold = new VersusEnterAndHoldCriterion(new NetReturnCriterion());
-AnalysisCriterion romad = new ReturnOverMaxDrawdownCriterion();
-AnalysisCriterion sharpe = new SharpeRatioCriterion();
-AnalysisCriterion sortino = new SortinoRatioCriterion(0.05, SamplingFrequency.DAY, Annualization.ANNUALIZED, ZoneOffset.UTC);
-AnalysisCriterion drawdownRisk = new MonteCarloMaximumDrawdownCriterion();
-AnalysisCriterion commissions = new CommissionsImpactPercentageCriterion();
+BaseTradingRecord record = new BaseTradingRecord(strategy.getStartingType());
+Num amount = series.numFactory().one();
+
+for (int i = series.getBeginIndex(); i <= series.getEndIndex(); i++) {
+    Num price = series.getBar(i).getClosePrice();
+    if (strategy.shouldEnter(i, record)) {
+        record.enter(i, price, amount);
+    } else if (strategy.shouldExit(i, record)) {
+        record.exit(i, price, amount);
+    }
+}
+```
+
+Fill-driven replay:
+
+```java
+BaseTradingRecord record = new BaseTradingRecord(strategy.getStartingType());
+
+record.operate(new TradeFill(
+        42,
+        Instant.parse("2025-01-02T10:15:00Z"),
+        series.numFactory().numOf("42100"),
+        series.numFactory().numOf("0.50"),
+        series.numFactory().numOf("4.21"),
+        ExecutionSide.BUY,
+        "order-42",
+        "decision-42"));
+```
+
+That same fill-driven pattern is what you will use in live or paper-trading systems when the broker is the source of truth for fills. If you already have the full partial-fill batch for one logical order, keep it together with `Trade.fromFills(...)` and pass the grouped trade into `operate(...)` instead.
+
+## Criteria, Statements, And Charts
+
+Once you have a `TradingRecord`, the same analysis layer works no matter how the record was produced:
+
+```java
+AnalysisCriterion netReturn = new NetReturnCriterion();
 AnalysisCriterion totalFees = new TotalFeesCriterion();
-AnalysisCriterion avgDurationSeconds = new PositionDurationCriterion(Statistics.MEAN);
-AnalysisCriterion rMultiple = new RMultipleCriterion(new StopLossPositionRiskModel(5));
+AnalysisCriterion openCostBasis = new OpenPositionCostBasisCriterion();
+AnalysisCriterion openUnrealized = new OpenPositionUnrealizedProfitCriterion();
 
-System.out.println("Net return: " + net.calculate(series, record));
-System.out.println("Vs buy & hold: " + buyHold.calculate(series, record));
-System.out.println("Return / Max DD: " + romad.calculate(series, record));
-System.out.println("Sharpe ratio: " + sharpe.calculate(series, record));
-System.out.println("Sortino ratio: " + sortino.calculate(series, record));
-System.out.println("Drawdown risk p95: " + drawdownRisk.calculate(series, record));
-System.out.println("Commission drag: " + commissions.calculate(series, record));
-System.out.println("Total fees: " + totalFees.calculate(series, record));
-System.out.println("Average position duration (sec): " + avgDurationSeconds.calculate(series, record));
-System.out.println("Average R-multiple: " + rMultiple.calculate(series, record));
+System.out.println(netReturn.calculate(series, record));
+System.out.println(totalFees.calculate(series, record));
+System.out.println(openCostBasis.calculate(series, record));
+System.out.println(openUnrealized.calculate(series, record));
 ```
 
-`SortinoRatioCriterion` is usually preferable when downside volatility matters more than upside volatility. `RMultipleCriterion` averages only closed positions with valid positive risk values from the configured risk model.
-For ratio criteria, prefer explicit configuration for reproducibility across environments: `SamplingFrequency`, `Annualization`, and (when relevant) `OpenPositionHandling`.
+Useful companions:
 
-Ta4j includes dozens of criteria organized by package:
+- `BaseTradingStatement`
+- `CommissionsImpactPercentageCriterion`
+- `PositionDurationCriterion`
+- `RMultipleCriterion`
+- `MonteCarloMaximumDrawdownCriterion`
 
-- `criteria.pnl.*` – differentiate net vs. gross results.
-- `criteria.drawdown.*` – absolute, relative, duration, Monte Carlo.
-- `criteria.commissions.*` – total fees across positions.
-- `criteria.risk.*` – risk-model-based evaluation such as `RMultipleCriterion`.
-- `org.ta4j.core.criteria` (top-level package) – ratio/return criteria, `PositionDurationCriterion`, open-position cost basis and unrealized PnL criteria, plus position streak/count criteria.
+For open exposure, prefer `getCurrentPosition()` as the canonical net-open view and `getOpenPositions()` when you want one snapshot per remaining lot. `getNetOpenPosition()` remains available only as a compatibility alias.
 
-Mix and match to build your own evaluation stack.
+For visualization, combine the resulting record with the `ChartWorkflow` APIs documented in [Charting](Charting.md).
 
-## Compare strategies
+## Visualize and sanity-check your results
 
-Use `AnalysisCriterion#chooseBest(...)` to rank alternatives:
-
-```java
-List<Strategy> candidates = List.of(meanReversion, trendFollowing, breakout);
-Strategy best = romad.chooseBest(manager, candidates);
-```
-
-With `BacktestExecutor`, keep a ranked leaderboard after a batch run:
-
-```java
-BacktestExecutionResult batch = executor.executeWithRuntimeReport(
-        candidates,
-        series.numFactory().numOf(1));
-List<TradingStatement> topFive = batch.getTopStrategies(5, romad, net);
-```
-
-For very large candidate sets, stream and keep only the best N during execution:
-
-```java
-BacktestExecutionResult topOnly = executor.executeAndKeepTopK(
-        candidates,
-        series.numFactory().numOf(1),
-        Trade.TradeType.BUY,
-        romad,
-        20,
-        ProgressCompletion.logging("wiki.backtesting.topk"));
-```
-
-## Visualize your backtests
-
-After you have a `TradingRecord`, you can render candlesticks, trades, and indicator overlays using `ChartWorkflow` + `ChartBuilder` from `ta4j-examples`.
-
-### Using the Fluent Builder API (Recommended)
-
-The builder API provides a clean, composable way to create and display charts:
-
-```java
-TradingRecord record = manager.run(strategy);
-ChartWorkflow chartWorkflow = new ChartWorkflow("target/charts");
-
-ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-SMAIndicator sma = new SMAIndicator(closePrice, 50);
-EMAIndicator ema = new EMAIndicator(closePrice, 200);
-
-ChartPlan plan = chartWorkflow.builder()
-    .withSeries(series)
-    .withTradingRecordOverlay(record)
-    .withIndicatorOverlay(sma)
-    .withIndicatorOverlay(ema)
-    .toPlan();
-
-chartWorkflow.display(plan);
-chartWorkflow.save(plan, "my-strategy");
-```
-
-See the [Charting](Charting.md) guide for comprehensive documentation and more examples.
-
-### Convenience workflow methods
-
-If you prefer less builder wiring, `ChartWorkflow` also exposes convenience methods like `createTradingRecordChart(...)`, `display(...)`, and `save(...)`. Saved images are JPEGs (see `FileSystemChartStorage`) with generated names derived from series metadata. For a full end-to-end strategy + chart flow, see [`ta4jexamples.strategies.NetMomentumStrategy`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java).
-
-## Backtesting with LiveTradingRecord
-
-When you need cost basis, unrealized PnL, or a position book in your backtest (e.g. to align with live reconciliation), run your strategy in a loop and feed a `LiveTradingRecord` instead of using `BarSeriesManager.run(strategy)` (which returns a `BaseTradingRecord`). At each bar, call `strategy.shouldEnter(index, record)` / `shouldExit(index, record)` and then `record.enter(index, price, amount)` or `record.exit(index, price, amount)`. You can then use `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`, and `record.getOpenPositions()` / `getNetOpenPosition()` for analysis. To enforce minimum hold time before exits, use `OpenedPositionMinimumBarCountRule(n)` for a fixed minimum or `OpenPositionDurationRule(indicator, minBars)` for dynamic thresholds. For a full walkthrough of partial fills and criteria, see [Live Trading – LiveTradingRecord walkthrough](Live-trading.md#walkthrough-livetradingrecord-with-partial-fills-and-cost-basis).
+After you have a `TradingRecord`, render it with `ChartWorkflow` or inspect it with `StrategyExecutionLogging` from `ta4j-examples`. That is often the fastest way to catch look-ahead bias, missing warmup bars, or surprising execution timing before you trust a criterion leaderboard.
 
 ## Avoid common pitfalls
 
-- **Look-ahead bias** – Ensure your indicator windows do not peek at future bars. Ta4j indicators automatically cap their lookbacks, but custom logic must do the same.
-- **Insufficient warm-up** – Set `strategy.setUnstableBars(n)` to skip the early `n` indices when indicators have not stabilized yet (`Indicator.isStable()` helps confirm).
-- **Moving series** – When using `setMaximumBarCount`, do not reference indexes older than `series.getBeginIndex()`. Criteria referencing evicted bars will return `NaN`.
-- **Ratio criteria edge cases** – `SortinoRatioCriterion` returns `NaN` when downside deviation is zero. Guard `NaN` values before `chooseBest(...)` or top-K ranking.
-- **Transaction costs** – Always configure explicit `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) on `BarSeriesManager` or `BacktestExecutor`.
+- **Look-ahead bias** - Ensure your indicator windows and any custom execution logic never peek past the current bar.
+- **Insufficient warm-up** - Set `strategy.setUnstableBars(n)` so signals do not fire before your indicators stabilize.
+- **Moving series** - If you use `setMaximumBarCount`, do not evaluate criteria against evicted bars.
+- **Execution assumptions** - Keep your `TradeExecutionModel`, fees, and borrowing costs aligned with what you are trying to simulate.
 
-## Walk-forward optimization
+## Walk-Forward And Tuning
 
-Current ta4j walk-forward APIs center around `WalkForwardConfig` and the built-in execution methods on `BarSeriesManager` / `BacktestExecutor`:
-
-```java
-WalkForwardConfig config = WalkForwardConfig.defaultConfig(series);
-BarSeriesManager manager = new BarSeriesManager(series);
-
-StrategyWalkForwardExecutionResult wf = manager.runWalkForward(strategy, config);
-List<Num> outOfSample = wf.outOfSampleCriterionValues(new GrossReturnCriterion());
-```
+Use walk-forward execution when you want training and testing windows instead of one monolithic run:
 
 ```java
-WalkForwardConfig config = WalkForwardConfig.defaultConfig(series);
-BacktestExecutor executor = new BacktestExecutor(series);
+WalkForwardConfig config = WalkForwardConfig.builder()
+        .trainingBars(500)
+        .testingBars(100)
+        .build();
 
-BacktestExecutor.BacktestAndWalkForwardResult combined =
-        executor.executeWithWalkForward(strategy, config);
+StrategyWalkForwardExecutionResult walkForward = new BarSeriesManager(series)
+        .runWalkForward(strategy, config);
 ```
 
-This gives you reproducible fold geometry, holdout support, and one-shot comparison between plain backtest and walk-forward outcomes.
+For large-scale performance tuning, use [`BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java), which sits on top of `BacktestExecutor`.
 
-See the maintained [`ta4jexamples.walkforward.WalkForward`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/walkforward/WalkForward.java) example for a complete setup.
+## Compatibility Note
 
-## Debugging slow or flaky backtests
-
-- Instrument rule evaluation with `ta4jexamples.logging.StrategyExecutionLogging` to print which rules triggered on each bar.
-- Use `BacktestRuntimeReport` to spot strategies that repeatedly trigger cost-heavy operations.
-- When bar data is inconsistent (missing timestamps, zero volumes), preprocess it with the JSON/CSV datasources or aggregator builders described in [Bar Series & Bars](Bar-series-and-bars.md).
-
-## Performance Tuning with BacktestPerformanceTuningHarness
-
-When running large-scale backtests with thousands of strategies, performance optimization becomes critical. The `BacktestPerformanceTuningHarness` class provides a comprehensive tool for systematically testing different parameter combinations and identifying optimal settings for your hardware and dataset.
-
-### Overview
-
-The harness helps tune several interrelated performance parameters:
-
-- **Strategy count**: How many strategies to evaluate in a single backtest run
-- **Bar series size**: Number of bars to use (last-N bars from the dataset)
-- **Maximum bar count hint**: Indicator cache window size via `BarSeries.getMaximumBarCount()` to control memory usage
-- **JVM heap size**: Optional: fork child JVMs with different heap sizes to find optimal memory configuration
-
-The harness uses a non-trivial NetMomentumIndicator-based strategy workload to make garbage collection (GC) and caching behavior visible. It automatically detects non-linear performance degradation (e.g., excessive GC overhead or slowdown beyond expected scaling) and recommends optimal parameter combinations.
-
-### Execution Modes
-
-The harness supports three execution modes:
-
-1. **Run Once (default)**: Execute a single backtest with specified parameters. Useful for quick performance checks or production runs with known optimal settings.
-2. **Tune In-Process**: Run multiple backtests with varying parameters to find optimal settings. Tests different strategy counts, bar counts, and maximum bar count hints systematically.
-3. **Tune Across Heaps**: Fork child JVMs with different heap sizes to test memory configuration impact. Each child JVM runs a full tuning cycle.
-
-## Maintainer rationale notes
-
-- Updated walk-forward examples to current APIs based on `org.ta4j.core.walkforward.WalkForwardConfig`, `BarSeriesManager#runWalkForward(...)`, and `BacktestExecutor#executeWithWalkForward(...)` (`0.22.4`; refreshed in commit `279d9056`).
-- Kept existing backtest ranking/runtime sections intact because `BacktestExecutor#executeWithRuntimeReport(...)` and `BacktestExecutionResult#getTopStrategies(...)` remain the supported batch workflow (`@since 0.19` in `BacktestExecutor`).
-
-### Quick Start
-
-#### Example 1: Quick Performance Check
-
-Run a single backtest with 1000 strategies on the last 2000 bars:
-
-```bash
-java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
-  --strategies 1000 \
-  --barCount 2000 \
-  --executionMode full
-```
-
-#### Example 2: Find Optimal Settings
-
-Run a tuning cycle to find optimal parameters for your hardware:
-
-```bash
-java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
-  --tune \
-  --tuneStrategyStart 2000 \
-  --tuneStrategyStep 2000 \
-  --tuneStrategyMax 20000 \
-  --tuneBarCounts 500,1000,2000,full \
-  --tuneMaxBarCountHints 0,512,1024,2048 \
-  --executionMode topK \
-  --topK 20
-```
-
-This will test strategy counts from 2000 to 20000 (in steps of 2000) across different bar counts and maximum bar count hints, then recommend the best configuration.
-
-#### Example 3: Test Different Heap Sizes
-
-Test performance across different JVM heap sizes:
-
-```bash
-java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
-  --tuneHeaps 4g,8g,16g \
-  --tuneStrategyStart 5000 \
-  --tuneStrategyMax 50000 \
-  --executionMode topK \
-  --topK 20
-```
-
-This forks separate JVMs with 4GB, 8GB, and 16GB heaps, running a full tuning cycle in each.
-
-#### Example 4: Production Run with Optimal Settings
-
-After tuning, use the recommended settings for a production run:
-
-```bash
-java -cp ta4j-examples.jar ta4jexamples.backtesting.BacktestPerformanceTuningHarness \
-  --strategies 10000 \
-  --barCount 2000 \
-  --maxBarCountHint 1024 \
-  --executionMode topK \
-  --topK 20 \
-  --progress
-```
-
-The `--progress` flag enables progress logging with memory usage information.
-
-### Performance Tuning Workflow
-
-A typical performance tuning workflow follows these steps:
-
-1. **Initial Exploration**: Start with a broad tuning run to identify promising regions:
-   ```bash
-   --tune --tuneStrategyStart 1000 --tuneStrategyStep 5000 --tuneStrategyMax 50000
-   ```
-
-2. **Fine-Tuning**: Narrow down to the promising region with smaller steps:
-   ```bash
-   --tune --tuneStrategyStart 8000 --tuneStrategyStep 1000 --tuneStrategyMax 15000
-   ```
-
-3. **Memory Optimization**: Test different maximum bar count hints to balance memory and performance:
-   ```bash
-   --tune --tuneMaxBarCountHints 0,256,512,1024,2048,4096
-   ```
-
-4. **Heap Size Testing**: If memory is a concern, test different heap sizes:
-   ```bash
-   --tuneHeaps 2g,4g,8g,16g
-   ```
-
-### Understanding Results
-
-The harness outputs several types of information:
-
-- **HARNESS_RESULT**: JSON-formatted results for each run, including runtime statistics, GC overhead, heap usage, and work units (strategies × bars)
-- **RECOMMENDED_SETTINGS**: Optimal parameter combinations based on linear performance behavior (before non-linear degradation is detected)
-- **Non-linear detection**: When performance degrades beyond expected scaling (excessive GC overhead or slowdown ratio), the harness flags this and recommends staying below that threshold
-
-Example output:
-
-```
-HARNESS_RESULT: {"executionMode":"KEEP_TOP_K","strategyCount":10000,"barCount":2000,...}
-RECOMMENDED_SETTINGS: BEST {strategies=10000, bars=2000, maxBarCountHint=1024, ...}
-RECOMMENDED_SETTINGS: BEST CLI --dataset Coinbase-ETH-USD-PT1D-20160517_20251028.json --strategies 10000 --barCount 2000 --maxBarCountHint 1024 --executionMode topK --topK 20
-```
-
-### Strategy Generation
-
-The harness generates strategies using a grid search over NetMomentumIndicator parameters:
-
-- RSI bar count: 7 to 49 (increment: 7)
-- Momentum timeframe: 100 to 400 (increment: 100)
-- Oversold threshold: -2000 to 0 (increment: 250)
-- Overbought threshold: 0 to 1500 (increment: 250)
-- Decay factor: 0.9 to 1.0 (increment: 0.02)
-
-This generates approximately 10,416 unique strategy combinations. When fewer strategies are requested, the harness samples from this grid. When more are requested, it repeats the grid with different repetition markers.
-
-### Command-Line Options
-
-Run with `--help` to see all available options. Key options include:
-
-| Option | Description | Default |
-| --- | --- | --- |
-| `--dataset <file>` | OHLC data file | `Coinbase-ETH-USD-PT1D-20160517_20251028.json` |
-| `--strategies <N>` | Number of strategies to test | Full grid (~10,416) |
-| `--barCount <N>` | Number of bars to use | Full series |
-| `--maxBarCountHint <N>` | Maximum bar count hint for indicator caching | 0 (disabled) |
-| `--executionMode full\|topK` | Execution mode | `full` |
-| `--topK <N>` | Number of top strategies to keep (topK mode) | 20 |
-| `--tune` | Enable tuning mode | false |
-| `--tuneStrategyStart <N>` | Starting strategy count for tuning | 2000 |
-| `--tuneStrategyStep <N>` | Strategy count increment for tuning | 2000 |
-| `--tuneStrategyMax <N>` | Maximum strategy count for tuning | 20000 |
-| `--tuneBarCounts <csv>` | Bar counts to test | `500,1000,2000,full` |
-| `--tuneMaxBarCountHints <csv>` | Maximum bar count hints to test | `0,512,1024,2048` |
-| `--nonlinearGcOverhead <0..1>` | GC overhead threshold for non-linear detection | 0.25 |
-| `--nonlinearSlowdownRatio <x>` | Slowdown ratio threshold for non-linear detection | 1.25 |
-| `--tuneHeaps <csv>` | Heap sizes to test (e.g., `4g,8g,16g`) | None |
-| `--progress` | Enable progress logging with memory information | false |
-| `--gcBetweenRuns` | Force GC between tuning runs | true |
-
-### Performance Notes
-
-- The default parameter ranges generate ~10,000+ strategies. `BacktestExecutor` automatically uses batch processing for large strategy counts (>1000) to prevent memory exhaustion.
-- If execution is too slow, consider:
-  1. Increasing increment values to reduce grid density
-  2. Narrowing MIN/MAX ranges based on preliminary results
-  3. Using coarser increments for initial exploration, then fine-tuning promising regions
-- The harness performs a warm-up run before tuning to stabilize JVM performance metrics.
-- Non-linear behavior detection helps identify when increasing strategy count or bar count causes performance to degrade beyond expected linear scaling.
-
-### See Also
-
-- [`BacktestPerformanceTuningHarness` source code](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java) - Full implementation with comprehensive Javadoc
-- [`BacktestExecutor`](https://github.com/ta4j/ta4j/blob/master/ta4j-core/src/main/java/org/ta4j/core/backtest/BacktestExecutor.java) - The underlying executor used for backtesting
-- `BarSeries.getMaximumBarCount()` - Maximum bar count hint for indicator caching
+`LiveTradingRecord` and `ExecutionFill` still exist for 0.22.x migration paths, but they are no longer the preferred way to explain or build new backtests.

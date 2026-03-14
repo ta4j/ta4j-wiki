@@ -1,67 +1,22 @@
 Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangelog.com/en/1.0.0/) from version 0.9 onwards.
 
 
-## 0.22.2 (Unreleased)
+## 0.22.4 (Unreleased)
+
+### Breaking
+- **Trade and record handling now has one obvious happy path**: New code should build fill-aware trades with `Trade.fromFill(...)` or `Trade.fromFills(...)`, then pass them to `TradingRecord#operate(...)`. `LiveTradingRecord`, `ExecutionFill`, and related live-only wrappers remain available as deprecated migration shims, but they are no longer the primary API surface.
+- **Open-position APIs now use `Position` end to end**: `TradingRecord#getOpenPositions()` returns open `Position` snapshots, `getCurrentPosition()` is the canonical net-open view, and `getNetOpenPosition()` is now just a compatibility alias.
+- **Lot bookkeeping is internal again**: `PositionBook` and `PositionLot` moved back behind `BaseTradingRecord`, while FIFO, LIFO, average-cost, and specific-id matching keep the same external behavior.
 
 ### Added
-- **Concurrent real-time bar series pipeline**: Introduced core support for concurrent, streaming bar ingestion with a dedicated series (`ConcurrentBarSeries`/`ConcurrentBarSeriesBuilder`), realtime bar model (`RealtimeBar`/`BaseRealtimeBar`), and streaming-bar ingestion helpers to enable candle reconciliation and side/liquidity-aware trade aggregation.
-  - `ConcurrentBarSeries`: Thread-safe `BarSeries` implementation using `ReentrantReadWriteLock` for concurrent read/write access. Essential for live trading systems where one thread ingests market data while another evaluates strategies.
-  - `ConcurrentBarSeriesBuilder`: Fluent builder API for creating `ConcurrentBarSeries` instances with configurable `NumFactory`, `BarBuilderFactory`, and maximum bar count.
-  - `RealtimeBar` interface and `BaseRealtimeBar` implementation: Extends `Bar` with optional side (buy/sell) and liquidity (maker/taker) breakdowns for market microstructure analysis.
-  - Streaming trade ingestion: `ingestTrade()` methods automatically aggregate trades into bars using the configured `BarBuilder`, handling bar rollovers seamlessly.
-  - Streaming bar ingestion: `ingestStreamingBar()` and `ingestStreamingBars()` methods for ingesting pre-aggregated bars (e.g., from WebSocket candle feeds) with automatic handling of appends, replacements, and historical corrections.
-  - `StreamingBarIngestResult`: Record describing how a streaming bar was applied (APPENDED, REPLACED_LAST, or REPLACED_HISTORICAL) and the affected index.
-- **Enhanced bar builders with trade ingestion**: All bar builder implementations (`TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, `AmountBarBuilder`) now support trade-level ingestion with optional side and liquidity classification.
-- **Remainder carry-over policy**: Added `RemainderCarryOverPolicy` for volume/amount bars to control whether side/liquidity splits follow threshold rollovers, providing fine-grained control over bar aggregation behavior.
-- **Bar replacement API**: Added `replaceBar()` method to `BaseBarSeries` for bar replacement without changing indices, useful for data reconciliation workflows.
-- **Live trading record**: Introduced `LiveTradingRecord` for live and backtest scenarios that need partial fills, multi-lot positions, and explicit cost/unrealized PnL tracking.
-  - `LiveTradingRecord`: Thread-safe trading record supporting partial fills, configurable execution matching (FIFO), and integration with `TransactionCostModel`/`HoldingCostModel`. Use when you need per-lot cost basis, unrealized PnL, or position book visibility.
-  - `Position`, `OpenPosition`, `Trade`, `PositionBook`, `PositionLot`: Refined model for positions and trades; `Trade` represents a single execution (fill), while `Position` aggregates trades and supports multiple lots.
-  - `ExecutionFill`, `ExecutionMatchPolicy`, `ExecutionSide`, `LiveTradingRecordSnapshot`: Execution semantics and snapshots for auditing and recovery.
-- **Analysis and performance indicators**: New and updated analysis types that work with both `BaseTradingRecord` and `LiveTradingRecord`:
-  - `PerformanceIndicator` interface: Shared contract for equity/return indicators (e.g. `CashFlow`, `Returns`, `CumulativePnL`) with configurable open-position handling.
-  - `OpenPositionHandling`, `EquityCurveMode`: Control how open positions contribute to equity curve and criteria (e.g. mark-to-market vs cost basis).
-  - `ExcessReturns`: Compounded excess returns between sampled index pairs for risk-adjusted analysis.
-  - `AnalysisUtils`, `AnalysisPositionSupport`: Helpers for position-aware analysis.
-- **Criteria**: New and reorganized criteria for drawdown, fees, and open-position metrics:
-  - `SharpeRatioCriterion`: Risk-adjusted return (excess return over volatility).
-  - `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion`: Cost basis and unrealized PnL for open positions (for use with `LiveTradingRecord`).
-  - `TotalFeesCriterion` (in `criteria/commissions/`): Total fees across positions.
-  - Drawdown criteria in `criteria/drawdown/`: `MaximumDrawdownCriterion`, `MaximumAbsoluteDrawdownCriterion`, `MaximumDrawdownBarLengthCriterion`, `MonteCarloMaximumDrawdownCriterion`, `ReturnOverMaxDrawdownCriterion`.
-- **Rule**: `InSlopeRule`: Rule satisfied when the slope of one indicator is within a boundary of another (e.g. trend strength or momentum alignment).
-- **Indicators**: The full indicator set is documented in [Indicators Inventory](Indicators-Inventory.md). This branch aligns core indicators including ATR, ConnorsRSI, RecentFractalSwing high/low, Elliott channel/confluence, CombineIndicator, DifferencePercentageIndicator, and Keltner channel indicators; see [Technical Indicators](Technical-indicators.md) for categories and usage.
-- **Elliott Wave analysis improvements** (feature/ew-analysis-improvements):
-  - **ElliottWaveAnalyzer**: Orchestrates one-shot Elliott Wave analysis with pluggable swing detectors and confidence profiles; returns `ElliottAnalysisResult` (raw/processed swings, scenarios, confidence breakdowns, channel, trend bias).
-  - **ElliottTrendBiasIndicator** and **ElliottTrendBias**: Aggregate directional bias across Elliott wave scenarios (bullish/bearish/neutral score, consensus flag).
-  - **Pluggable swing detection** (`org.ta4j.core.indicators.elliott.swing`): `SwingDetector` interface; `FractalSwingDetector`, `ZigZagSwingDetector`, `AdaptiveZigZagSwingDetector`, `CompositeSwingDetector`; `SwingDetectors` factory; `SwingFilter`, `MinMagnitudeSwingFilter`; `SwingPivot`, `SwingPivotType`, `SwingDetectorResult`, `AdaptiveZigZagConfig`.
-  - **Confidence model refactor** (`org.ta4j.core.indicators.elliott.confidence`): `ConfidenceModel`, `ConfidenceProfile`, `ConfidenceProfiles`, `ElliottConfidenceBreakdown`; factor types: `ChannelAdherenceFactor`, `FibonacciRelationshipFactor`, `ScenarioTypeConfidenceModel`, `StructureCompletenessFactor`, `TimeAlternationFactor`, `TimeProportionFactor`.
-  - **Data types**: `ElliottAnalysisResult`, `ElliottScenarioSet` (ranked scenarios), `PatternSet` (enabled scenario types).
-  - **Examples**: `ElliottWaveAdaptiveSwingAnalysis`, `ElliottWavePatternProfileDemo`, `ElliottWaveTrendBacktest`, `HighRewardElliottWaveBacktest`, and **HighRewardElliottWaveStrategy** (named strategy for high-confidence impulse scenarios with trend/momentum confirmation). See [Elliott Wave Indicators](Elliott-Wave-Indicators.md) and [Usage Examples](Usage-examples.md#elliott-wave-analysis).
+- **Weighted strategy ranking across execution results**: `TradingStatementExecutionResult` and `BacktestExecutionResult#getTopStrategiesWeighted(...)` now support normalized weighted ranking across multiple criteria. Jump in with `WeightedCriterion.of(...)`, `RankingProfile.weighted(...)`, or the direct weighted overloads, and see `SimpleMovingAverageRangeBacktest` for a concrete "net profit + RoMaD" shortlist.
 
 ### Changed
-- **TimeBarBuilder**: Enhanced with trade ingestion logic, time alignment validation, and `RealtimeBar` support. Now omits empty bars for missing periods, improving gap handling behavior.
-- **BaseBarSeriesBuilder**: Deprecated `setConstrained()` in favor of deriving constrained mode from max-bar-count configuration. When `withMaxBarCount()` is called, the series automatically becomes unconstrained to allow removals.
-- **BarBuilder implementations**: All bar builders (`TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, `AmountBarBuilder`) now support trade ingestion with side/liquidity metadata and can emit `RealtimeBar` instances when side or liquidity data is available.
-- **Factory selection from bars**: Derive the `NumFactory` from the first available bar price instead of assuming a specific price is always present, improving robustness when working with incomplete data.
-- **Release workflow improvements**: Major enhancements to the automated release process for better maintainability and reliability:
-  - **Two-phase release workflows**: Split release process into `prepare-release.yml` and `publish-release.yml` to separate release preparation from tagging and deployment, ensuring release commits land on `master` before tags are created.
-  - **Release workflow branching**: Auto-merge the release PR by default, with optional direct push to the default branch when `RELEASE_DIRECT_PUSH=true` for emergency scenarios.
-  - **Release health workflow**: Added scheduled checks for tag reachability, snapshot version drift, stale release PRs, and missing release notes, with summaries posted to GitHub Discussions.
-  - **Release workflow notifications**: Post GitHub Discussion updates for release-scheduler and release runs with decision summaries, run mode, and timestamps for better auditability.
-  - **Release scheduler dispatch**: Route automated releases through `prepare-release.yml` and include the binary change count in the AI prompt, with deterministic no-release outputs for zero binary changes.
-  - **Release automation tokens**: Use `GH_TA4J_REPO_TOKEN` for release push operations when available, with fail-fast preflight checks for write permissions.
-  - **Release scheduler enablement**: Gate scheduled runs on `RELEASE_SCHEDULER_ENABLED` (defaults to disabled when unset) for controlled automation.
-  - **Release process documentation**: Overhauled `RELEASE_PROCESS.md` with clearer steps, rationale, and example scenarios for maintainers.
-- **Agent workflow**: Allow skipping the full build when the only changes are within `.github/workflows/`, `CHANGELOG.md`, or documentation-only files (e.g., `*.md`, `docs/`), improving CI efficiency.
-- **Workflow lint hook**: Added a repository `pre-push` hook to run `actionlint` on workflow changes, catching workflow expression and shell syntax errors early (see CONTRIBUTING.md for details).
-
-### Fixed
-- **TimeBarBuilder gap handling**: Preserve in-progress bars when trade ingestion skips across multiple time periods, preventing data loss during gaps.
-- **BarSeries MaxBarCount**: Fixed sub-series creation to preserve the original series max bars, instead of resetting it to default `Integer.MAX_VALUE`.
-- **ConcurrentBarSeries serialization**: Enhanced serialization to make bar builder factories serializable, reinitialize locks after deserialization, and ensure sub-series preserve max bar count and builder factory configuration.
-- **Release workflow notifications**: Fixed discussion comment posting in workflows (unescaped template literals).
-- **Release scheduler**: Gate release decisions on binary-impacting changes (`pom.xml` or `src/main/**`) so workflow-only updates no longer trigger releases.
-- **Release version validation**: Fixed version comparison in `prepare-release.yml` to properly validate that `nextVersion` is greater than `releaseVersion` using semantic version sorting, preventing invalid version sequences.
+- **Partial-fill recording is smoother in live-style flows**: Stream one fill at a time with `TradingRecord.operate(fill)` when fills arrive incrementally, or keep using `Trade.fromFills(...)` plus `operate(...)` when you already have the whole batch for one logical order. `TradeFillRecordingExample` shows both styles and how `FIFO`, `LIFO`, `AVG_COST`, and `SPECIFIC_ID` change partial-exit matching.
+- **Bring your own trading record in backtests**: `BarSeriesManager` can now run directly against a caller-provided `TradingRecord` and can also be configured with a default `TradingRecordFactory`, so you can keep the normal `run(...)` flow while still injecting custom record behavior.
+- **`BacktestExecutor` now matches the same execution wiring**: You can construct it directly with a `TradeExecutionModel` for common slippage/stop-limit cases, or hand it a preconfigured `BarSeriesManager` so custom record-factory behavior flows through batch, top-K, and walk-forward runs.
+- **Execution-model examples are much easier to copy**: `TradingRecordParityBacktest` now walks through next-open, current-close, and slippage fills side by side, then verifies the same behavior with default, provided, and factory-configured `BaseTradingRecord` runs.
+- **Stop-limit behavior is closer to real execution**: `StopLimitExecutionModel` now expires stale pending orders before accepting new signals, keeps rejection metadata for the unfilled remainder, and handles partial expiry fills more cleanly on unified `BaseTradingRecord` flows.
 
 ## 0.21.0 (Released November 29, 2025)
 
