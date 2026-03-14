@@ -25,13 +25,15 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 
 - **[SimpleMovingAverageBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageBacktest.java)** - Baseline crossover backtest
 - **[MovingAverageCrossOverRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/MovingAverageCrossOverRangeBacktest.java)** - Parameter sweeps across SMA windows
+- **[SimpleMovingAverageRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageRangeBacktest.java)** - Parameter sweep that ranks the shortlist with weighted normalized criteria (`WeightedCriterion.of(...)`, `getTopStrategiesWeighted(...)`)
 - **[CoinbaseBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/CoinbaseBacktest.java)** - Backtest against Coinbase-sourced data
 - **[YahooFinanceBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/YahooFinanceBacktest.java)** - Backtest against Yahoo Finance data
-- **[TradingRecordParityBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradingRecordParityBacktest.java)** - Shows that default `BarSeriesManager` runs, provided `BaseTradingRecord` runs, and factory-configured runs all converge on the same unified record behavior
+- **[TradingRecordParityBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradingRecordParityBacktest.java)** - Compare next-open, current-close, and slippage execution models side by side, then show the same fills across default, provided, and factory-configured `BaseTradingRecord` runs
+- **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Stream fills with `TradingRecord.operate(fill)`, group batches with `Trade.fromFills(...)`, and compare `FIFO`, `LIFO`, `AVG_COST`, and `SPECIFIC_ID` exit matching
 - **[BacktestPerformanceTuningHarness](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java)** - Tune large batch runs built on `BacktestExecutor`
 - **[StrategyExecutionLogging](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/logging/StrategyExecutionLogging.java)** - Trace rule evaluation and execution decisions line by line
 
-If you are learning the new unified execution model, start with `Quickstart`, then `TradingRecordParityBacktest`.
+If you are learning the current execution stack, start with `Quickstart`, then `TradingRecordParityBacktest`, then `TradeFillRecordingExample`, and finally `SimpleMovingAverageRangeBacktest`.
 
 ## Bots & live trading
 
@@ -42,11 +44,9 @@ If you are learning the new unified execution model, start with `Quickstart`, th
 For new live code:
 
 - Use `BaseTradingRecord` as the record type
-- Update the record from confirmed fills with `recordFill(BaseTrade)` or `recordExecutionFill(new TradeFill(...))`
+- Update the record from confirmed fills with `TradingRecord.operate(fill)` or batch one logical order with `Trade.fromFills(...)`
 - Use `ConcurrentBarSeries` when feed ingestion and strategy evaluation happen on different threads
 - Treat `LiveTradingRecord` and `ExecutionFill` as compatibility-only APIs during migration
-
-CF follows this same pattern downstream: strategy engines emit intents, fill listeners and paper ledgers mutate `BaseTradingRecord`, and performance reporting runs directly on ta4j criteria.
 
 ## More examples
 

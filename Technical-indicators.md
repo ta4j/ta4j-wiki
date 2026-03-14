@@ -10,7 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum (new), MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Volume spikes. | Indicators package |
-| Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
+| Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
 | Bill Williams Toolkit | Alligator (jaw/teeth/lips), FractalHigh/Low, Gator Oscillator, Market Facilitation Index. | [Bill Williams Indicators](Bill-Williams-Indicators.md) |
 | Candle/Pattern | Hammer, Shooting Star, Three White Soldiers, DownTrend/UpTrend. | `indicators.candles` |
 | Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator` transforms. | `indicators.renko` |
@@ -41,6 +41,7 @@ ta4j now includes a complete workflow for value, location, and phase analysis:
 - Value: `VWAPIndicator`, `AnchoredVWAPIndicator`, `VWAPBandIndicator`, `VWAPZScoreIndicator`
 - Location: `PriceClusterSupportIndicator`, `PriceClusterResistanceIndicator`, `BounceCountSupportIndicator`, `BounceCountResistanceIndicator`, `VolumeProfileKDEIndicator`
 - Phase: `WyckoffPhaseIndicator`
+- Cycle context: `WyckoffCycleFacade`, `WyckoffCycleAnalysis`, `WyckoffEventDetector`
 
 Use the dedicated guide for implementation templates and tuning advice:
 

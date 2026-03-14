@@ -1,6 +1,6 @@
 # Backtesting
 
-Backtesting estimates how a strategy would have behaved over historical data. In ta4j's current 0.22.x line, the default building blocks are:
+Backtesting estimates how a strategy would have behaved over historical data. In current ta4j, the default building blocks are:
 
 - `BarSeriesManager` for one strategy over one series
 - `BacktestExecutor` for many strategies over one series
@@ -10,13 +10,13 @@ Backtesting estimates how a strategy would have behaved over historical data. In
 
 | Need | Recommended path | Notes |
 | --- | --- | --- |
-| One strategy, minimal setup | `BarSeriesManager.run(strategy)` | Creates a fresh `BaseTradingRecord` through the manager's configured factory |
+| One strategy, minimal setup | `BarSeriesManager.run(strategy)` | Creates a fresh `BaseTradingRecord` through the manager's configured factory and defaults to next-open execution |
 | One strategy with a preconfigured record | `BarSeriesManager.run(strategy, tradingRecord, ...)` | Reuse a record instance or keep a custom `ExecutionMatchPolicy` / fee setup |
-| Many strategies or tuning | `BacktestExecutor` | Collects `TradingStatement`s plus `BacktestRuntimeReport` telemetry |
+| Many strategies or tuning | `BacktestExecutor` | Builds on the same next-open default, collects `TradingStatement`s, and adds telemetry plus ranking helpers |
 | Event-driven or fill-driven replay | Manual loop + `BaseTradingRecord` | Use when fills do not happen exactly where the default execution model would place them |
 | Older live-oriented adapters | `LiveTradingRecord` | Compatibility facade only; not recommended for new backtests |
 
-The main thing to keep in mind is that you do **not** need a manual loop just to get open-lot views, recorded fees, or open-position criteria. `BaseTradingRecord` already exposes `getOpenPositions()`, `getNetOpenPosition()`, and recorded-fee-aware metrics.
+The main thing to keep in mind is that you do **not** need a manual loop just to get open-lot views, recorded fees, or open-position criteria. `BaseTradingRecord` already exposes `getCurrentPosition()`, `getOpenPositions()`, and recorded-fee-aware metrics.
 
 ## Default Path: `BarSeriesManager`
 
@@ -44,7 +44,7 @@ BarSeriesManager manager = new BarSeriesManager(
 
 ## Provide Your Own `BaseTradingRecord`
 
-As of 0.22.4, `BarSeriesManager` can run directly against a record you provide. That is the right choice when you want to preserve a specific match policy, start and end window, or recorded-fee behavior.
+Recent ta4j versions let `BarSeriesManager` run directly against a record you provide. That is the right choice when you want to preserve a specific match policy, start and end window, or recorded-fee behavior.
 
 ```java
 BaseTradingRecord record = new BaseTradingRecord(
@@ -79,18 +79,27 @@ BacktestExecutionResult result = executor.executeWithRuntimeReport(
         Trade.TradeType.BUY,
         ProgressCompletion.logging("wiki.backtesting"));
 
-List<TradingStatement> topRuns = result.getTopStrategies(
+List<TradingStatement> topRuns = result.getTopStrategiesWeighted(
         20,
-        new ReturnOverMaxDrawdownCriterion(),
-        new NetReturnCriterion());
+        WeightedCriterion.of(new NetProfitCriterion(), 7.0),
+        WeightedCriterion.of(new ReturnOverMaxDrawdownCriterion(), 3.0));
 ```
 
 Use `BacktestExecutor` when you care about:
 
 - strategy leaderboards
+- normalized weighted ranking such as "net profit + RoMaD"
 - progress callbacks
 - runtime telemetry (`BacktestRuntimeReport`)
 - batched execution for large candidate sets
+
+You have the same execution-wiring flexibility here as in `BarSeriesManager`: use `new BacktestExecutor(series, tradeExecutionModel)` for the common slippage/stop-limit case, or pass a preconfigured `BarSeriesManager` when you want a custom `TradingRecordFactory` or other manager-level defaults to flow through every batch run.
+
+Choose the ranking style that matches the job:
+
+- `getTopStrategies(...)` for simple lexicographic ranking by one or more criteria
+- `getTopStrategiesWeighted(...)` plus `WeightedCriterion.of(...)` when you want normalized weighted scoring across different metrics
+- `executeAndKeepTopK(...)` when the candidate set is so large that you want streaming top-K retention with one primary criterion instead of materializing every statement
 
 ## When A Manual Loop Is The Right Tool
 
@@ -122,7 +131,7 @@ Fill-driven replay:
 ```java
 BaseTradingRecord record = new BaseTradingRecord(strategy.getStartingType());
 
-record.recordExecutionFill(new TradeFill(
+record.operate(new TradeFill(
         42,
         Instant.parse("2025-01-02T10:15:00Z"),
         series.numFactory().numOf("42100"),
@@ -133,7 +142,7 @@ record.recordExecutionFill(new TradeFill(
         "decision-42"));
 ```
 
-That same fill-driven pattern is what you will use in live or paper-trading systems when the broker is the source of truth for fills.
+That same fill-driven pattern is what you will use in live or paper-trading systems when the broker is the source of truth for fills. If you already have the full partial-fill batch for one logical order, keep it together with `Trade.fromFills(...)` and pass the grouped trade into `operate(...)` instead.
 
 ## Criteria, Statements, And Charts
 
@@ -159,7 +168,20 @@ Useful companions:
 - `RMultipleCriterion`
 - `MonteCarloMaximumDrawdownCriterion`
 
+For open exposure, prefer `getCurrentPosition()` as the canonical net-open view and `getOpenPositions()` when you want one snapshot per remaining lot. `getNetOpenPosition()` remains available only as a compatibility alias.
+
 For visualization, combine the resulting record with the `ChartWorkflow` APIs documented in [Charting](Charting.md).
+
+## Visualize and sanity-check your results
+
+After you have a `TradingRecord`, render it with `ChartWorkflow` or inspect it with `StrategyExecutionLogging` from `ta4j-examples`. That is often the fastest way to catch look-ahead bias, missing warmup bars, or surprising execution timing before you trust a criterion leaderboard.
+
+## Avoid common pitfalls
+
+- **Look-ahead bias** - Ensure your indicator windows and any custom execution logic never peek past the current bar.
+- **Insufficient warm-up** - Set `strategy.setUnstableBars(n)` so signals do not fire before your indicators stabilize.
+- **Moving series** - If you use `setMaximumBarCount`, do not evaluate criteria against evicted bars.
+- **Execution assumptions** - Keep your `TradeExecutionModel`, fees, and borrowing costs aligned with what you are trying to simulate.
 
 ## Walk-Forward And Tuning
 
@@ -176,17 +198,6 @@ StrategyWalkForwardExecutionResult walkForward = new BarSeriesManager(series)
 ```
 
 For large-scale performance tuning, use [`BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java), which sits on top of `BacktestExecutor`.
-
-## CF Alignment
-
-CF consumes the same backtest primitives described here:
-
-- strategy engines hold a ta4j `Strategy`
-- state is carried in `BaseTradingRecord`
-- snapshots are persisted through `LiveTradingRecordSnapshotCodec`
-- performance is measured through ta4j criteria in `TradingRecordPerformanceSnapshotProvider`
-
-That means the backtest and live documentation now describe the same record type and the same metrics surface.
 
 ## Compatibility Note
 

@@ -1,5 +1,17 @@
 # Fixed Window Rule Design - Product Requirements Document
 
+## Status Snapshot (2026-03-06)
+
+Status: partially superseded by shipped functionality.
+
+What landed:
+- `AndWithThresholdRule` exists in `org.ta4j.core.rules` (commit `5e5acc99`) and provides fixed-window AND semantics for exactly two rules within one threshold window.
+
+What remains open from this PRD:
+- Per-rule threshold configuration.
+- Multi-rule list/builder API beyond two rules.
+- Explicit migration/positioning relative to existing `ChainRule` semantics.
+
 ## Overview
 
 This document consolidates the design proposals for implementing fixed-window rule functionality in ta4j. The goal is to provide a rule that checks if multiple rules were ALL satisfied within a fixed time window from when an initial trigger rule was satisfied, as opposed to the existing `ChainRule` which uses resetting thresholds.
@@ -557,3 +569,8 @@ public class ChainRule extends AbstractRule {
   - `pseudocode-AndWithThresholdRule-Enhanced.md`
   - `pseudocode-FixedWindowChainRule.md`
   - `pseudocode-comparison.md`
+
+## Rationale Notes (2026-03-06)
+
+- Verified shipped baseline in `org.ta4j.core.rules.AndWithThresholdRule` (commit `5e5acc99`): two-rule fixed-window check with a single threshold.
+- This PRD still captures additional, not-yet-shipped scope (multi-rule/per-rule-threshold design).

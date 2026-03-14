@@ -1,6 +1,6 @@
 # Live Trading
 
-ta4j gives you the strategy, series, and trading-record primitives for live systems. It does **not** replace your exchange adapter, order router, risk controls, or persistence layer, but it now lets you use the same `BaseTradingRecord` class across historical, paper, and live execution paths.
+ta4j gives you the strategy, series, and trading-record primitives for live systems. It does **not** replace your exchange adapter, order router, risk controls, or persistence layer, but it does let you use the same `BaseTradingRecord` class across historical, paper, and live execution paths.
 
 ## What ta4j Handles, And What You Still Own
 
@@ -24,8 +24,8 @@ You still own:
 | --- | --- | --- |
 | Single-threaded bot with synchronous fills | `BaseBarSeries` + `BaseTradingRecord` | Simple loop, minimal moving pieces |
 | Multi-threaded ingestion and evaluation | `ConcurrentBarSeries` + `BaseTradingRecord` | Thread-safe reads and writes |
-| Partial fills, fee capture, broker order IDs, or reconciliation | `BaseTradingRecord.recordFill(...)` or `recordExecutionFill(new TradeFill(...))` | Preserve the exact fill stream |
-| Legacy adapter that still exposes `LiveTradingRecord` or `ExecutionFill` | Keep temporarily, migrate when practical | Compatibility only in 0.22.x |
+| Partial fills, fee capture, broker order IDs, or reconciliation | `TradingRecord.operate(fill)` or `operate(Trade.fromFills(...))` | Preserve the exact fill stream without a separate live-only API |
+| Legacy adapter that still exposes `LiveTradingRecord` or `ExecutionFill` | Keep temporarily, migrate when practical | Compatibility only while moving toward `TradeFill` / `Trade` |
 
 For new code, start with `BaseTradingRecord`. `LiveTradingRecord` is a deprecated compatibility facade over the same underlying model.
 
@@ -64,7 +64,7 @@ BaseTradingRecord tradingRecord = new BaseTradingRecord(
         null);
 ```
 
-Use `RecordedTradeCostModel` when your broker already tells you the actual fee for each fill. That is the pattern the CF live stack uses.
+Use `RecordedTradeCostModel` when your broker already tells you the actual fee for each fill. That keeps analytics aligned with what actually happened at the broker.
 
 ## Feed The Series
 
@@ -118,25 +118,7 @@ if (strategy.shouldEnter(endIndex, tradingRecord)) {
 
 <a id="walkthrough-livetradingrecord-with-partial-fills-and-cost-basis"></a>
 
-When the broker confirms a fill, write that fill into the record. You can use either a prebuilt `BaseTrade` or the lighter `TradeFill` DTO.
-
-Using `BaseTrade`:
-
-```java
-BaseTrade fill = new BaseTrade(
-        0,
-        Instant.now(),
-        series.numFactory().numOf("42100"),
-        series.numFactory().numOf("0.50"),
-        series.numFactory().numOf("4.21"),
-        ExecutionSide.BUY,
-        "order-123",
-        "decision-123");
-
-tradingRecord.recordFill(fill);
-```
-
-Using `TradeFill`:
+When the broker confirms a fill, write that fill into the record:
 
 ```java
 TradeFill fill = new TradeFill(
@@ -149,7 +131,14 @@ TradeFill fill = new TradeFill(
         "order-123",
         "decision-123");
 
-tradingRecord.recordExecutionFill(fill);
+tradingRecord.operate(fill);
+```
+
+If the exchange already gives you the complete batch for one logical order, keep the fills together:
+
+```java
+List<TradeFill> exchangeFills = List.of(fillOne, fillTwo);
+tradingRecord.operate(Trade.fromFills(Trade.TradeType.BUY, exchangeFills));
 ```
 
 Both paths preserve metadata such as side, fee, order ID, and correlation ID.
@@ -159,30 +148,20 @@ Both paths preserve metadata such as side, fee, order ID, and correlation ID.
 Because `BaseTradingRecord` now exposes lot-aware views directly, you can inspect open positions and live PnL without switching to a separate record type:
 
 ```java
-OpenPosition netOpenPosition = tradingRecord.getNetOpenPosition();
-List<OpenPosition> lots = tradingRecord.getOpenPositions();
+Position currentPosition = tradingRecord.getCurrentPosition();
+List<Position> lots = tradingRecord.getOpenPositions();
 
 AnalysisCriterion costBasis = new OpenPositionCostBasisCriterion();
 AnalysisCriterion unrealizedPnL = new OpenPositionUnrealizedProfitCriterion();
 
+System.out.println("Net open amount: " + currentPosition.amount());
 System.out.println("Cost basis: " + costBasis.calculate(series, tradingRecord));
 System.out.println("Unrealized PnL: " + unrealizedPnL.calculate(series, tradingRecord));
 ```
 
+`getCurrentPosition()` is the canonical net-open view. `getNetOpenPosition()` still exists in 0.22.x as a compatibility alias, but new code should not need it.
+
 This is also the surface used by downstream systems for dashboards and snapshots.
-
-## CF Integration Pattern
-
-CF is a concrete example of how the unified ta4j live stack fits into a fuller trading system:
-
-- `Ta4jStrategyEngine` and `MarketInputStrategyEngine` evaluate ta4j strategies on closed bars.
-- `MarketInputsFactory` publishes `ConcurrentBarSeries` instances and a shared `TradingRecord` into the input graph.
-- `LiveTradingRecordFillListener` writes confirmed execution fills into `BaseTradingRecord`.
-- `PaperTradingLedger` uses the same `BaseTradingRecord` update path during paper execution.
-- `LiveTradingRecordSnapshotCodec` persists snapshots but restores unified `BaseTradingRecord` instances.
-- `TradingRecordPerformanceSnapshotProvider` calculates ta4j criteria such as total fees and open-position cost basis from that same record.
-
-The important practical result is that CF no longer needs one record type for backtests and another for live execution. The same ta4j trading record now survives through decisioning, fills, persistence, and analytics.
 
 ## Persistence And Recovery
 
@@ -195,8 +174,15 @@ At minimum, persist:
 
 If you rebuild the series on startup, make sure its bar index alignment still matches the recovered fills before you resume strategy evaluation.
 
+## Operational Notes
+
+- Persist fills or snapshots before acknowledging them as durable in your own pipeline.
+- Keep monitoring around bar ingestion gaps, order rejections, and repeated stale signals; those are usually integration bugs, not ta4j math bugs.
+- If feed ingestion and strategy evaluation happen on different threads, prefer `ConcurrentBarSeries` and keep `TradingRecord` mutation on the execution-confirmation path only.
+
 ## Examples And References
 
+- **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Runnable walkthrough of streamed fills, grouped batches, and partial-exit matching policies
 - **[TradingBotOnMovingBarSeries](Usage-examples.md#bots--live-trading)** - Minimal manual bot loop
 - **[Backtesting](Backtesting.md)** - Historical and replay-style execution patterns
 - **[Bar Series & Bars](Bar-series-and-bars.md)** - Bar ingestion and aggregation details
@@ -204,4 +190,4 @@ If you rebuild the series on startup, make sure its bar index alignment still ma
 
 ## Compatibility Note
 
-`LiveTradingRecord` and `ExecutionFill` are still present in 0.22.x so older integrations can migrate without a sudden compile break, but the recommended path for new live code is `BaseTradingRecord` plus `TradeFill` or `BaseTrade`.
+`LiveTradingRecord` and `ExecutionFill` are still present in 0.22.x so older integrations can migrate without a sudden compile break, but the recommended path for new live code is `BaseTradingRecord` plus `TradeFill` or grouped `Trade.fromFills(...)`.

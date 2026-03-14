@@ -274,7 +274,7 @@ chartWorkflow.builder()
 
 #### Save Chart
 
-Save the chart as a PNG image:
+Save the chart as a JPEG image:
 
 ```java
 Optional<Path> savedPath = chartWorkflow.builder()
@@ -354,7 +354,7 @@ Here's a complete example from the ADX strategy:
 
 ```java
 // Build and run strategy
-BarSeries series = CsvTradesLoader.loadBitstampSeries();
+BarSeries series = BitStampCsvTradesFileBarSeriesDataSource.loadBitstampSeries();
 Strategy strategy = ADXStrategy.buildStrategy(series);
 BarSeriesManager seriesManager = new BarSeriesManager(series);
 TradingRecord tradingRecord = seriesManager.run(strategy);
@@ -531,7 +531,7 @@ chartWorkflow.displayChart(chart);
 Create a comprehensive performance dashboard with multiple analysis criteria:
 
 ```java
-BarSeries series = CsvTradesLoader.loadBitstampSeries();
+BarSeries series = BitStampCsvTradesFileBarSeriesDataSource.loadBitstampSeries();
 Strategy strategy = MyStrategy.buildStrategy(series);
 BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);
@@ -631,6 +631,8 @@ workflow.displayChart(chart, "My Custom Chart");
 
 See the following example classes in the ta4j-examples project for more charting patterns:
 
+- [ChartWorkflow](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/charting/workflow/ChartWorkflow.java) - Facade API for rendering, displaying, and saving charts
+- [IndicatorsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java) - Minimal indicator overlay flow using the builder API
 - [ADXStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/ADXStrategy.java) - Complex chart with overlays and sub-charts
 - [NetMomentumStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java) - Analysis criterion overlay example
 - [BuyAndSellSignalsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/BuyAndSellSignalsToChart.java) - Simple trading record visualization
@@ -658,3 +660,8 @@ For large datasets:
 - Consider using sub-charts instead of many overlays
 - Reduce the number of indicators displayed simultaneously
 - Use the `save()` method instead of `display()` for batch processing
+
+### Sync rationale (2026-03-06)
+
+- Revalidated `ChartWorkflow`, `ChartBuilder`, and `TimeAxisMode.BAR_INDEX` guidance against current examples/charting sources.
+- Confirmed non-trading-gap handling references align with commits `66fceb95` (introducing `TimeAxisMode`) and `b9c04cf3` (BAR_INDEX behavior hardening/tests).

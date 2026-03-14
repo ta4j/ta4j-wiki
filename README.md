@@ -4,11 +4,11 @@
 
 Welcome to the ta4j wiki, the working handbook for building indicators, strategies, backtests, and live trading systems on the JVM.
 
-The current 0.22.x line uses one unified trading stack:
+The current wiki reflects ta4j's newer unified trading stack:
 
 - `BaseTradingRecord` is the default trading-record implementation for both backtests and live or paper-trading flows.
 - `BarSeriesManager` is the default single-strategy backtest driver and now accepts either its own default record factory or a record you provide.
-- `BacktestExecutor` builds on `BarSeriesManager` when you want to rank or tune many strategies at once.
+- `BacktestExecutor` builds on `BarSeriesManager` when you want to rank or tune many strategies at once, including weighted normalized leaderboards.
 - Manual loops are still the right tool when orders and fills are decoupled, partial fills matter, or your broker confirms executions asynchronously.
 - `LiveTradingRecord` and `ExecutionFill` remain available only as 0.22.x compatibility facades. New code should use `BaseTradingRecord` and `TradeFill`.
 
@@ -36,19 +36,9 @@ The current 0.22.x line uses one unified trading stack:
 | --- | --- | --- |
 | One strategy over historical data | `BarSeriesManager` + default `BaseTradingRecord` | Fastest path with minimal wiring |
 | Backtest with a preconfigured record | `BarSeriesManager.run(strategy, providedRecord, ...)` | Keep a specific `ExecutionMatchPolicy`, fee model, or reusable record instance |
-| Large batch runs or tuning | `BacktestExecutor` | Runtime telemetry, ranked statements, progress callbacks, and batching |
-| Live or paper trading with confirmed fills | Manual loop + `BaseTradingRecord` | Signals and broker fills stay separate; partial fills and metadata are preserved |
+| Large batch runs or tuning | `BacktestExecutor` | Runtime telemetry, weighted leaderboards, progress callbacks, and batching |
+| Live or paper trading with confirmed fills | Manual loop + `BaseTradingRecord` | Signals and broker fills stay separate; stream `TradingRecord.operate(fill)` or batch `Trade.fromFills(...)` |
 | Maintaining older live adapters | `LiveTradingRecord` / `ExecutionFill` | Compatibility only while migrating toward `BaseTradingRecord` / `TradeFill` |
-
-## Downstream Example: CF
-
-The unified stack is already consumed by a production-style downstream system:
-
-- CF strategy engines (`Ta4jStrategyEngine`, `MarketInputStrategyEngine`) evaluate ta4j `Strategy` objects on bar close.
-- CF keeps market state in `ConcurrentBarSeries` and trading state in `BaseTradingRecord`.
-- CF updates the record from confirmed fills through `LiveTradingRecordFillListener` and `PaperTradingLedger`, not from signal generation itself.
-- CF persists snapshots through `LiveTradingRecordSnapshotCodec`, which now restores unified `BaseTradingRecord` instances.
-- CF analytics reuse ta4j criteria directly through `TradingRecordPerformanceSnapshotProvider`, including `OpenPositionCostBasisCriterion`.
 
 ## Project & Community
 

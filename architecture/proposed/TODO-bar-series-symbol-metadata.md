@@ -1,5 +1,14 @@
 # BarSeries Base/Quote Symbol Metadata (TODO PRD)
 
+## Status Snapshot (2026-03-06)
+
+Status: still proposed, not implemented in ta4j-core.
+
+What exists today:
+- `BarSeries` does not expose `getBaseSymbol()` / `getQuoteSymbol()`.
+- `BaseBarSeriesBuilder` and `ConcurrentBarSeriesBuilder` do not provide `withBaseSymbol(...)` / `withQuoteSymbol(...)`.
+- Instrument identity currently appears on `Trade` (`org.ta4j.core.Trade#getInstrument`), not series-level metadata.
+
 ## Overview
 
 Add optional symbol metadata to `BarSeries` so a series can explicitly carry its
@@ -125,3 +134,7 @@ fields so round-trips preserve them.
 - Should `withSymbolPair(base, quote)` be included for convenience?
 - Should symbols be normalized (e.g., uppercase) or stored verbatim?
 
+## Rationale Notes (2026-03-06)
+
+- Verified current API surface in `org.ta4j.core.BarSeries`, `BaseBarSeries`, `BaseBarSeriesBuilder`, `ConcurrentBarSeries`, and `ConcurrentBarSeriesBuilder`.
+- Verified recent core branch history through commit `6cce8809` with no landed series-level symbol metadata.

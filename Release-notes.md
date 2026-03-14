@@ -1,29 +1,22 @@
 Changelog for `ta4j`, roughly following [keepachangelog.com](http://keepachangelog.com/en/1.0.0/) from version 0.9 onwards.
 
 
-## Unreleased
+## 0.22.4 (Unreleased)
 
 ### Breaking
-- **One fill model for new code**: New integrations should use `TradeFill` directly with `BaseTradingRecord.recordExecutionFill(...)` instead of building fresh work on top of `ExecutionFill`.
-- **One record stack for live and backtests**: New flows should target `BaseTrade` and `BaseTradingRecord`, which now cover the shared execution model across historical, replay, paper, and live adapters.
-- **Open-position analytics live on the record itself**: Build against `TradingRecord#getOpenPositions()` and `getNetOpenPosition()` rather than a separate position-ledger abstraction.
-
-Migration note: on the 0.22.x branch you may still encounter `LiveTradingRecord` as a deprecated compatibility facade while downstream projects migrate. New code should already target `BaseTradingRecord`, `BaseTrade`, and `TradeFill`.
+- **Trade and record handling now has one obvious happy path**: New code should build fill-aware trades with `Trade.fromFill(...)` or `Trade.fromFills(...)`, then pass them to `TradingRecord#operate(...)`. `LiveTradingRecord`, `ExecutionFill`, and related live-only wrappers remain available as deprecated migration shims, but they are no longer the primary API surface.
+- **Open-position APIs now use `Position` end to end**: `TradingRecord#getOpenPositions()` returns open `Position` snapshots, `getCurrentPosition()` is the canonical net-open view, and `getNetOpenPosition()` is now just a compatibility alias.
+- **Lot bookkeeping is internal again**: `PositionBook` and `PositionLot` moved back behind `BaseTradingRecord`, while FIFO, LIFO, average-cost, and specific-id matching keep the same external behavior.
 
 ### Added
-- **Window-aware criterion evaluation API**: `AnalysisCriterion` can now evaluate exact bar/date/lookback slices with `AnalysisWindow` / `AnalysisContext`.
-- **Reusable walk-forward framework with backtest integration**: `WalkForwardEngine`, `WalkForwardTuner`, `WalkForwardObjective`, and `StrategyWalkForwardExecutor` make backtest-only, walk-forward-only, and combined evaluation share one workflow.
-- **Weighted strategy ranking across execution results**: `TradingStatementExecutionResult` and `BacktestExecutionResult#getTopStrategiesWeighted(...)` now support normalized weighted ranking.
-- **Live Elliott preset demo support**: `ElliottWavePresetDemo` now accepts live tickers such as `BTC-USD`, `ETH-USD`, and `SPY`.
+- **Weighted strategy ranking across execution results**: `TradingStatementExecutionResult` and `BacktestExecutionResult#getTopStrategiesWeighted(...)` now support normalized weighted ranking across multiple criteria. Jump in with `WeightedCriterion.of(...)`, `RankingProfile.weighted(...)`, or the direct weighted overloads, and see `SimpleMovingAverageRangeBacktest` for a concrete "net profit + RoMaD" shortlist.
 
 ### Changed
-- **Bring your own trading record in backtests**: `BarSeriesManager` now runs directly against caller-provided `TradingRecord` instances (`run(strategy, tradingRecord[, amount, start, end])`) and can also be configured with a default `TradingRecordFactory`. That makes parity-style runs with `BaseTradingRecord` straightforward.
-- **Trade-first fill flow across live and backtests**: `BaseTradingRecord#recordFill(...)` and `PositionBook#recordEntry(...)` / `recordExit(...)` now work directly with `Trade`, so adapters can stay implementation-agnostic while preserving live/backtest parity.
-- **Stop-limit/live parity hardening**: `StopLimitExecutionModel` now expires stale pending orders before new signals, commits partial expiry fills onto unified `BaseTradingRecord` exit flows, and preserves rejection metadata for any unfilled remainder.
-
-### Fixed
-- **Net momentum late-start stability**: `NetMomentumIndicator` now handles late first-lookups and constrained rolling windows without stack blowups, so replay/backtest flows can jump straight to later bars safely.
-- **Walk-forward fold metadata stability**: Fold-value reporting is now deterministic for downstream comparisons that depend on fold order.
+- **Partial-fill recording is smoother in live-style flows**: Stream one fill at a time with `TradingRecord.operate(fill)` when fills arrive incrementally, or keep using `Trade.fromFills(...)` plus `operate(...)` when you already have the whole batch for one logical order. `TradeFillRecordingExample` shows both styles and how `FIFO`, `LIFO`, `AVG_COST`, and `SPECIFIC_ID` change partial-exit matching.
+- **Bring your own trading record in backtests**: `BarSeriesManager` can now run directly against a caller-provided `TradingRecord` and can also be configured with a default `TradingRecordFactory`, so you can keep the normal `run(...)` flow while still injecting custom record behavior.
+- **`BacktestExecutor` now matches the same execution wiring**: You can construct it directly with a `TradeExecutionModel` for common slippage/stop-limit cases, or hand it a preconfigured `BarSeriesManager` so custom record-factory behavior flows through batch, top-K, and walk-forward runs.
+- **Execution-model examples are much easier to copy**: `TradingRecordParityBacktest` now walks through next-open, current-close, and slippage fills side by side, then verifies the same behavior with default, provided, and factory-configured `BaseTradingRecord` runs.
+- **Stop-limit behavior is closer to real execution**: `StopLimitExecutionModel` now expires stale pending orders before accepting new signals, keeps rejection metadata for the unfilled remainder, and handles partial expiry fills more cleanly on unified `BaseTradingRecord` flows.
 
 ## 0.21.0 (Released November 29, 2025)
 

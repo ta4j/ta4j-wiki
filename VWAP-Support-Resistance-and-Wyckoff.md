@@ -97,7 +97,9 @@ Num rangeHigh = wyckoffFacade.tradingRangeHigh(series.getEndIndex());
 ```
 
 Recent code drift note:
-- In ta4j `0.22.3` (commit `39194498`), this stack was expanded materially (VWAP derivatives, support/resistance families, and Wyckoff cycle facade/analysis). The map above reflects the current class surface in `org.ta4j.core.indicators.volume`, `supportresistance`, and `wyckoff`.
+- Commit `39194498` (2026-02-21, #1444) introduced the modern stack here: VWAP derivatives (`VWAPBandIndicator`, `VWAPDeviationIndicator`, `VWAPStandardDeviationIndicator`, `VWAPZScoreIndicator`), Wyckoff cycle analysis/facade, and KDE/cluster/bounce support-resistance indicators.
+- Commit `b814436b` (#1360) is the trendline baseline for this page (`AbstractTrendLineIndicator`, `TrendLineSupportIndicator`, `TrendLineResistanceIndicator`).
+- Commit `279d9056` (2026-03-05, #1448) extended Wyckoff analysis workflow integration (`WyckoffCycleAnalysisRunner`) while preserving the core `WyckoffPhaseIndicator`/`WyckoffCycleFacade` usage shown below.
 
 ## Backtesting how-to
 

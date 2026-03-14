@@ -1,6 +1,6 @@
 # Trading Strategies
 
-A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and run the same logic across quick backtests, batch optimization, and live or paper adapters built on the unified `BaseTradingRecord` stack.
+A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and take advantage of features introduced in 0.19 through 0.22.3.
 
 ## Trading rules
 
@@ -27,8 +27,8 @@ Key points:
 - `Rule#isSatisfied(int index)` is stateless. Pass the `TradingRecord` when the rule depends on open positions or previous signals.
 - Composition is fluent (`and`, `or`, `xor`, `negation`), making it easy to express “enter when fast SMA crosses slow SMA **and** RSI recovers above 40.”
 - For windowed boolean composition across the last `N` bars, use `AndWithThresholdRule` / `OrWithThresholdRule` (introduced in 0.22.2). These are explicit rule classes rather than overloads on `and(...)` / `or(...)`.
-- Since 0.19 you can use `VoteRule` to require agreement between multiple rules (e.g., "at least 3 out of 5 oscillators must agree"). In 0.21.0, return representation is unified across all criteria for consistent formatting.
-- `InSlopeRule` is satisfied when the slope of one indicator is within a boundary of another (e.g. for trend strength or momentum alignment).
+- Since 0.19 you can use `VoteRule` to require agreement between multiple rules (e.g., "at least 3 out of 5 oscillators must agree"). Return-format control is handled in criteria via `ReturnRepresentation` / `ReturnRepresentationPolicy` (`@since 0.20`).
+- `InSlopeRule` is satisfied when the indicator slope (current minus prior value over `nthPrevious` bars) is within configured min/max slope bounds.
 
 ## Compose richer logic
 
@@ -47,8 +47,8 @@ Rule timedMomentumExit = new OrWithThresholdRule(
         new InSlopeRule(netMomentum, 3, series.numFactory().numOf("-10")),
         3);
 Rule exitRule = timedMomentumExit
-        .or(new StopLossRule(closePrice, numOf(3)))
-        .or(new StopGainRule(closePrice, numOf(5)));
+        .or(new StopLossRule(closePrice, series.numFactory().numOf(3)))
+        .or(new StopGainRule(closePrice, series.numFactory().numOf(5)));
 ```
 
 This configuration fires an **entry** when at least two of the following hold on the same bar:
@@ -58,7 +58,7 @@ This configuration fires an **entry** when at least two of the following hold on
 
 On top of that vote, the Net Momentum indicator must be above zero so entries only happen when breadth is positive.
 The **exit** side first evaluates `timedMomentumExit`, an `OrWithThresholdRule` over a 3-bar window: it triggers when either MACD crosses below its signal line or the Net Momentum slope rule (`InSlopeRule(netMomentum, 3, -10)`) is satisfied within that same 3-bar window.
-That combined rule is then OR'd with `StopLossRule(closePrice, numOf(3))` and `StopGainRule(closePrice, numOf(5))` as hard risk/profit boundaries.
+That combined rule is then OR'd with `StopLossRule(closePrice, series.numFactory().numOf(3))` and `StopGainRule(closePrice, series.numFactory().numOf(5))` as hard risk/profit boundaries.
 
 For the full stop toolkit (fixed %, fixed amount, trailing, volatility, ATR) and live-trading usage guidance, see [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md).
 
@@ -98,6 +98,25 @@ Rule entryRule = macdCrossUp.and(bullishState);
 ```
 
 This pattern keeps entries aligned with MACD-V regime and avoids triggering signal-line crosses during weak/ranging states.
+For a maintained end-to-end example, see `ta4jexamples.strategies.MACDVMomentumStateStrategy`.
+
+## Time-based filters
+
+When strategy behavior should depend on trading session structure, combine rule logic with time-based gates:
+
+```java
+DateTimeIndicator time = new DateTimeIndicator(series, Bar::getEndTime);
+Rule sessionWindow = new TimeRangeRule(
+        List.of(new TimeRangeRule.TimeRange(LocalTime.of(9, 30), LocalTime.of(16, 0))),
+        time);
+Rule entryHour = new HourOfDayRule(time, 10);
+Rule entryMinute = new MinuteOfHourRule(time, 5);
+
+Rule entryRule = signalRule.and(sessionWindow).and(entryHour).and(entryMinute);
+```
+
+These rules evaluate against UTC hour/minute values from the indicator's `Instant`. For exchange-local sessions, normalize timestamps to your target timezone before they reach the series, or provide a transformed time indicator that emits the desired session-aligned `Instant`.
+These rules are useful for opening-range breakouts, avoiding illiquid session tails, and separating overnight vs regular-hours behavior.
 
 ## Build a strategy
 
@@ -116,34 +135,6 @@ TradingRecord record = manager.run(strategy);
 `BarSeriesManager` wires your entry/exit rules to simulated orders, applies the configured cost/execution models, and returns a `TradingRecord` containing every trade so you can plug it into analysis criteria or the charting workflow documented in [Backtesting](Backtesting.md#visualize-your-backtests).
 
 The same strategy class can be used in [backtests](Backtesting.md) and [live trading](Live-trading.md) contexts.
-
-## Execution models and trading records
-
-The strategy itself stays the same; the execution path around it is what changes.
-
-```java
-BaseTradingRecord providedRecord = new BaseTradingRecord(
-        strategy.getStartingType(),
-        ExecutionMatchPolicy.FIFO,
-        new ZeroCostModel(),
-        new ZeroCostModel(),
-        series.getBeginIndex(),
-        series.getEndIndex());
-
-BarSeriesManager manager = new BarSeriesManager(
-        series,
-        new ZeroCostModel(),
-        new ZeroCostModel(),
-        new TradeOnCurrentCloseModel());
-
-manager.run(strategy, providedRecord, series.numFactory().one(), series.getBeginIndex(), series.getEndIndex());
-```
-
-- Use the default `BarSeriesManager` setup when next-bar-open fills match your strategy assumptions.
-- Switch to `TradeOnCurrentCloseModel` when you want closed-bar live bots and backtests to line up more closely.
-- Reach for `SlippageExecutionModel` or `StopLimitExecutionModel` when you need explicit execution realism instead of idealized fills.
-- Provide your own `BaseTradingRecord` when you want one record model across replays, walk-forward runs, live fills, and downstream persistence.
-- In live or paper trading, the strategy should still evaluate `shouldEnter(...)` / `shouldExit(...)` against the current record, but the record itself should only be updated from confirmed fills.
 
 ## Parameterizing and Named strategies
 
@@ -212,9 +203,8 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 
 ## Execution context tips
 
-- **Backtesting** – Inject custom `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) or a custom `TradeExecutionModel` into `BarSeriesManager` to simulate commissions, slippage, close-bar fills, or stop-limit behavior accurately.
-- **Parity replays** – Use `BarSeriesManager.run(strategy, providedRecord, ...)` or `TradingRecordParityBacktest` when you want the exact same `BaseTradingRecord` configuration used across test and live-facing code.
-- **Live trading** – Feed real-time bars into a moving `BarSeries`, call `strategy.shouldEnter(index, record)` / `shouldExit(...)`, send the order to your broker, then append the confirmed `TradeFill` or `Trade` back onto `BaseTradingRecord` (see [Live Trading](Live-trading.md)).
+- **Backtesting** – Inject custom `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) or a custom `TradeExecutionModel` into `BarSeriesManager` to simulate slippage and commissions accurately.
+- **Live trading** – Feed real-time bars into a moving `BarSeries`, call `strategy.shouldEnter(index, record)` / `shouldExit(...)`, then execute trades through your broker (see [Live Trading](Live-trading.md)).
 - **Diagnostics** – Mirror the approach in `ta4jexamples.logging.StrategyExecutionLogging` to trace which rule triggered each trade.
 
 ## Best practices
@@ -224,3 +214,9 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 - Encapsulate repeated rule snippets into helper methods or custom `Rule` implementations—readability matters when strategies grow complex.
 - Keep entry/exit rules symmetric when building short strategies; for short-only operation, construct your strategy with starting type `TradeType.SELL`.
 - When mixing timeframes or data sources, align them into the same `BarSeries` (or into multiple series managed by your own coordinator) to avoid implicit look-ahead.
+
+## Maintainer rationale notes
+
+- Clarified `InSlopeRule` semantics to match the actual implementation in `org.ta4j.core.rules.InSlopeRule` (difference vs. `PreviousValueIndicator`, optional min/max bounds).
+- Kept threshold/voting composition guidance aligned with `AndWithThresholdRule` / `OrWithThresholdRule` (commit `5e5acc99`) and `VoteRule` (commit `cca0bb02`).
+- Kept MACD-V regime examples aligned with `MomentumStateRule` and `MACDVMomentumStateStrategy` updates (commit `161f7656`).

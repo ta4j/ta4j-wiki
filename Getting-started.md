@@ -16,13 +16,23 @@ If technical analysis is new to you, skim [Wikipedia](https://en.wikipedia.org/w
 
 ## Install ta4j
 
-If you are following the current branch directly, install the snapshot locally first:
+Start with the latest released line unless you specifically want unreleased `master` APIs:
+
+```xml
+<dependency>
+  <groupId>org.ta4j</groupId>
+  <artifactId>ta4j-core</artifactId>
+  <version>0.22.3</version>
+</dependency>
+```
+
+If you want the newest development APIs described on this wiki, install the current snapshot locally first:
 
 ```bash
 mvn -pl ta4j-core -am install
 ```
 
-Then depend on `ta4j-core`:
+Then depend on `ta4j-core` with the snapshot version:
 
 ```xml
 <dependency>
@@ -36,7 +46,7 @@ Then depend on `ta4j-core`:
 implementation "org.ta4j:ta4j-core:0.22.4-SNAPSHOT"
 ```
 
-If you are consuming a released build from Maven Central instead, replace the version with the newest released `0.22.x` number from [Release Notes](Release-notes.md).
+If you are consuming a released build from Maven Central instead, replace the version with the newest released `0.22.x` number from [Release Notes](Release-notes.md). If a page mentions an API you do not see in `0.22.3` yet, that is your cue to build the current snapshot locally.
 
 Prefer to inspect the code? Clone [ta4j](https://github.com/ta4j/ta4j) and import the root Maven project. `ta4j-core` and `ta4j-examples` live side by side.
 
@@ -112,7 +122,7 @@ strategy.setUnstableBars(30);
 | --- | --- | --- |
 | One strategy over historical bars | `BarSeriesManager` | Minimal wiring and deterministic trade-execution models |
 | Same backtest loop, but with a preconfigured record | `BarSeriesManager.run(strategy, tradingRecord, ...)` | Keep a specific `ExecutionMatchPolicy`, fee model, or record instance |
-| Large parameter sweeps | `BacktestExecutor` | Batched execution, runtime reports, ranked statements |
+| Large parameter sweeps | `BacktestExecutor` | Batched execution, runtime reports, and weighted ranked statements |
 | Live or paper execution with confirmed fills | Manual loop + `BaseTradingRecord` | Signal generation stays separate from fill recording |
 
 For the common case, start with `BarSeriesManager`:
@@ -160,6 +170,8 @@ Useful follow-up metrics:
 - `MaxConsecutiveLossCriterion`
 - `BaseTradingStatement`
 
+If you want to compare many parameter combinations instead of one strategy, move next to `BacktestExecutor` and `SimpleMovingAverageRangeBacktest`, which show the current weighted shortlist flow with `WeightedCriterion.of(...)` and `getTopStrategiesWeighted(...)`.
+
 ### 5. Live-style loop with confirmed fills
 
 When your orders are filled asynchronously, do not mutate the record at signal time. Emit the order intent first, then update the record from the confirmed fill:
@@ -184,10 +196,10 @@ TradeFill fill = new TradeFill(
         "order-123",
         "decision-123");
 
-liveRecord.recordExecutionFill(fill);
+liveRecord.operate(fill);
 ```
 
-That is the same pattern used by downstream systems such as CF: ta4j strategies decide, brokers execute, then `BaseTradingRecord` is updated from confirmed fills.
+If your exchange hands you the full partial-fill batch for one logical order, group it with `Trade.fromFills(...)` and pass that through `operate(...)` instead. Either way, the pattern is the same: ta4j strategies decide, brokers execute, then `BaseTradingRecord` is updated from confirmed fills.
 
 ## Next Steps
 
