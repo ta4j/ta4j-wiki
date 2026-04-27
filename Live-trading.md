@@ -190,4 +190,8 @@ If you rebuild the series on startup, make sure its bar index alignment still ma
 
 ## Compatibility Note
 
-`LiveTradingRecord` and `ExecutionFill` are still present in 0.22.x so older integrations can migrate without a sudden compile break, but the recommended path for new live code is `BaseTradingRecord` plus `TradeFill` or grouped `Trade.fromFills(...)`.
+`LiveTradingRecord` and `ExecutionFill` are deprecated compatibility APIs in 0.22.x so older integrations can migrate without a sudden compile break. The recommended path for new live code is `BaseTradingRecord` plus `TradeFill` or grouped `Trade.fromFills(...)`; both preserve recorded fees through `RecordedTradeCostModel`.
+
+## Rationale Notes (2026-04-27)
+
+- Rechecked this page against the trade API tightening in commit `49f3f5f8`: `TradeFill` is the current fill contract, `LiveTradingRecord` and `ExecutionFill` are deprecated compatibility surfaces, and `BaseTradingRecord` owns open-position views and fill-aware `operate(...)` paths.

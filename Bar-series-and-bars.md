@@ -34,7 +34,7 @@ series.addBar(series.barBuilder()
 
 Options to consider:
 
-- **Builders** – `TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, and the new `AmountBarBuilder` aggregate trades into bars by elapsed time, tick count, volume, or quote currency size respectively.
+- **Builders** – `TimeBarBuilder`, `TickBarBuilder`, `VolumeBarBuilder`, and `AmountBarBuilder` aggregate trades into bars by elapsed time, tick count, volume, or quote currency size respectively. Their factories can also build `BaseRealtimeBar` instances when you enable the `realtimeBars` constructor flag.
 - **Begin vs. end timestamps** – Since 0.18 you can build bars anchored on begin time (`timePeriod` + `beginTime`) or end time. Use whichever matches your data source.
 - **Split series** – `series.getSubSeries(start, end)` is the standard way to create train/test or walk-forward slices. The resulting series inherits the source max-bar-count setting.
 - **Data Sources** – The `ta4j-examples` module includes ready-made data sources for loading historical data from APIs (Yahoo Finance, Coinbase) and files (CSV, JSON). See [Data Sources](Data-Sources.md) for comprehensive documentation.
@@ -56,7 +56,11 @@ Common choices:
 - `VolumeBarAggregator` for volume-threshold bars.
 - `RenkoBarAggregator` for brick-based trend views.
 
-Note: range/volume/Renko aggregators assume contiguous, ordered source bars.
+Notes:
+
+- Range, volume, and Renko aggregators require source bars to be ordered, contiguous, and evenly spaced.
+- Range and volume aggregators emit only completed threshold bars by default; use the `onlyFinalBars=false` constructor when you also want the trailing partial bar.
+- Renko aggregation uses close-price movement and may emit multiple bricks from one source bar. The first brick emitted from a source bar carries the pending accumulated volume/amount/trade count; additional bricks from the same source bar carry zero volume/amount/trades.
 
 ## Working with live data
 
@@ -103,7 +107,7 @@ Since 0.22.2, `ConcurrentBarSeries` provides thread-safe access for scenarios wh
 ConcurrentBarSeries concurrentSeries = new ConcurrentBarSeriesBuilder()
         .withName("btc_usd_concurrent")
         .withNumFactory(DecimalNumFactory.getInstance())
-        .withBarBuilderFactory(new TimeBarBuilderFactory(true))
+        .withBarBuilderFactory(new TimeBarBuilderFactory(Duration.ofMinutes(1), true))
         .withMaxBarCount(1000)  // Optional: limit memory usage
         .build();
 ```
@@ -113,7 +117,7 @@ ConcurrentBarSeries concurrentSeries = new ConcurrentBarSeriesBuilder()
 The recommended approach for real-time data feeds is to use `ingestTrade()` methods, which let the configured `BarBuilder` handle bar rollovers automatically:
 
 ```java
-// Configure the trade builder before ingestion (required)
+// If the TimeBarBuilderFactory did not set a default period, configure it once:
 concurrentSeries.tradeBarBuilder().timePeriod(Duration.ofMinutes(1));
 
 // Simple trade ingestion (no side/liquidity data)
@@ -163,6 +167,8 @@ The method automatically handles:
 - **APPENDED**: New bar added to the end
 - **REPLACED_LAST**: Latest bar replaced (for corrections)
 - **REPLACED_HISTORICAL**: Historical bar replaced (for reconciliation)
+
+For exchange snapshots that arrive newest-first or contain more than one candle, use `ingestStreamingBars(Collection<Bar>)`. It ignores null payloads, sorts the remaining bars by end time, and returns the per-bar actions in ascending end-time order.
 
 ### RealtimeBar for side/liquidity analytics
 
@@ -242,6 +248,11 @@ Transient locks are reinitialized on deserialization, and the trade bar builder 
 - Added aggregator guidance because ta4j now includes `RangeBarAggregator`, `VolumeBarAggregator`, and `RenkoBarAggregator` (`org.ta4j.core.aggregator.*`), introduced in commit `3d6ca7b7`.
 - Clarified sub-series behavior to match `BaseBarSeries#getSubSeries(...)` and `ConcurrentBarSeries#getSubSeries(...)`, which carry forward max-bar-count behavior.
 - Clarified concurrency wording to match `ConcurrentBarSeries#getBarData()` (immutable snapshot return) and lock usage (`ReentrantReadWriteLock` in `ConcurrentBarSeries`), added in commit `dc759436`.
+
+## Rationale Notes (2026-04-27)
+
+- Refined threshold aggregation guidance against `RangeBarAggregator`, `VolumeBarAggregator`, `RenkoBarAggregator`, and `BarAggregator#requireEvenIntervals(...)`, including the 0.22.4 since-tag alignment from commit `f8966331`.
+- Updated concurrent ingestion examples for `TimeBarBuilderFactory(Duration, boolean)` and `ConcurrentBarSeries#ingestStreamingBars(...)`, from the live series work in commit `dc759436`.
 
 ### When to use ConcurrentBarSeries
 
