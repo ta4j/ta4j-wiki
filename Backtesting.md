@@ -42,6 +42,15 @@ BarSeriesManager manager = new BarSeriesManager(
         new TradeOnNextOpenModel());
 ```
 
+Current execution-model choices are:
+
+- `TradeOnNextOpenModel` - default; signal at bar `t`, fill at the next bar open when one exists.
+- `TradeOnCurrentCloseModel` - signal and fill on the current bar close.
+- `SlippageExecutionModel` - applies directional slippage to either next-open or current-close fills.
+- `StopLimitExecutionModel` - models pending stop-limit orders, partial fills, expiries, and rejected-order metadata.
+
+Execution models can do per-bar work before signals through `TradeExecutionModel.onBar(...)` and clean up at the end of the run through `onRunEnd(...)`. That matters for pending-order models such as `StopLimitExecutionModel`; immediate-fill models leave those hooks as no-ops.
+
 ## Provide Your Own `BaseTradingRecord`
 
 Recent ta4j versions let `BarSeriesManager` run directly against a record you provide. That is the right choice when you want to preserve a specific match policy, start and end window, or recorded-fee behavior.
@@ -167,8 +176,26 @@ Useful companions:
 - `PositionDurationCriterion`
 - `RMultipleCriterion`
 - `MonteCarloMaximumDrawdownCriterion`
+- `SharpeRatioCriterion`
+- `SortinoRatioCriterion`
+- `CalmarRatioCriterion`
+- `OmegaRatioCriterion`
 
 For open exposure, prefer `getCurrentPosition()` as the canonical net-open view and `getOpenPositions()` when you want one snapshot per remaining lot. `getNetOpenPosition()` remains available only as a compatibility alias.
+
+Risk-adjusted criteria can be configured for sampling frequency, annualization, equity-curve mode, and open-position handling. Use `SharpeRatioCriterion` and `SortinoRatioCriterion` when you need return distributions with risk-free-rate handling; use `CalmarRatioCriterion` when maximum drawdown is the denominator; use `OmegaRatioCriterion` when you want upside-vs-downside return mass around a configurable threshold.
+
+For recent-window reporting, use the window-aware criterion overloads instead of trimming the series yourself:
+
+```java
+Num thirtyDayDrawdown = new MaximumDrawdownCriterion().calculate(
+        series,
+        record,
+        AnalysisWindow.lookbackDuration(Duration.ofDays(30)),
+        AnalysisContext.defaults());
+```
+
+Window boundaries are resolved against the available `BarSeries`. Use the `AnalysisContext` missing-history policy when a moving series may have evicted older bars.
 
 For visualization, combine the resulting record with the `ChartWorkflow` APIs documented in [Charting](Charting.md).
 
@@ -188,17 +215,23 @@ After you have a `TradingRecord`, render it with `ChartWorkflow` or inspect it w
 Use walk-forward execution when you want training and testing windows instead of one monolithic run:
 
 ```java
-WalkForwardConfig config = WalkForwardConfig.builder()
-        .trainingBars(500)
-        .testingBars(100)
-        .build();
+WalkForwardConfig config = WalkForwardConfig.defaultConfig(series);
 
-StrategyWalkForwardExecutionResult walkForward = new BarSeriesManager(series)
-        .runWalkForward(strategy, config);
+BacktestExecutor.BacktestAndWalkForwardResult result = new BacktestExecutor(series)
+        .executeWithWalkForward(strategy, config);
+
+BacktestExecutionResult standardRun = result.backtest();
+StrategyWalkForwardExecutionResult walkForward = result.walkForward();
 ```
 
-For large-scale performance tuning, use [`BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java), which sits on top of `BacktestExecutor`.
+For fixed study geometry, construct `WalkForwardConfig` directly with your chosen train/test, purge, embargo, holdout, horizon, top-K, and seed values, then keep that configuration unchanged across candidate comparisons. For large-scale performance tuning, use [`BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java), which sits on top of `BacktestExecutor`.
 
 ## Compatibility Note
 
 `LiveTradingRecord` and `ExecutionFill` still exist for 0.22.x migration paths, but they are no longer the preferred way to explain or build new backtests.
+
+## Maintainer rationale notes
+
+- Execution-model guidance reflects `TradeExecutionModel`, `SlippageExecutionModel`, `StopLimitExecutionModel`, `BarSeriesManager`, and `BacktestExecutor` changes from commit `49f3f5f8`.
+- Criteria coverage reflects `CalmarRatioCriterion` and `OmegaRatioCriterion` from commit `b5f5d2d0`, plus the windowed `MaximumDrawdownCriterion` fix from commit `a6cf6149`.
+- Walk-forward examples now match `WalkForwardConfig.defaultConfig(...)` and `BacktestExecutor.executeWithWalkForward(...)` in the current `org.ta4j.core.backtest` and `org.ta4j.core.walkforward` APIs.
