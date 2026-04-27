@@ -33,6 +33,8 @@ The key change is simple: new code no longer needs a split "backtest record" ver
 
 - **[Getting Started](Getting-started.md)** - First strategy, first backtest, and first live-style loop
 - **[Backtesting](Backtesting.md)** - When to use `BarSeriesManager`, `BacktestExecutor`, or a manual simulation loop
+- **[Analysis Criteria and Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)** - Rolling criteria, risk-adjusted return, open exposure, and risk-unit scoring
+- **[Walk-Forward Research](Walk-Forward-Research.md)** - Strategy walk-forward runs and generic prediction research workflows
 - **[Live Trading](Live-trading.md)** - `ConcurrentBarSeries`, broker-confirmed fills, persistence, and downstream integration patterns
 - **[Usage Examples](Usage-examples.md)** - Runnable examples like `Quickstart`, `TradingRecordParityBacktest`, `TradeFillRecordingExample`, and `SimpleMovingAverageRangeBacktest`
 - **[Release Notes](Release-notes.md)** - Migration details and version history
