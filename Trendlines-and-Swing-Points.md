@@ -170,6 +170,17 @@ TrendLineResistanceIndicator tightResistance = new TrendLineResistanceIndicator(
 - **Segment metadata**: `TrendLineSegment segment = support.getCurrentSegment();` exposes anchors, slope, intercept, touch/outside counts, score, and window start/end—great for logging or overlay labels.
 - **Descriptor/JSON**: `support.toJson()` serializes parameters and the swing subtree for persistence.
 
+### Runnable analysis harness
+`ta4jexamples.analysis.TrendLineAndSwingPointAnalysis` is the companion example for this page. It performs regression-style headroom checks across bundled datasets for fractal and ZigZag swing sources, then renders a chart with support/resistance lines and swing markers.
+
+Run it from the ta4j source checkout:
+
+```bash
+mvn -pl ta4j-examples -Dexec.mainClass=ta4jexamples.analysis.TrendLineAndSwingPointAnalysis exec:java
+```
+
+Use it after changing trendline scoring, swing detection, chart overlay rendering, or default search caps. In headless environments the checks still run; chart display is skipped or saved according to the example configuration.
+
 ## Strategy patterns
 
 ```java
@@ -203,3 +214,9 @@ Strategy trendlineStrategy = new BaseStrategy("Trendline break/bounce", breakout
 - Match lookback to data retention: if you set `series.setMaximumBarCount(250)`, keep trendline `barCount <= 250` or earlier anchors will be evicted.
 - Tune tolerance to the instrument: use absolute/tick-size tolerance for low-priced or fixed-tick assets; percentage works well for equities.
 - Watch performance with dense swing series: if you detect thousands of swings, lower `maxSwingPointsForTrendline` or raise the reversal/plateau thresholds to avoid combinatorial explosions.
+- For chart overlays, `.withConnectAcrossNaN(true)` connects sparse swing markers into lines; leave it `false` when you want discrete marker points.
+
+## Rationale Notes (2026-04-27)
+
+- Added the runnable harness guidance from `ta4jexamples.analysis.TrendLineAndSwingPointAnalysis`, introduced with support/resistance coverage in commit `39194498`.
+- Rechecked current trendline metadata and search-cap wording against `AbstractTrendLineIndicator`, `TrendLineSupportIndicator`, and `TrendLineResistanceIndicator`.

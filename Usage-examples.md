@@ -13,12 +13,16 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 - **[IndicatorsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java)** - Plot price plus indicator overlays
 - **[CandlestickChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java)** - Candlestick chart overlays
 - **[Charting](Charting.md)** - Full `ChartWorkflow` guide
+- **[ElliottWaveIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveIndicatorSuiteDemo.java)** - Full Elliott Wave indicator-suite run with charts and scenario analysis
+- **[ElliottWavePresetDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWavePresetDemo.java)** - Preset Elliott Wave launcher for ossified BTC/ETH/SP500 datasets or live datasource arguments
+- **[WyckoffCycleIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/wyckoff/WyckoffCycleIndicatorSuiteDemo.java)** - Wyckoff cycle facade and one-shot analysis demo
 
 ## Strategy patterns
 
 - **[CCICorrectionStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/CCICorrectionStrategy.java)** - Baseline trend-reversion pattern
 - **[RSI2Strategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/RSI2Strategy.java)** - Classic mean-reversion example
 - **[NetMomentumStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/NetMomentumStrategy.java)** - Strategy built around Net Momentum
+- **[HighRewardElliottWaveStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/HighRewardElliottWaveStrategy.java)** - Elliott Wave strategy using scenario confidence, risk/reward, trend, and momentum gates
 - **[WalkForward](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/walkforward/WalkForward.java)** - Full walk-forward optimization loop
 
 ## Backtesting & analytics
@@ -32,8 +36,16 @@ The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src
 - **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Stream fills with `TradingRecord.operate(fill)`, group batches with `Trade.fromFills(...)`, and compare `FIFO`, `LIFO`, `AVG_COST`, and `SPECIFIC_ID` exit matching
 - **[BacktestPerformanceTuningHarness](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java)** - Tune large batch runs built on `BacktestExecutor`
 - **[StrategyExecutionLogging](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/logging/StrategyExecutionLogging.java)** - Trace rule evaluation and execution decisions line by line
+- **[ElliottWaveTrendBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/ElliottWaveTrendBacktest.java)** - Evaluate Elliott Wave trend-bias prediction accuracy across ossified datasets
+- **[HighRewardElliottWaveBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/HighRewardElliottWaveBacktest.java)** - Run several parameter profiles for the high-reward Elliott Wave strategy
 
 If you are learning the current execution stack, start with `Quickstart`, then `TradingRecordParityBacktest`, then `TradeFillRecordingExample`, and finally `SimpleMovingAverageRangeBacktest`.
+
+## Elliott Wave analysis
+
+- **[ElliottWaveAdaptiveSwingAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWaveAdaptiveSwingAnalysis.java)** - Composite fractal/adaptive-ZigZag swing detection with confidence breakdown logging
+- **[ElliottWaveMultiDegreeAnalysisDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWaveMultiDegreeAnalysisDemo.java)** - Multi-degree analysis with cross-degree scenario support
+- **[ElliottWavePatternProfileDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWavePatternProfileDemo.java)** - Compare default and pattern-aware confidence profiles
 
 ## Bots & live trading
 

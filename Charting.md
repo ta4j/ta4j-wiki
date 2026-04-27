@@ -73,6 +73,8 @@ JFreeChart chart = chartWorkflow.builder()
     .toChart();
 ```
 
+In `BAR_INDEX` mode, chart datasets still retain the original bar timestamps for tooltips and mouseover readouts.
+
 #### Indicator-Based Chart
 
 Start with an indicator as the base:
@@ -511,7 +513,7 @@ chartWorkflow.builder()
 
 6. **Use analysis criterion overlays for performance tracking**: Visualize how your strategy's performance metrics evolve over time using `AnalysisCriterionIndicator`. This is especially useful for understanding drawdown patterns and profit accumulation.
 
-7. **Leverage ChartPlan for reuse**: The `toPlan()` method returns a `ChartPlan` that can be reused or serialized:
+7. **Leverage ChartPlan for reuse**: The `toPlan()` method returns a `ChartPlan` that can be inspected, rendered later, displayed, or saved without rebuilding the fluent chain:
 
 ```java
 ChartPlan plan = chartWorkflow.builder()
@@ -519,10 +521,17 @@ ChartPlan plan = chartWorkflow.builder()
     .withTradingRecordOverlay(tradingRecord)
     .toPlan();
 
+TimeAxisMode axisMode = plan.context().timeAxisMode();
+String title = plan.metadata().title();
+
 // Later, render the same chart
 JFreeChart chart = chartWorkflow.render(plan);
 chartWorkflow.displayChart(chart);
 ```
+
+`ChartPlan#context()` exposes the immutable chart definition plus shared metadata (`domainSeries`, title, and `TimeAxisMode`). `ChartWorkflow.display(plan)` uses the plan title as the Swing window title when one is present.
+
+8. **Control NaN gaps deliberately**: Indicator overlays split at `NaN` values by default. For sparse marker indicators such as swing points, call `.withConnectAcrossNaN(true)` when you want lines connecting confirmed points, or leave it `false` for dots-only markers.
 
 ## Advanced Examples
 
@@ -665,3 +674,8 @@ For large datasets:
 
 - Revalidated `ChartWorkflow`, `ChartBuilder`, and `TimeAxisMode.BAR_INDEX` guidance against current examples/charting sources.
 - Confirmed non-trading-gap handling references align with commits `66fceb95` (introducing `TimeAxisMode`) and `b9c04cf3` (BAR_INDEX behavior hardening/tests).
+
+### Sync rationale (2026-04-27)
+
+- Updated `ChartPlan` wording against `ChartPlan` and `ChartContext` introduced in commit `00689545`; plans expose metadata/context but are not a documented serialization format.
+- Added current NaN-gap and BAR_INDEX tooltip behavior from `ChartBuilder#withConnectAcrossNaN(...)` and `TradingChartFactory` tests, including the BAR_INDEX hardening in commit `b9c04cf3`.

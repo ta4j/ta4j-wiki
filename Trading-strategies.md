@@ -1,6 +1,6 @@
 # Trading Strategies
 
-A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and take advantage of features introduced in 0.19 through 0.22.3.
+A strategy in ta4j pairs **entry** and **exit** rules to generate trades. This section explains how to model those rules, combine them into reusable strategies, and take advantage of the current 0.22.x strategy and rule APIs.
 
 ## Trading rules
 
@@ -125,6 +125,12 @@ Strategy strategy = new BaseStrategy("SMA + MACDV hybrid", entryRule, exitRule);
 strategy.setUnstableBars(30); // optional: indicators already report their own unstable window
 ```
 
+For short-first strategies, set the starting trade type on the strategy itself:
+
+```java
+Strategy shortOnly = new BaseStrategy("Short breakdown", shortEntryRule, shortExitRule, Trade.TradeType.SELL);
+```
+
 Running it is identical regardless of complexity:
 
 ```java
@@ -132,7 +138,7 @@ BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);
 ```
 
-`BarSeriesManager` wires your entry/exit rules to simulated orders, applies the configured cost/execution models, and returns a `TradingRecord` containing every trade so you can plug it into analysis criteria or the charting workflow documented in [Backtesting](Backtesting.md#visualize-your-backtests).
+`BarSeriesManager` wires your entry/exit rules to simulated orders, uses `strategy.getStartingType()` by default, applies the configured cost/execution models, and returns a `TradingRecord` containing every trade so you can plug it into analysis criteria or the charting workflow documented in [Backtesting](Backtesting.md#visualize-and-sanity-check-your-results).
 
 The same strategy class can be used in [backtests](Backtesting.md) and [live trading](Live-trading.md) contexts.
 
@@ -190,14 +196,14 @@ This is ideal for:
 
 ## Serializing strategies
 
-Use `StrategySerialization` to persist and reload strategies:
+Use the `Strategy` convenience methods to persist and reload strategies:
 
 ```java
-String json = StrategySerialization.toJson(strategy);
-Strategy restored = StrategySerialization.fromJson(series, json);
+String json = strategy.toJson();
+Strategy restored = Strategy.fromJson(series, json);
 ```
 
-That JSON payload captures the full rule graph, making it safe to persist strategies between runs, transmit them over an API, or archive the configuration used for a specific backtest run.
+That JSON payload captures the full rule graph, making it safe to persist strategies between runs, transmit them over an API, or archive the configuration used for a specific backtest run. Use `rule.toJson()` and `Rule.fromJson(series, json)` when you only need to persist one rule subtree.
 
 `NamedStrategy` variants generate compact IDs (`ToggleNamedStrategy_true_false_u3`) that you can store alongside backtest results or in configuration files.
 
@@ -220,3 +226,5 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 - Clarified `InSlopeRule` semantics to match the actual implementation in `org.ta4j.core.rules.InSlopeRule` (difference vs. `PreviousValueIndicator`, optional min/max bounds).
 - Kept threshold/voting composition guidance aligned with `AndWithThresholdRule` / `OrWithThresholdRule` (commit `5e5acc99`) and `VoteRule` (commit `cca0bb02`).
 - Kept MACD-V regime examples aligned with `MomentumStateRule` and `MACDVMomentumStateStrategy` updates (commit `161f7656`).
+- Short-first guidance follows `Strategy#getStartingType()` and `BaseStrategy(..., TradeType)` from commit `b112d34b`.
+- Serialization examples now use `Strategy#toJson()`, `Strategy.fromJson(...)`, `Rule#toJson()`, and `Rule.fromJson(...)` from `org.ta4j.core.Strategy` / `org.ta4j.core.Rule` rather than only the lower-level `StrategySerialization` API introduced in commit `b62d9bad`.

@@ -110,7 +110,13 @@ For fixed-percentage and fixed-distance calculations, you can also use helper me
 Num stopLoss = StopLossRule.stopLossPrice(entryPrice, numOf(2), true);
 Num stopGain = StopGainRule.stopGainPrice(entryPrice, numOf(4), true);
 Num trailingGain = StopGainRule.trailingStopGainPrice(highestPrice, numOf(1.5), true);
+
+Num fixedLoss = StopLossRule.stopLossPriceFromDistance(entryPrice, numOf(10), true);
+Num fixedGain = StopGainRule.stopGainPriceFromDistance(entryPrice, numOf(15), true);
+Num fixedTrailingGain = StopGainRule.trailingStopGainPriceFromDistance(highestPrice, numOf(5), true);
 ```
+
+Pass `true` for long-position math and `false` for short-position math. The fixed-distance helpers are the same primitives used by fixed-amount and volatility stop rules internally.
 
 If you evaluate strategy quality in risk units, pair your stop model with `RMultipleCriterion` (for example, `new RMultipleCriterion(new StopLossPositionRiskModel(5))`) so research and stop geometry stay aligned.
 
@@ -229,3 +235,4 @@ See also:
 - Stop-rule family coverage mirrors the expanded hierarchy added in commit `89cd2271` (`BaseVolatility*`, fixed-amount, trailing, and stop-price model interfaces).
 - ATR constructor guidance reflects commit `1fa097ef` and current `AverageTrueRange*` constructors that accept `ATRIndicator` directly.
 - Added positive-coefficient note for `AverageTrueRangeTrailingStopGainRule` based on its input validation in `requirePositiveAtrCoefficient(...)`.
+- Stop-price helper examples now include `StopLossRule.stopLossPriceFromDistance(...)`, `StopGainRule.stopGainPriceFromDistance(...)`, and `StopGainRule.trailingStopGainPriceFromDistance(...)`, which are used by the fixed-amount and volatility rule implementations.

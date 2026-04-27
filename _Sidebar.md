@@ -24,6 +24,8 @@
 - [Trading Strategies](Trading-strategies.md)
 - [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting](Backtesting.md)
+- [Analysis Criteria & Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)
+- [Walk-Forward Research](Walk-Forward-Research.md)
 - [Live Trading](Live-trading.md)
 - [Charting](Charting.md)
 - [Usage Examples](Usage-examples.md)
