@@ -43,7 +43,7 @@ Combined, they answer:
 - `WyckoffPhaseIndicator`: phase inference engine (cycle + phase + confidence + latest event index).
 - `WyckoffPhase`: record with cycle type, phase type, confidence, and latest event index.
 - `WyckoffCycleFacade`: unified entry point wrapping phase indicator plus cycle-level helpers.
-- `WyckoffCycleAnalysis` / `WyckoffCycleAnalysisResult`: multi-degree cycle analysis utilities.
+- `WyckoffCycleAnalysisRunner` / `WyckoffCycleAnalysisResult`: multi-degree cycle analysis utilities.
 - `WyckoffEventDetector`, `WyckoffStructureTracker`, `WyckoffVolumeProfile`:
   internal components used by the phase indicator.
 
@@ -99,7 +99,7 @@ Num rangeHigh = wyckoffFacade.tradingRangeHigh(series.getEndIndex());
 Recent code drift note:
 - Commit `39194498` (2026-02-21, #1444) introduced the modern stack here: VWAP derivatives (`VWAPBandIndicator`, `VWAPDeviationIndicator`, `VWAPStandardDeviationIndicator`, `VWAPZScoreIndicator`), Wyckoff cycle analysis/facade, and KDE/cluster/bounce support-resistance indicators.
 - Commit `b814436b` (#1360) is the trendline baseline for this page (`AbstractTrendLineIndicator`, `TrendLineSupportIndicator`, `TrendLineResistanceIndicator`).
-- Commit `279d9056` (2026-03-05, #1448) extended Wyckoff analysis workflow integration (`WyckoffCycleAnalysisRunner`) while preserving the core `WyckoffPhaseIndicator`/`WyckoffCycleFacade` usage shown below.
+- Commit `279d9056` (2026-03-05, #1448) renamed the one-shot entry point to `WyckoffCycleAnalysisRunner` and extended workflow integration while preserving the core `WyckoffPhaseIndicator`/`WyckoffCycleFacade` usage shown below.
 
 ## Backtesting how-to
 

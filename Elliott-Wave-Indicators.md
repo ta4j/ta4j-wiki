@@ -8,11 +8,11 @@ A comprehensive guide to using ta4j's Elliott Wave analysis tools, from basic co
 2. [Overview of ta4j's Elliott Wave Implementation](#overview-of-ta4js-elliott-wave-implementation)
 3. [Core Components](#core-components)
 4. [Getting Started](#getting-started)
-   - [Quickstart: Facade vs Analyzer](#quickstart-facade-vs-analyzer)
+   - [Quickstart: Facade vs Runner](#quickstart-facade-vs-runner)
    - [Example Classes](#example-classes)
    - [Using ElliottWaveFacade (Recommended)](#using-elliottwavefacade-recommended)
 5. [Scenario-Based Analysis](#scenario-based-analysis)
-6. [ElliottWaveAnalyzer and One-Shot Analysis](#elliottwaveanalyzer-and-one-shot-analysis)
+6. [ElliottWaveAnalysisRunner and One-Shot Analysis](#elliottwaveanalysisrunner-and-one-shot-analysis)
 7. [ElliottTrendBias and ElliottTrendBiasIndicator](#elliotttrendbias-and-elliotttrendbiasindicator)
 8. [Pluggable Swing Detection](#pluggable-swing-detection)
 9. [Confidence Scoring](#confidence-scoring)
@@ -116,9 +116,9 @@ ElliottSwingIndicator (alternating swings)
 └─────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────┐
-│  Pluggable Analysis Pipeline (0.22.2+)                   │
+│  Pluggable Analysis Pipeline (0.22.4+)                   │
 ├─────────────────────────────────────────────────────────┤
-│ • ElliottWaveAnalyzer       (one-shot analysis)         │
+│ • ElliottWaveAnalysisRunner (one-shot analysis)         │
 │ • SwingDetector             (pluggable swing detection)  │
 │ • FractalSwingDetector / ZigZag / AdaptiveZigZag        │
 │ • ConfidenceModel / ConfidenceProfile (pluggable weights)│
@@ -141,7 +141,7 @@ ElliottSwingIndicator (alternating swings)
 ### Change tracking relevant to this guide
 
 - Commit `bebb758e` (2026-02-12, #1435) is the baseline for the current confidence/trend-bias model used here (`ElliottTrendBias`, `ElliottTrendBiasIndicator`, `ElliottConfidenceScorer`, and `elliott.confidence` factors).
-- Commit `279d9056` (2026-03-05, #1448) expanded the Elliott workflow with automatic multi-timeframe analysis (for example `ElliottWaveAnalyzer`, `ElliottAnalysisResult`, and updated `ElliottWaveFacade` integration).
+- Commit `279d9056` (2026-03-05, #1448) expanded the Elliott workflow with automatic multi-timeframe analysis (for example `ElliottWaveAnalysisRunner`, `ElliottWaveAnalysisResult`, and updated `ElliottWaveFacade` integration).
 - Confidence scoring uses soft penalties outside preferred extension ranges (instead of hard pass/fail), so mildly overextended wave-3/wave-5 structures are down-weighted rather than discarded.
 - For release-by-release history, see [Release Notes](Release-notes.md).
 
@@ -322,9 +322,9 @@ if (confluence.isConfluent(index)) {
 
 ## Getting Started
 
-### Quickstart: Facade vs Analyzer
+### Quickstart: Facade vs Runner
 
-This quickstart shows the minimal entry points into the Elliott Wave suite. Start with the facade for indicator-style access, or the analyzer for one-shot pipeline analysis.
+This quickstart shows the minimal entry points into the Elliott Wave suite. Start with the facade for indicator-style access, or the runner for one-shot pipeline analysis.
 
 #### Option 1: Indicator-style access (recommended entry point)
 
@@ -344,19 +344,24 @@ Num invalidation = facade.invalidationLevel().getValue(index);
 
 #### Option 2: One-shot analysis pipeline
 
-Use `ElliottWaveAnalyzer` when you want a single analysis result (for reporting, charting, or batch processing) and you need to plug in custom swing detectors, filters, or confidence profiles.
+Use `ElliottWaveAnalysisRunner` when you want a single analysis result (for reporting, charting, or batch processing) and you need to plug in custom swing detectors, filters, confidence profiles, or supporting degrees.
 
 ```java
 BarSeries series = ...;
 
-ElliottWaveAnalyzer analyzer = ElliottWaveAnalyzer.builder()
+ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
         .swingDetector(SwingDetectors.fractal(5))
         .degree(ElliottDegree.INTERMEDIATE)
         .build();
 
-ElliottAnalysisResult result = analyzer.analyze(series);
-ElliottScenarioSet scenarios = result.scenarios();
-ElliottTrendBias trendBias = result.trendBias();
+ElliottWaveAnalysisResult result = runner.analyze(series);
+ElliottWaveAnalysisResult.BaseScenarioAssessment best =
+        result.recommendedScenario().orElseThrow();
+ElliottScenario scenario = best.scenario();
+ElliottTrendBias trendBias = result.analysisFor(ElliottDegree.INTERMEDIATE)
+        .map(ElliottWaveAnalysisResult.DegreeAnalysis::analysis)
+        .map(ElliottAnalysisResult::trendBias)
+        .orElse(ElliottTrendBias.unknown());
 ```
 
 Next steps:
@@ -368,80 +373,42 @@ Next steps:
 
 ### Example Classes
 
-ta4j provides several example classes that demonstrate Elliott Wave analysis with real market data:
+ta4j-examples currently groups Elliott Wave examples under `ta4jexamples.analysis.elliottwave`:
 
-#### ElliottWaveAnalysis
+#### ElliottWaveIndicatorSuiteDemo
 
-The main example class that demonstrates comprehensive Elliott Wave analysis with chart visualization. It can be used in two ways:
+The main suite demo runs swing detection, phase identification, Fibonacci ratio validation, channels, confluence, invalidation checks, scenario scoring, chart labels, and optional chart output.
 
 **Command-line usage:**
 ```bash
-# Load default dataset (ossified BTC-USD data)
-java ElliottWaveAnalysis
+# Load the default ossified BTC-USD dataset
+java ta4jexamples.analysis.elliottwave.ElliottWaveIndicatorSuiteDemo
 
-# Load from external data source (4-6 arguments)
-java ElliottWaveAnalysis [dataSource] [ticker] [barDuration] [startEpoch] [endEpoch]
-java ElliottWaveAnalysis [dataSource] [ticker] [barDuration] [degree] [startEpoch] [endEpoch]
+# Load from an external data source
+java ta4jexamples.analysis.elliottwave.ElliottWaveIndicatorSuiteDemo [dataSource] [ticker] [barDuration] [startEpoch] [endEpoch]
+java ta4jexamples.analysis.elliottwave.ElliottWaveIndicatorSuiteDemo [dataSource] [ticker] [barDuration] [degree] [startEpoch] [endEpoch]
 ```
 
 **Arguments:**
-- `dataSource`: "YahooFinance" or "Coinbase" (case-insensitive)
-- `ticker`: Symbol (e.g., "BTC-USD", "AAPL", "^GSPC")
-- `barDuration`: ISO-8601 duration (e.g., "PT1D" for daily, "PT4H" for 4-hour, "PT5M" for 5-minute)
-- `degree`: Elliott degree (optional; if omitted, auto-selected based on bar duration and count)
-- `startEpoch`: Start time as Unix epoch seconds
-- `endEpoch`: End time as Unix epoch seconds (optional, defaults to now)
+- `dataSource`: `YahooFinance` or `Coinbase`
+- `ticker`: symbol such as `BTC-USD`, `AAPL`, or `^GSPC`
+- `barDuration`: ISO-8601 duration such as `PT1D`, `PT4H`, or `PT5M`
+- `degree`: optional Elliott degree; if omitted, the suite auto-selects from bar duration and history length
+- `startEpoch` / `endEpoch`: Unix epoch seconds; `endEpoch` is optional
 
-**Programmatic usage:**
-```java
-BarSeries series = // ... load your bar series
-ElliottWaveAnalysis analysis = new ElliottWaveAnalysis();
-analysis.analyze(series, ElliottDegree.PRIMARY, 0.25);
-```
+The suite can also be called programmatically with `analyze(BarSeries, ElliottDegree, double)` and returns structured report data through `ElliottWaveAnalysisReport`.
 
-The `analyze()` method performs complete Elliott Wave analysis including:
-- Swing detection and wave counting
-- Phase identification (impulse and corrective waves)
-- Fibonacci ratio validation
-- Channel projections
-- Scenario-based analysis with confidence scoring
-- Chart visualization with wave pivot labels
+#### Preset and focused demos
 
-Charts are saved to `temp/charts/` and displayed if running in a non-headless environment.
+- **ElliottWavePresetDemo** - Consolidated launcher for `ossified <btc|eth|sp500>` datasets or `live <Coinbase|YahooFinance> <ticker> [barDuration] [lookbackDays] [degree]`.
+- **ElliottWaveAdaptiveSwingAnalysis** - Composite fractal/adaptive-ZigZag swing detection with confidence-breakdown logging.
+- **ElliottWaveMultiDegreeAnalysisDemo** - Multi-degree analysis with cross-degree scenario matching and a recommended base scenario.
+- **ElliottWavePatternProfileDemo** - Compares default and pattern-aware confidence profiles.
+- **ElliottWaveTrendBacktest** - Backtests and walk-forward tests Elliott Wave trend-bias predictions across ossified datasets.
+- **HighRewardElliottWaveBacktest** - Runs the `HighRewardElliottWaveStrategy` through several parameter profiles.
+- **HighRewardElliottWaveStrategy** - Named strategy that trades high-confidence impulse scenarios with risk/reward, trend, and momentum gates. See [Usage Examples](Usage-examples.md) for links.
 
-#### Asset-Specific Examples
-
-For quick analysis of specific assets, use the dedicated example classes:
-
-**BTCUSDElliottWaveAnalysis** - Bitcoin (BTC-USD) analysis using Coinbase data:
-```bash
-java BTCUSDElliottWaveAnalysis
-```
-Loads 365 days of daily Bitcoin data from Coinbase and performs analysis using the PRIMARY degree.
-
-**ETHUSDElliottWaveAnalysis** - Ethereum (ETH-USD) analysis using Coinbase data:
-```bash
-java ETHUSDElliottWaveAnalysis
-```
-Loads daily Ethereum data from Coinbase starting from a specific timestamp.
-
-**SP500ElliottWaveAnalysis** - S&P 500 Index (^GSPC) analysis using Yahoo Finance data:
-```bash
-java SP500ElliottWaveAnalysis
-```
-Loads 365 days of daily S&P 500 index data from Yahoo Finance with auto-selected degree.
-
-**ElliottWaveAdaptiveSwingAnalysis** (0.22.2+) – Elliott Wave analysis using the **adaptive ZigZag** swing detector (volatility-adaptive reversal threshold). Demonstrates pluggable swing detection and one-shot analysis via `ElliottWaveAnalyzer`.
-
-**ElliottWavePatternProfileDemo** (0.22.2+) – Demonstrates confidence profiles and scenario-type–aware confidence models. Shows how different Elliott pattern types (impulse, corrective zigzag, etc.) can use different confidence weightings.
-
-**ElliottWaveTrendBacktest** (0.22.2+) – Backtests and walk-forward tests Elliott Wave **trend bias** predictions. Evaluates whether trend bias from scenarios correctly predicts price direction over a lookahead horizon across multiple datasets (e.g. ETH-USD, AAPL).
-
-**HighRewardElliottWaveBacktest** (0.22.2+) – Runs the **HighRewardElliottWaveStrategy** on ossified data and prints performance metrics. Entry requires high-confidence impulse scenarios, favorable risk/reward, trend/momentum alignment, and wave 2/4 time alternation; exit uses invalidation, targets, and trend/momentum breakdown.
-
-**HighRewardElliottWaveStrategy** (0.22.2+) – Named strategy that trades only high-confidence impulse scenarios (wave 3 or 5) with trend (SMA) and momentum (RSI/MACD) confirmation. Uses `ElliottWaveAnalyzer`, pluggable swing detectors, and custom confidence profiles. See [Usage Examples](Usage-examples.md#elliott-wave-analysis) for links.
-
-These example classes demonstrate simple usage patterns and can be modified to analyze different time periods or use different degrees.
+Older thin wrappers such as `BTCUSDElliottWaveAnalysis`, `ETHUSDElliottWaveAnalysis`, and `SP500ElliottWaveAnalysis` have been replaced by `ElliottWavePresetDemo`.
 
 ### Using ElliottWaveFacade (Recommended)
 
@@ -683,41 +650,53 @@ int expected = type.expectedWaveCount(); // 5 for impulse, 3 for zigzag/flat
 
 ---
 
-## ElliottWaveAnalyzer and One-Shot Analysis
+## ElliottWaveAnalysisRunner and One-Shot Analysis
 
-The `ElliottWaveAnalyzer` (0.22.2+) orchestrates a full Elliott Wave analysis run with **pluggable swing detectors** and **confidence profiles**. It returns an `ElliottAnalysisResult` containing raw and processed swings, scenarios, confidence breakdowns, channel, and trend bias—ideal for one-shot analysis, reports, or custom pipelines.
+The `ElliottWaveAnalysisRunner` (0.22.4+) orchestrates a full Elliott Wave analysis run with **pluggable swing detectors**, **confidence profiles**, and optional higher/lower-degree validation. It returns an `ElliottWaveAnalysisResult` containing per-degree `ElliottAnalysisResult` snapshots plus ranked base-scenario assessments—ideal for one-shot analysis, reports, or custom pipelines.
 
-### Using the analyzer
+### Using the runner
 
 ```java
-import org.ta4j.core.indicators.elliott.ElliottWaveAnalyzer;
 import org.ta4j.core.indicators.elliott.ElliottAnalysisResult;
 import org.ta4j.core.indicators.elliott.ElliottDegree;
+import org.ta4j.core.indicators.elliott.ElliottScenario;
 import org.ta4j.core.indicators.elliott.swing.SwingDetectors;
+import org.ta4j.core.indicators.elliott.ElliottWaveAnalysisResult;
+import org.ta4j.core.indicators.elliott.ElliottWaveAnalysisRunner;
 
-// Build analyzer with fractal swing detection
+// Build runner with fractal swing detection and supporting degrees
 SwingDetector detector = SwingDetectors.fractal(5);
-ElliottWaveAnalyzer analyzer = ElliottWaveAnalyzer.builder()
+ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
     .swingDetector(detector)
     .degree(ElliottDegree.INTERMEDIATE)
+    .higherDegrees(1)
+    .lowerDegrees(1)
     .minConfidence(0.15)
     .maxScenarios(5)
     .build();
 
-ElliottAnalysisResult result = analyzer.analyze(series);
-int index = result.index();
-ElliottScenarioSet scenarios = result.scenarios();
-ElliottTrendBias trendBias = result.trendBias();
-ElliottChannel channel = result.channel();
+ElliottWaveAnalysisResult result = runner.analyze(series);
+ElliottWaveAnalysisResult.BaseScenarioAssessment recommended =
+        result.recommendedScenario().orElseThrow();
+ElliottScenario scenario = recommended.scenario();
+
+ElliottAnalysisResult base = result.analysisFor(ElliottDegree.INTERMEDIATE)
+        .map(ElliottWaveAnalysisResult.DegreeAnalysis::analysis)
+        .orElseThrow();
+int index = base.index();
+ElliottScenarioSet scenarios = base.scenarios();
+ElliottTrendBias trendBias = base.trendBias();
+ElliottChannel channel = base.channel();
 
 // Per-scenario confidence breakdown
-Optional<ElliottScenario> baseCase = scenarios.base();
-baseCase.ifPresent(sc -> result.breakdownFor(sc).ifPresent(System.out::println));
+base.breakdownFor(scenario).ifPresent(System.out::println);
 ```
 
-### ElliottAnalysisResult
+### ElliottWaveAnalysisResult and ElliottAnalysisResult
 
-The result record includes:
+`ElliottWaveAnalysisResult` is the top-level one-shot output. It includes the base degree, one `DegreeAnalysis` per analyzed degree, ranked base-scenario assessments, and diagnostic notes. Use `recommendedScenario()` for the highest composite-score scenario and `analysisFor(ElliottDegree)` to retrieve the per-degree snapshot.
+
+Each per-degree `ElliottAnalysisResult` includes:
 
 | Field | Description |
 |-------|-------------|
@@ -731,6 +710,15 @@ The result record includes:
 | `trendBias` | Aggregate directional bias across scenarios |
 
 Use `breakdownFor(ElliottScenario)` to get the confidence breakdown for a specific scenario.
+
+### Walk-forward adapters
+
+Commit `279d9056` also added Elliott-specific adapters for the generic walk-forward framework:
+
+- `ElliottWavePredictionProvider` runs a configured `ElliottWaveAnalysisRunner` on each decision prefix and maps ranked base scenarios to walk-forward predictions.
+- `ElliottWaveOutcomeLabeler` labels fixed-horizon outcomes as target-first, invalidation-first, or neither, with coarse phase progression and realized return.
+- `ElliottWaveWalkForwardContext` carries the runner, prefix selector, max predictions, and metadata for repeatable runs.
+- `ElliottWaveWalkForwardProfiles` exposes a tuned baseline context and split geometry for cross-run comparisons.
 
 ---
 
@@ -769,7 +757,7 @@ Use trend bias for entry filters (e.g. only enter long when bias is bullish and 
 
 ## Pluggable Swing Detection
 
-Elliott Wave analysis can use different swing detection backends via the **SwingDetector** interface (package `org.ta4j.core.indicators.elliott.swing`). The analyzer accepts any `SwingDetector` and optional `SwingFilter` and `ElliottSwingCompressor`.
+Elliott Wave analysis can use different swing detection backends via the **SwingDetector** interface (package `org.ta4j.core.indicators.elliott.swing`). The runner accepts any `SwingDetector` and optional `SwingFilter` and `ElliottSwingCompressor`.
 
 ### Built-in detectors
 
@@ -804,7 +792,7 @@ SwingDetector composite = SwingDetectors.composite(
 
 ```java
 SwingFilter filter = new MinMagnitudeSwingFilter(0.10); // keep swings >= 10% of largest
-ElliottWaveAnalyzer analyzer = ElliottWaveAnalyzer.builder()
+ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
     .swingDetector(detector)
     .swingFilter(filter)
     .degree(ElliottDegree.INTERMEDIATE)
@@ -1276,7 +1264,7 @@ The recommendation system considers:
 - Hourly bars: INTERMEDIATE through MINUETTE degrees
 - 5-15 minute bars: MINOR through SUB_MINUETTE degrees
 
-The `ElliottWaveAnalysis` class automatically uses degree recommendations when no explicit degree is provided via command-line arguments.
+`ElliottWaveIndicatorSuiteDemo` and `ElliottWavePresetDemo` automatically use degree recommendations when no explicit degree is provided via command-line arguments.
 
 ---
 
@@ -1568,17 +1556,17 @@ System.out.println("Alternative counts: " + alts.size());
 For the fastest way to see Elliott Wave analysis in action, use the provided example classes:
 
 ```bash
-# Analyze Bitcoin with default settings
-java BTCUSDElliottWaveAnalysis
+# Analyze ossified Bitcoin with default settings
+java ta4jexamples.analysis.elliottwave.ElliottWavePresetDemo ossified btc
 
-# Analyze Ethereum
-java ETHUSDElliottWaveAnalysis
+# Analyze ossified Ethereum
+java ta4jexamples.analysis.elliottwave.ElliottWavePresetDemo ossified eth
 
-# Analyze S&P 500
-java SP500ElliottWaveAnalysis
+# Analyze ossified S&P 500
+java ta4jexamples.analysis.elliottwave.ElliottWavePresetDemo ossified sp500
 
-# Custom analysis with command-line arguments
-java ElliottWaveAnalysis Coinbase BTC-USD PT1D PRIMARY 1686960000 1697040000
+# Custom live-style analysis with command-line arguments
+java ta4jexamples.analysis.elliottwave.ElliottWavePresetDemo live Coinbase BTC-USD PT1D 1825 PRIMARY
 ```
 
 All examples generate charts with wave pivot labels, scenario analysis, and confidence scores. Charts are saved to `temp/charts/` and displayed if running in a non-headless environment.

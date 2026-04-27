@@ -9,6 +9,7 @@ ta4j gives you the building blocks for technical-analysis-driven systems in Java
 - **Configurable backtest execution models**: `BarSeriesManager` and `BacktestExecutor` can now stay on the default next-open model or switch to current-close, slippage, or stop-limit execution.
 - **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
 - **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
+- **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
 
 ## Start Here
 

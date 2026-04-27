@@ -169,7 +169,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **NetMomentumIndicator** | Net momentum (e.g. gains minus losses over period). |
 | `org.ta4j.core.indicators` | **WilliamsRIndicator** | Williams %R (overbought/oversold oscillator). |
 | `org.ta4j.core.indicators` | **CCIIndicator** | Commodity Channel Index. |
-| `org.ta4j.core.indicators` | **KRIIndicator** | Klinger Volume Oscillator (simplified or full). |
+| `org.ta4j.core.indicators` | **KRIIndicator** | Kairi Relative Index: percent distance of price from its moving average. |
 | `org.ta4j.core.indicators` | **AwesomeOscillatorIndicator** | Awesome Oscillator (median price, 5 vs 34 period). |
 | `org.ta4j.core.indicators` | **GatorOscillatorIndicator** | Bill Williams gator oscillator derived from alligator line spreads. |
 | `org.ta4j.core.indicators` | **AccelerationDecelerationIndicator** | AC: acceleration/deceleration of momentum. |
@@ -242,7 +242,10 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.volume` | **OnBalanceVolumeIndicator** | OBV: cumulative volume signed by close direction. |
 | `org.ta4j.core.indicators.volume` | **AccumulationDistributionIndicator** | A/D: cumulative volume weighted by CLV. |
 | `org.ta4j.core.indicators.volume` | **ChaikinMoneyFlowIndicator** | CMF: volume-weighted money flow over period. |
-| `org.ta4j.core.indicators.volume` | **ChaikinOscillatorIndicator** | Chaikin Oscillator (A/D short − long EMA). |
+| `org.ta4j.core.indicators.volume` | **ChaikinOscillatorIndicator** | Chaikin Oscillator (A/D short - long EMA). |
+| `org.ta4j.core.indicators.volume` | **ForceIndexIndicator** | Force Index: EMA-smoothed close-price change multiplied by volume. |
+| `org.ta4j.core.indicators.volume` | **EaseOfMovementIndicator** | Ease of Movement: price-range movement normalized by volume and smoothed over a window. |
+| `org.ta4j.core.indicators.volume` | **KlingerVolumeOscillatorIndicator** | Klinger Volume Oscillator: short/long EMA spread of volume force. |
 | `org.ta4j.core.indicators.volume` | **MoneyFlowIndexIndicator** | MFI: volume-weighted RSI-style oscillator. |
 | `org.ta4j.core.indicators` | **MarketFacilitationIndexIndicator** | Bill Williams MFI: `(high - low) / volume` (not Money Flow Index). |
 | `org.ta4j.core.indicators.volume` | **VWAPIndicator** | Volume-weighted average price (from open). |
@@ -261,9 +264,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **PVOIndicator** | Percentage Volume Oscillator (short − long volume MA). |
 
 **Short usage**  
-- **What it is:** Volume-based indicators: OBV, A/D, Chaikin, MFI, VWAP, PVI/NVI, III, ROCV, relative volume, PVO.  
-- **Theory:** Volume confirms price moves; accumulation/distribution and VWAP help assess institutional flow and fair value.  
-- **When to use:** Confirming breakouts, divergence with price, and VWAP as reference for execution.  
+- **What it is:** Volume-based indicators: OBV, A/D, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator, MFI, VWAP, PVI/NVI, III, ROCV, relative volume, PVO.
+- **Theory:** Volume confirms price moves; accumulation/distribution, force/effort oscillators, and VWAP help assess participation, institutional flow, and fair value.
+- **When to use:** Confirming breakouts, detecting price/volume divergence, filtering weak moves, and using VWAP as an execution reference.
 - **When not to use:** When volume data is missing or unreliable (e.g. some instruments or bars).  
 - *Future: use cases, example code.*
 
@@ -377,7 +380,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioIndicator** | Set of possible Elliott scenarios at index. |
 | `org.ta4j.core.indicators.elliott` | **ElliottConfluenceIndicator** | Confluence score (e.g. agreement across scenarios). |
 | `org.ta4j.core.indicators.elliott` | **ElliottTrendBiasIndicator** | Aggregate directional bias across Elliott wave scenarios (bullish/bearish/neutral). |
-| `org.ta4j.core.indicators.elliott` | **ElliottWaveAnalyzer** | Orchestrates Elliott Wave analysis with pluggable swing detectors and confidence profiles; returns ElliottAnalysisResult. |
+| `org.ta4j.core.indicators.elliott` | **ElliottWaveAnalysisRunner** | One-shot Elliott analysis entry point; can analyze supporting degrees and returns `ElliottWaveAnalysisResult`. |
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioSet** | Immutable container of ranked alternative Elliott scenarios (base case + alternatives). |
 | `org.ta4j.core.indicators.elliott` | **PatternSet** | Configures which Elliott scenario pattern types are enabled (impulse, corrective zigzag, etc.). |
 
@@ -416,9 +419,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.elliott.confidence` | **TimeProportionFactor** | Scores time proportion conformance. |
 
 **Short usage**  
-- **What it is:** Elliott Wave structure (swings, count, channel, ratios, projection, invalidation, phase, scenarios, confluence); trend bias across scenarios; pluggable analyzer with swing detectors and confidence profiles.  
+- **What it is:** Elliott Wave structure (swings, count, channel, ratios, projection, invalidation, phase, scenarios, confluence); trend bias across scenarios; pluggable analysis runner with swing detectors, confidence profiles, and optional supporting degrees.
 - **Theory:** Elliott Wave Theory models market structure in impulsive and corrective waves with Fibonacci relationships.  
-- **When to use:** When applying Elliott-based rules or targets; use confluence, invalidation, and trend bias for robustness; use ElliottWaveAnalyzer for one-shot analysis with custom detectors.
+- **When to use:** When applying Elliott-based rules or targets; use confluence, invalidation, and trend bias for robustness; use `ElliottWaveAnalysisRunner` for one-shot analysis with custom detectors or multi-degree validation.
 - **When not to use:** When wave rules or degree are not clearly defined; interpretation is subjective.  
 - *Future: use cases, example code.*  
 - See also: [Elliott Wave Indicators](Elliott-Wave-Indicators.md).
@@ -429,15 +432,15 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
-| `org.ta4j.core.indicators.statistics` | **StandardDeviationIndicator** | Standard deviation of source over period. |
-| `org.ta4j.core.indicators.statistics` | **VarianceIndicator** | Variance of source over period. |
+| `org.ta4j.core.indicators.statistics` | **StandardDeviationIndicator** | Standard deviation of source over period; supports sample/population modes. |
+| `org.ta4j.core.indicators.statistics` | **VarianceIndicator** | Variance of source over period; defaults to sample variance and supports explicit sample/population modes. |
 | `org.ta4j.core.indicators.statistics` | **MeanDeviationIndicator** | Mean absolute deviation. |
 | `org.ta4j.core.indicators.statistics` | **CovarianceIndicator** | Covariance between two indicators. |
-| `org.ta4j.core.indicators.statistics` | **CorrelationCoefficientIndicator** | Correlation between two series. |
+| `org.ta4j.core.indicators.statistics` | **CorrelationCoefficientIndicator** | Correlation between two series; supports sample/population variance normalization. |
 | `org.ta4j.core.indicators.statistics` | **PearsonCorrelationIndicator** | Pearson correlation. |
 | `org.ta4j.core.indicators.statistics` | **SimpleLinearRegressionIndicator** | Moving simple linear regression (slope/intercept). |
-| `org.ta4j.core.indicators.statistics` | **StandardErrorIndicator** | Standard error of regression (or estimate). |
-| `org.ta4j.core.indicators.statistics` | **SigmaIndicator** | Z-score (value in standard deviations from mean). |
+| `org.ta4j.core.indicators.statistics` | **StandardErrorIndicator** | Standard error of regression (or estimate); supports sample/population standard-deviation modes. |
+| `org.ta4j.core.indicators.statistics` | **SigmaIndicator** | Z-score (value in standard deviations from mean); supports sample/population standard-deviation modes. |
 | `org.ta4j.core.indicators.statistics` | **ZScoreIndicator** | Z-score indicator. |
 | `org.ta4j.core.indicators.statistics` | **PeriodicalGrowthRateIndicator** | Period-over-period growth rate (e.g. annualized). |
 | `org.ta4j.core.indicators.numeric` | **BinaryOperationIndicator** | Binary operation (add, subtract, multiply, divide, min, max) on two indicators. |
@@ -445,7 +448,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.numeric` | **NumericIndicator** | Wraps a numeric expression (e.g. from indicator arithmetic) as an indicator. |
 
 **Short usage**  
-- **What it is:** Variance, std dev, correlation, regression, z-score, growth rate; numeric combinators (binary/unary).  
+- **What it is:** Variance, std dev, correlation, regression, z-score, growth rate; numeric combinators (binary/unary); sample/population mode selection via `SampleType`.
 - **Theory:** Statistics describe distribution and relationship between series; operations allow custom formulas.  
 - **When to use:** Volatility (std dev), normalization (z-score), and composing indicators (Binary/Unary).  
 - **When not to use:** When period is too short for stable statistics.  
@@ -514,6 +517,16 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
+| `org.ta4j.core.indicators` | **AbstractIndicator** | Base class for indicators that stores the backing `BarSeries`. |
+| `org.ta4j.core.indicators` | **CachedIndicator** | Base class for cached indicators; caches calculated values except the latest bar. |
+| `org.ta4j.core.indicators` | **RecursiveCachedIndicator** | Cached base class for recursive indicators with iterative warmup support. |
+| `org.ta4j.core.indicators` | **AbstractRecentSwingIndicator** | Base class for recent-swing indicators that expose the latest confirmed swing level. |
+| `org.ta4j.core.indicators.averages` | **AbstractEMAIndicator** | Base class for EMA-family implementations. |
+| `org.ta4j.core.indicators.pivotpoints` | **AbstractPivotPointIndicator** | Base class for pivot-point indicators. |
+| `org.ta4j.core.indicators.supportresistance` | **AbstractBounceCountIndicator** | Base class for bounce-count support/resistance indicators. |
+| `org.ta4j.core.indicators.supportresistance` | **AbstractPriceClusterIndicator** | Base class for clustered-price support/resistance indicators. |
+| `org.ta4j.core.indicators.supportresistance` | **AbstractTrendLineIndicator** | Base class for rolling trend-line support/resistance indicators. |
+| `org.ta4j.core.indicators.volume` | **AbstractVWAPIndicator** | Base class for VWAP-family indicators. |
 | `org.ta4j.core.indicators` | **PriceChannel** | Interface for channel-like outputs (upper/lower/median), used by channel indicators. |
 | `org.ta4j.core.indicators` | **IndicatorUtils** | Utility helpers for indicator composition contracts (same-series validation and numeric invalid checks). |
 | `org.ta4j.core.indicators.aroon` | **AroonFacade** | Convenience wrapper exposing Aroon Up/Down/Oscillator values from a common setup. |
@@ -526,23 +539,35 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 | `org.ta4j.core.indicators.macd` | **MACDVMomentumState** | Enum for MACD-V momentum regimes used by momentum-state indicators/rules. |
 | `org.ta4j.core.indicators.pivotpoints` | **PivotLevel** | Enum for pivot-derived levels (pivot/support/resistance variants). |
 | `org.ta4j.core.indicators.pivotpoints` | **TimeLevel** | Enum describing pivot timeframe granularity (for example day/week/month). |
-| `org.ta4j.core.indicators.elliott` | **ElliottAnalysisResult** | Record returned by `ElliottWaveAnalyzer` with scenarios, confidence, and diagnostics. |
+| `org.ta4j.core.indicators.statistics` | **SampleType** | Enum selecting sample (`n - 1`) or population (`n`) formulas for rolling statistics. |
+| `org.ta4j.core.indicators.elliott` | **ElliottAnalysisResult** | Single-degree analysis snapshot produced inside `ElliottWaveAnalysisRunner` with scenarios, confidence, and diagnostics. |
+| `org.ta4j.core.indicators.elliott` | **ElliottWaveAnalysisResult** | Multi-degree analysis result returned by `ElliottWaveAnalysisRunner`, including ranked base-scenario assessments. |
+| `org.ta4j.core.indicators.elliott` | **ElliottWaveFacade** | Facade for per-bar Elliott indicator access from one shared swing configuration. |
 | `org.ta4j.core.indicators.elliott` | **ElliottChannel** | Record representing Elliott channel boundaries (`PriceChannel` implementation). |
 | `org.ta4j.core.indicators.elliott` | **ElliottConfidence** | Record capturing aggregate and component confidence values for Elliott analysis. |
+| `org.ta4j.core.indicators.elliott` | **ElliottConfidenceScorer** | Direct weighted confidence scorer for Elliott swings, phases, and channels. |
 | `org.ta4j.core.indicators.elliott` | **ElliottDegree** | Enum for Elliott wave degrees (multi-timeframe wave scale). |
 | `org.ta4j.core.indicators.elliott` | **ElliottFibonacciValidator** | Validator for Elliott Fibonacci relationship checks across swings/waves. |
 | `org.ta4j.core.indicators.elliott` | **ElliottPhase** | Enum representing Elliott phase classification (impulse/corrective states). |
 | `org.ta4j.core.indicators.elliott` | **ElliottRatio** | Record representing a computed Elliott ratio and its ratio type. |
 | `org.ta4j.core.indicators.elliott` | **ElliottScenario** | Record describing one candidate Elliott scenario and associated metadata. |
+| `org.ta4j.core.indicators.elliott` | **ElliottScenarioComparator** | Utility for scenario divergence, consensus, and shared invalidation analysis. |
+| `org.ta4j.core.indicators.elliott` | **ElliottScenarioGenerator** | Generates ranked Elliott scenario alternatives from recent swings and confidence profiles. |
 | `org.ta4j.core.indicators.elliott` | **ElliottSwing** | Record describing a swing segment used by Elliott scenario generation/scoring. |
 | `org.ta4j.core.indicators.elliott` | **ElliottSwingCompressor** | Utility that compresses/noise-filters Elliott swing sequences. |
+| `org.ta4j.core.indicators.elliott` | **ElliottSwingMetadata** | Validated swing-statistics snapshot used by Elliott analysis and diagnostics. |
 | `org.ta4j.core.indicators.elliott` | **ElliottTrendBias** | Record representing bullish/bearish/neutral Elliott trend-bias weighting. |
 | `org.ta4j.core.indicators.elliott` | **ScenarioType** | Enum for supported Elliott scenario families (used in pattern selection/scoring). |
 | `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceFactorCategory** | Enum categorizing confidence factors in Elliott confidence scoring. |
 | `org.ta4j.core.indicators.elliott.confidence` | **ConfidenceFactorResult** | Record containing one factor's raw score, weighted score, and diagnostics. |
 | `org.ta4j.core.indicators.elliott.confidence` | **ElliottConfidenceContext** | Record containing context input used by Elliott confidence factors/models. |
+| `org.ta4j.core.indicators.elliott.walkforward` | **ElliottWaveOutcome** | Fixed-horizon realized outcome record for Elliott walk-forward evaluation. |
+| `org.ta4j.core.indicators.elliott.walkforward` | **ElliottWaveOutcomeLabeler** | Labels realized Elliott outcomes for generic walk-forward prediction evaluation. |
+| `org.ta4j.core.indicators.elliott.walkforward` | **ElliottWavePredictionProvider** | Adapts `ElliottWaveAnalysisRunner` ranked scenarios into walk-forward predictions. |
+| `org.ta4j.core.indicators.elliott.walkforward` | **ElliottWaveWalkForwardContext** | Runner, series selector, max-prediction, and metadata context for Elliott walk-forward runs. |
+| `org.ta4j.core.indicators.elliott.walkforward` | **ElliottWaveWalkForwardProfiles** | Baseline Elliott walk-forward profiles and split geometry for repeatable comparisons. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleAnalysisResult** | Record containing cycle-analysis outcomes and supporting notes. |
-| `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleAnalysis** | One-shot multi-degree Wyckoff analysis entry point for complete cycle snapshots. |
+| `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleAnalysisRunner** | One-shot multi-degree/configuration Wyckoff analysis entry point for complete cycle snapshots. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleFacade** | Facade that wires Wyckoff cycle indicators and exposes per-bar phase/range helpers. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffCycleType** | Enum representing inferred Wyckoff cycle type. |
 | `org.ta4j.core.indicators.wyckoff` | **WyckoffEvent** | Record describing a detected Wyckoff event and its properties. |

@@ -9,7 +9,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Trend / Moving Averages | SMA, EMA, HMA, VIDYA, Jurik, Displaced variants, SuperTrend, Renko helpers. | [Moving Average Indicators](Moving-Average-Indicators.md) |
 | Momentum & Oscillators | RSI family, NetMomentum (new), MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
-| Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Volume spikes. | Indicators package |
+| Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
 | Bill Williams Toolkit | Alligator (jaw/teeth/lips), FractalHigh/Low, Gator Oscillator, Market Facilitation Index. | [Bill Williams Indicators](Bill-Williams-Indicators.md) |
 | Candle/Pattern | Hammer, Shooting Star, Three White Soldiers, DownTrend/UpTrend. | `indicators.candles` |
@@ -41,7 +41,7 @@ ta4j now includes a complete workflow for value, location, and phase analysis:
 - Value: `VWAPIndicator`, `AnchoredVWAPIndicator`, `VWAPBandIndicator`, `VWAPZScoreIndicator`
 - Location: `PriceClusterSupportIndicator`, `PriceClusterResistanceIndicator`, `BounceCountSupportIndicator`, `BounceCountResistanceIndicator`, `VolumeProfileKDEIndicator`
 - Phase: `WyckoffPhaseIndicator`
-- Cycle context: `WyckoffCycleFacade`, `WyckoffCycleAnalysis`, `WyckoffEventDetector`
+- Cycle context: `WyckoffCycleFacade`, `WyckoffCycleAnalysisRunner`, `WyckoffEventDetector`
 
 Use the dedicated guide for implementation templates and tuning advice:
 
@@ -59,6 +59,16 @@ ta4j 0.22.3 added a complete Bill Williams toolkit:
 
 Fractal indicators confirm on the current bar; use `getConfirmedFractalIndex(...)` to reference the pivot bar without introducing look-ahead bias.
 
+## Volume pressure workflow (0.22.4)
+
+ta4j's volume package includes price/volume pressure oscillators that complement OBV, A/D, MFI, and VWAP:
+
+- `ForceIndexIndicator` multiplies close-to-close price change by volume and smooths the result with EMA (default `13`).
+- `EaseOfMovementIndicator` measures how easily price moves through the bar range relative to volume and smooths the one-period EMV with SMA (default `14`, default volume divisor `100,000,000`).
+- `KlingerVolumeOscillatorIndicator` applies the Klinger volume-force formula and returns the short/long EMA spread (default `34/55`).
+
+Use them as participation or divergence filters; avoid treating them as standalone entries when volume quality is poor.
+
 ## MACD-V momentum-state workflow (0.22.3)
 
 Prefer `org.ta4j.core.indicators.macd.MACDVIndicator` for new code. The legacy `org.ta4j.core.indicators.MACDVIndicator` is deprecated and scheduled for removal in 0.24.0.
@@ -72,7 +82,7 @@ Prefer `org.ta4j.core.indicators.macd.MACDVIndicator` for new code. The legacy `
 
 ## Backtesting indicators
 
-Indicators should be evaluated the same way strategies are—prefer realistic data with survivorship-bias filters. The [Usage Examples](Usage-examples.md#playing-with-indicators) page links to CSV/Chart demos where indicators are plotted alongside price bars.
+Indicators should be evaluated the same way strategies are—prefer realistic data with survivorship-bias filters. The [Usage Examples](Usage-examples.md) page links to CSV/Chart demos where indicators are plotted alongside price bars.
 
 ## Caching & stability
 
