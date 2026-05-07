@@ -4,6 +4,14 @@
 
 ta4j gives you the building blocks for technical-analysis-driven systems in Java: bar series, indicators, rules, strategies, reports, and a unified trading-record model that now spans backtests, paper trading, and live execution.
 
+The current wiki reflects ta4j's newer unified trading stack:
+
+- `BaseTradingRecord` is the default trading-record implementation for both backtests and live or paper-trading flows.
+- `BarSeriesManager` is the default single-strategy backtest driver and now accepts either its own default record factory or a record you provide.
+- `BacktestExecutor` builds on `BarSeriesManager` when you want to rank or tune many strategies at once, including weighted normalized leaderboards.
+- Manual loops are still the right tool when orders and fills are decoupled, partial fills matter, or your broker confirms executions asynchronously.
+- `LiveTradingRecord` and `ExecutionFill` remain available only as 0.22.x compatibility facades. New code should use `BaseTradingRecord` and `TradeFill`.
+
 ## What’s Newer On Current Master
 
 - **Configurable backtest execution models**: `BarSeriesManager` and `BacktestExecutor` can now stay on the default next-open model or switch to current-close, slippage, or stop-limit execution.
@@ -13,35 +21,41 @@ ta4j gives you the building blocks for technical-analysis-driven systems in Java
 
 ## Start Here
 
-1. **Install ta4j** - Follow [Getting Started](Getting-started.md#install-ta4j) to build from the current branch or wire the latest release into your project.
-2. **Learn the building blocks** - Read [Bar Series & Bars](Bar-series-and-bars.md), [Num](Num.md), and [Technical Indicators](Technical-indicators.md).
-3. **Build your first strategy** - Use the walkthrough in [Getting Started](Getting-started.md#walkthrough-build-your-first-strategy).
-4. **Choose the right execution path** - Use [Backtesting](Backtesting.md) for `BarSeriesManager` and `BacktestExecutor`, then [Live Trading](Live-trading.md) for event-driven loops.
+- **[Getting Started](Getting-started.md)** - Install ta4j, build a strategy, and pick the right driver
+- **[Backtesting](Backtesting.md)** - `BarSeriesManager`, `BacktestExecutor`, supplied records, and manual simulation loops
+- **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
+- **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops
+- **[Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)** - Version-by-version changelog and migration notes
 
-## Unified Trading Stack At A Glance
+## Core Concepts
 
-| Scenario | Recommended path | Core classes |
+- **[Bar Series & Bars](Bar-series-and-bars.md)** - OHLCV data, aggregation, moving windows, and streaming updates
+- **[Data Sources](Data-Sources.md)** - Loading bars or trades from files and HTTP providers
+- **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
+- **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
+- **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
+- **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
+
+## Pick The Right Execution Path
+
+| Need | Recommended path | Why |
 | --- | --- | --- |
-| Quick historical validation | `BarSeriesManager` | `BarSeriesManager`, `BaseTradingRecord`, `TradeExecutionModel` |
-| Parameter sweeps and leaderboards | `BacktestExecutor` | `BacktestExecutor`, `WeightedCriterion`, `BacktestRuntimeReport` |
-| Deterministic replay with a preconfigured record | `BarSeriesManager.run(..., tradingRecord, ...)` | `BaseTradingRecord`, `ExecutionMatchPolicy` |
-| Live or paper execution with asynchronous fills | Manual loop | `Strategy`, `TradingRecord`, `TradeFill`, `Trade.fromFills(...)`, `ConcurrentBarSeries` |
-| Older live adapter compatibility | Temporary bridge only | `LiveTradingRecord`, `ExecutionFill` |
-
-The key change is simple: new code no longer needs a split "backtest record" versus "live record" mental model. `BaseTradingRecord` already supports classic `enter` / `exit` operations, fill-aware updates, open-lot views, recorded fees, and open-position criteria.
+| One strategy over historical data | `BarSeriesManager` + default `BaseTradingRecord` | Fastest path with minimal wiring |
+| Backtest with a preconfigured record | `BarSeriesManager.run(strategy, providedRecord, ...)` | Keep a specific `ExecutionMatchPolicy`, fee model, or reusable record instance |
+| Large batch runs or tuning | `BacktestExecutor` | Runtime telemetry, weighted leaderboards, progress callbacks, and batching |
+| Live or paper trading with confirmed fills | Manual loop + `BaseTradingRecord` | Signals and broker fills stay separate; stream `TradingRecord.operate(fill)` or batch `Trade.fromFills(...)` |
+| Maintaining older live adapters | `LiveTradingRecord` / `ExecutionFill` | Compatibility only while migrating toward `BaseTradingRecord` / `TradeFill` |
 
 ## Where To Go Next
 
-- **[Getting Started](Getting-started.md)** - First strategy, first backtest, and first live-style loop
-- **[Backtesting](Backtesting.md)** - When to use `BarSeriesManager`, `BacktestExecutor`, or a manual simulation loop
 - **[Analysis Criteria and Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)** - Rolling criteria, risk-adjusted return, open exposure, and risk-unit scoring
 - **[Walk-Forward Research](Walk-Forward-Research.md)** - Strategy walk-forward runs and generic prediction research workflows
-- **[Live Trading](Live-trading.md)** - `ConcurrentBarSeries`, broker-confirmed fills, persistence, and downstream integration patterns
-- **[Usage Examples](Usage-examples.md)** - Runnable examples like `Quickstart`, `TradingRecordParityBacktest`, `TradeFillRecordingExample`, and `SimpleMovingAverageRangeBacktest`
-- **[Release Notes](Release-notes.md)** - Migration details and version history
 
 ## Community
 
 - Chat on the [ta4j Discord](https://discord.gg/HX9MbWZ)
 - Explore the [ta4j repository](https://github.com/ta4j/ta4j) and its `ta4j-examples` module
-- Open a PR or issue when you spot drift, missing examples, or confusing behavior
+- **[How to Contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md)** - Development setup and contribution workflow
+- **[Roadmap & Tasks](Roadmap-and-Tasks.md)** - Planned work and known gaps
+- **[Alternative Libraries](Alternative-libraries.md)** - Comparable TA libraries
+- **[Related Projects](Related-projects.md)** - Ecosystem projects built around ta4j

@@ -5,7 +5,7 @@
 - [Live Trading](Live-trading.md)
 - [Usage Examples](Usage-examples.md)
 - [FAQ](FAQ.md)
-- [Release Notes](Release-notes.md)
+- [Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)
 
 ## Core Concepts
 - [Bar Series & Bars](Bar-series-and-bars.md)
@@ -18,7 +18,6 @@
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
 - [Elliott Wave Indicators](Elliott-Wave-Indicators.md)
 - [VWAP, S/R & Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)
-- [Maven Notes](Maven-notes.md)
 
 ## Build Strategies
 - [Trading Strategies](Trading-strategies.md)
@@ -31,11 +30,10 @@
 - [Usage Examples](Usage-examples.md)
 
 ## Project & Community
-- [How to Contribute](How-to-contribute.md)
-- [Found a Bug?](Found-a-bug.md)
+- [How to Contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md)
+- [Found a Bug?](https://github.com/ta4j/ta4j/issues/new/choose)
 - [Roadmap & Tasks](Roadmap-and-Tasks.md)
-- [Branching Model](Branching-model.md)
-- [Release Process](Release-process.md)
+- [Release Process](https://github.com/ta4j/ta4j/blob/master/RELEASE_PROCESS.md)
 - [Alternative Libraries](Alternative-libraries.md)
 - [Related Projects](Related-projects.md)
 - [XLS Testing](XLS-Testing.md)
