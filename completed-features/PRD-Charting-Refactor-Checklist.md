@@ -64,4 +64,4 @@ Status: Completed (2026-01-31)
 ## References
 - [Charting guide](../Charting.md)
 - [Usage examples](../Usage-examples.md)
-- [Project README](../README.md)
+- [Wiki home](../Home.md)
