@@ -20,6 +20,16 @@ Browse `org.ta4j.core.indicators` in your IDE for the full list—packages mirro
 
 ## Composition example
 
+```mermaid
+graph TD
+    BS[BarSeries] -->|input| CP[ClosePriceIndicator]
+    CP -->|input| FAST[SMAIndicator fast 9]
+    CP -->|input| SLOW[SMAIndicator slow 50]
+    FAST -->|operand 1| DIV[BinaryOperationIndicator.division]
+    SLOW -->|operand 2| DIV
+    DIV -->|output| TB[trendBias Indicator]
+```
+
 ```java
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 SMAIndicator fast = new SMAIndicator(close, 9);

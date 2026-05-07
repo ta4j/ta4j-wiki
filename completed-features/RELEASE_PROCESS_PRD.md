@@ -228,5 +228,5 @@ This ensures the tag is always an ancestor of `master` and removes reliance on h
 ---
 
 ## References
-- [Release Process Documentation](../Release-process.md) - Current process documentation
+- [Release Process Documentation](https://github.com/ta4j/ta4j/blob/master/RELEASE_PROCESS.md) - Current process documentation
 - [GitHub Workflows](https://github.com/ta4j/ta4j/tree/master/.github/workflows) - Implementation details

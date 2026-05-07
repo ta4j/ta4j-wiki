@@ -22,6 +22,16 @@ The main thing to keep in mind is that you do **not** need a manual loop just to
 
 For a normal single-strategy backtest, start here:
 
+```mermaid
+graph LR
+    BS[BarSeries] -->|feeds data| IND[Indicators]
+    IND -->|calculate| R[Rules]
+    R -->|Entry/Exit| STR[Strategy]
+    STR -->|evaluated by| BSM[BarSeriesManager]
+    BS -->|supplies bars| BSM
+    BSM -->|generates| TR[TradingRecord]
+```
+
 ```java
 BarSeriesManager manager = new BarSeriesManager(series);
 TradingRecord record = manager.run(strategy);
