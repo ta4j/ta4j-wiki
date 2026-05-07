@@ -49,4 +49,4 @@ Note that due to the volume of questions of this nature, you are highly encourag
 
 ### How to contribute?
 
-Ta4j lives from your participation! For more information, take a look at the [how to contribute](How-to-contribute.md) section.
+Ta4j lives from your participation! For more information, take a look at the [how to contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md) section.

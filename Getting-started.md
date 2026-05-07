@@ -46,7 +46,7 @@ Then depend on `ta4j-core` with the snapshot version:
 implementation "org.ta4j:ta4j-core:0.22.4-SNAPSHOT"
 ```
 
-If you are consuming a released build from Maven Central instead, replace the version with the newest released `0.22.x` number from [Release Notes](Release-notes.md). If a page mentions an API you do not see in `0.22.3` yet, that is your cue to build the current snapshot locally.
+If you are consuming a released build from Maven Central instead, replace the version with the newest released `0.22.x` number from [Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md). If a page mentions an API you do not see in `0.22.3` yet, that is your cue to build the current snapshot locally.
 
 Prefer to inspect the code? Clone [ta4j](https://github.com/ta4j/ta4j) and import the root Maven project. `ta4j-core` and `ta4j-examples` live side by side.
 
