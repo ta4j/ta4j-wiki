@@ -15,7 +15,7 @@
   <body>
     <div class="wrapper">
       <header>
-        <a href="/ta4j-wiki/"> <h3>Ta4j Wiki</h3> </a>
+        <a href="{{ '/' | relative_url }}"> <h3>Ta4j Wiki</h3> </a>
         <p>Documentation, examples and further information of the ta4j project</p>
         {% if site.show_downloads %}
           <ul>
@@ -32,33 +32,40 @@
           <!-- Custom div for the sidebar-->
         <div>
             <nav>
-                <dl class="sidebar" >
-                    <dt class="sidebar">General</dt>                    
-                        <dd><a target="_blank" href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.21.0/ta4j-core-0.21.0-javadoc.jar/!/index.html">Javadoc (0.21.0)</a></dd>
-                        <dd><a target="_blank" href="https://oss.sonatype.org/service/local/repositories/releases/archive/org/ta4j/ta4j-core/0.19/ta4j-core-0.19-javadoc.jar/!/index.html">Javadoc (0.19)</a></dd>
-						<dd><a href="Release-notes.html">Release Notes</a></dd>
-                        <dd><a href="Roadmap-and-Tasks.html">Roadmap</a></dd>
-                        <dd><a href="FAQ.html">FAQ</a></dd>
-                    <dt clas="sidebar">User's guide</dt>
-                        <dd><a href="Getting-started.html">Getting Started</a></dd>
-                        <dd><a href="Bar-series-and-bars.html">Bar series and Bars</a></dd>
-                        <dd><a href="Technical-indicators.html">Technical Indicators</a></dd>
-                        <dd><a href="Moving-Average-Indicators.html">Moving Average Indicators</a></dd>
-                        <dd><a href="Trading-strategies.html">Trading Strategies</a></dd>
-                        <dd><a href="Backtesting.html">Backtesting</a></dd>
-                        <dd><a href="Live-trading.html">Live Trading</a></dd>
-                        <dd><a href="Num.html">Num</a></dd>
-                    <dt clas="sidebar">Contributing</dt>
-                        <dd><a href="Found-a-bug.html">Found a bug</a></dd>
-                        <dd><a href="Branching-model.html">Branching model</a></dd>
-                        <dd><a href="How-to-contribute">How to Contribute</a></dd>
-                        <dd><a href="XLS-Testing.html">XLS Testing</a></dd>
-                    <dt clas="sidebar">Development Features</dt>
-                        
-                    <dt class="sidebar">Miscellaneous</dt>
-                        <dd><a href="Related-projects.html">Related Projects</a></dd>
-                        <dd><a href="Alternative-libraries">Alternative Libraries</a></dd>
-                        <dd><a href="Maven-notes.html">Maven Notes</a></dd>
+                <dl class="sidebar">
+                    <dt class="sidebar">General</dt>
+                        <dd><a target="_blank" href="https://javadoc.io/doc/org.ta4j/ta4j-core">Javadoc (latest release)</a></dd>
+                        <dd><a target="_blank" href="https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md">Release Notes</a></dd>
+                        <dd><a href="{{ '/Roadmap-and-Tasks.html' | relative_url }}">Roadmap</a></dd>
+                        <dd><a href="{{ '/FAQ.html' | relative_url }}">FAQ</a></dd>
+                    <dt class="sidebar">User's guide</dt>
+                        <dd><a href="{{ '/Getting-started.html' | relative_url }}">Getting Started</a></dd>
+                        <dd><a href="{{ '/Bar-series-and-bars.html' | relative_url }}">Bar series and Bars</a></dd>
+                        <dd><a href="{{ '/Data-Sources.html' | relative_url }}">Data Sources</a></dd>
+                        <dd><a href="{{ '/Num.html' | relative_url }}">Num</a></dd>
+                        <dd><a href="{{ '/Technical-indicators.html' | relative_url }}">Technical Indicators</a></dd>
+                        <dd><a href="{{ '/Indicators-Inventory.html' | relative_url }}">Indicators Inventory</a></dd>
+                        <dd><a href="{{ '/Moving-Average-Indicators.html' | relative_url }}">Moving Average Indicators</a></dd>
+                        <dd><a href="{{ '/Bill-Williams-Indicators.html' | relative_url }}">Bill Williams Indicators</a></dd>
+                        <dd><a href="{{ '/Trendlines-and-Swing-Points.html' | relative_url }}">Trendlines and Swing Points</a></dd>
+                        <dd><a href="{{ '/Elliott-Wave-Indicators.html' | relative_url }}">Elliott Wave Indicators</a></dd>
+                        <dd><a href="{{ '/VWAP-Support-Resistance-and-Wyckoff.html' | relative_url }}">VWAP, S/R and Wyckoff Guide</a></dd>
+                    <dt class="sidebar">Build Strategies</dt>
+                        <dd><a href="{{ '/Trading-strategies.html' | relative_url }}">Trading Strategies</a></dd>
+                        <dd><a href="{{ '/Stop-Loss-and-Stop-Gain-Rules.html' | relative_url }}">Stop Loss and Stop Gain Rules</a></dd>
+                        <dd><a href="{{ '/Backtesting.html' | relative_url }}">Backtesting</a></dd>
+                        <dd><a href="{{ '/Analysis-Criteria-and-Risk-Metrics.html' | relative_url }}">Analysis Criteria and Risk Metrics</a></dd>
+                        <dd><a href="{{ '/Walk-Forward-Research.html' | relative_url }}">Walk-Forward Research</a></dd>
+                        <dd><a href="{{ '/Live-trading.html' | relative_url }}">Live Trading</a></dd>
+                        <dd><a href="{{ '/Charting.html' | relative_url }}">Charting</a></dd>
+                        <dd><a href="{{ '/Usage-examples.html' | relative_url }}">Usage Examples</a></dd>
+                    <dt class="sidebar">Project and Community</dt>
+                        <dd><a target="_blank" href="https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md">How to Contribute</a></dd>
+                        <dd><a target="_blank" href="https://github.com/ta4j/ta4j/issues/new/choose">Found a bug</a></dd>
+                        <dd><a target="_blank" href="https://github.com/ta4j/ta4j/blob/master/RELEASE_PROCESS.md">Release Process</a></dd>
+                        <dd><a href="{{ '/XLS-Testing.html' | relative_url }}">XLS Testing</a></dd>
+                        <dd><a href="{{ '/Related-projects.html' | relative_url }}">Related Projects</a></dd>
+                        <dd><a href="{{ '/Alternative-libraries.html' | relative_url }}">Alternative Libraries</a></dd>
                 </dl>
             </nav>
         </div>

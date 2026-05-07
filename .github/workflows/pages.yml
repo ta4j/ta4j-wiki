@@ -1,6 +1,10 @@
 name: Deploy GitHub Pages
 
 on:
+  pull_request:
+    branches:
+      - master
+      - main
   push:
     branches:
       - master
@@ -13,7 +17,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
@@ -29,11 +33,80 @@ jobs:
         with:
           source: .
           destination: ./_site
+      - name: Validate generated site
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f index.md
+          test -f Home.md
+          grep -Fq "{% include_relative Home.md %}" index.md
+          test -f ./_site/index.html
+          grep -Fq "https://javadoc.io/doc/org.ta4j/ta4j-core" ./_site/index.html
+
+          source_stale_pattern='oss\.sonatype\.org/service/local/repositories/releases/archive|Javadoc \(0([.][0-9]+)+\)|clas="sidebar"|href="/ta4j-wiki/|Release-notes\.html|Found-a-bug\.html|Branching-model\.html|How-to-contribute|Maven-notes\.html'
+          generated_stale_pattern='oss\.sonatype\.org/service/local/repositories/releases/archive|Javadoc \(0([.][0-9]+)+\)|clas="sidebar"|Release-notes\.html|Found-a-bug\.html|Branching-model\.html|How-to-contribute|Maven-notes\.html'
+
+          if grep -E "$source_stale_pattern" _layouts/default.html _Sidebar.md Home.md index.md; then
+            echo "Stale source sidebar/root link found."
+            exit 1
+          fi
+
+          while IFS= read -r -d '' html; do
+            if grep -E "$generated_stale_pattern" "$html"; then
+              echo "Stale generated sidebar/root link found in $html."
+              exit 1
+            fi
+          done < <(find ./_site -name '*.html' -print0)
+
+          failures=0
+          while IFS= read -r -d '' html; do
+            html_path=${html#./_site/}
+            base_dir=$(dirname "$html_path")
+            while IFS= read -r href; do
+              case "$href" in
+                ""|"#"*|http://*|https://*|mailto:*|tel:*|//*)
+                  continue
+                  ;;
+              esac
+
+              href=${href%%#*}
+              href=${href%%\?*}
+              [[ -z "$href" ]] && continue
+
+              if [[ "$href" == "/ta4j-wiki" ]]; then
+                target="index.html"
+              elif [[ "$href" == "/ta4j-wiki/"* ]]; then
+                target=${href#/ta4j-wiki/}
+              elif [[ "$href" == "/" ]]; then
+                target="index.html"
+              elif [[ "$href" == /* ]]; then
+                target=${href#/}
+              elif [[ "$base_dir" == "." ]]; then
+                target=$href
+              else
+                target="$base_dir/$href"
+              fi
+
+              if [[ -z "$target" || "$target" == */ ]]; then
+                target="${target}index.html"
+              fi
+
+              if [[ ! -f "./_site/$target" ]]; then
+                echo "$html: unresolved href $href -> ./_site/$target"
+                failures=1
+              fi
+            done < <(grep -hoE 'href="[^"]+"' "$html" | sed -E 's/^href="(.*)"$/\1/')
+          done < <(find ./_site -name '*.html' -print0)
+
+          exit "$failures"
       - name: Upload artifact
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
   deploy:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     needs: build
     environment:
