@@ -22,6 +22,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 ## Start Here
 
 - **[Getting Started](Getting-started.md)** - Install ta4j, build a strategy, and pick the right driver
+- **[Canonical User Journey](Canonical-User-Journey.md)** - Follow the end-to-end production path from data ingestion to live operations
 - **[Backtesting](Backtesting.md)** - `BarSeriesManager`, `BacktestExecutor`, supplied records, and manual simulation loops
 - **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
 - **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops

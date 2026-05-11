@@ -180,6 +180,8 @@ If you rebuild the series on startup, make sure its bar index alignment still ma
 - Keep monitoring around bar ingestion gaps, order rejections, and repeated stale signals; those are usually integration bugs, not ta4j math bugs.
 - If feed ingestion and strategy evaluation happen on different threads, prefer `ConcurrentBarSeries` and keep `TradingRecord` mutation on the execution-confirmation path only.
 
+For a full production operating model (startup, persistence, recovery, reconciliation, and incident handling), follow the [Live Trading Runbook](Live-Trading-Runbook.md).
+
 ## Examples And References
 
 - **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Runnable walkthrough of streamed fills, grouped batches, and partial-exit matching policies
@@ -187,6 +189,7 @@ If you rebuild the series on startup, make sure its bar index alignment still ma
 - **[Backtesting](Backtesting.md)** - Historical and replay-style execution patterns
 - **[Bar Series & Bars](Bar-series-and-bars.md)** - Bar ingestion and aggregation details
 - **[Usage Examples](Usage-examples.md)** - Runnable examples in `ta4j-examples`
+- **[Troubleshooting Hub](Troubleshooting-Hub.md)** - Symptom-driven diagnostics and escalation checklist
 
 ## Compatibility Note
 

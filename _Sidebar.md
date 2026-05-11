@@ -1,6 +1,7 @@
 ## Start Here
 - [Home](Home.md)
 - [Getting Started](Getting-started.md)
+- [Canonical User Journey](Canonical-User-Journey.md)
 - [Backtesting](Backtesting.md)
 - [Live Trading](Live-trading.md)
 - [Usage Examples](Usage-examples.md)
@@ -23,14 +24,18 @@
 - [Trading Strategies](Trading-strategies.md)
 - [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting](Backtesting.md)
+- [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md)
 - [Analysis Criteria & Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)
 - [Walk-Forward Research](Walk-Forward-Research.md)
 - [Live Trading](Live-trading.md)
+- [Live Trading Runbook](Live-Trading-Runbook.md)
+- [Troubleshooting Hub](Troubleshooting-Hub.md)
 - [Charting](Charting.md)
 - [Usage Examples](Usage-examples.md)
 
 ## Project & Community
 - [How to Contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md)
+- [Documentation Governance](Documentation-Governance.md)
 - [Found a Bug?](https://github.com/ta4j/ta4j/issues/new/choose)
 - [Roadmap & Tasks](Roadmap-and-Tasks.md)
 - [Release Process](https://github.com/ta4j/ta4j/blob/master/RELEASE_PROCESS.md)

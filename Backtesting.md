@@ -220,6 +220,8 @@ After you have a `TradingRecord`, render it with `ChartWorkflow` or inspect it w
 - **Moving series** - If you use `setMaximumBarCount`, do not evaluate criteria against evicted bars.
 - **Execution assumptions** - Keep your `TradeExecutionModel`, fees, and borrowing costs aligned with what you are trying to simulate.
 
+For production promotion gates, run through the [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md).
+
 ## Walk-Forward And Tuning
 
 Use walk-forward execution when you want training and testing windows instead of one monolithic run:
@@ -235,6 +237,8 @@ StrategyWalkForwardExecutionResult walkForward = result.walkForward();
 ```
 
 For fixed study geometry, construct `WalkForwardConfig` directly with your chosen train/test, purge, embargo, holdout, horizon, top-K, and seed values, then keep that configuration unchanged across candidate comparisons. For large-scale performance tuning, use [`BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java), which sits on top of `BacktestExecutor`.
+
+If your results look unstable or surprising, use the [Troubleshooting Hub](Troubleshooting-Hub.md) for symptom-driven debugging paths.
 
 ## Compatibility Note
 
