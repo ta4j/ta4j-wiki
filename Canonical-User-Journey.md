@@ -142,4 +142,8 @@ Exit criteria:
 
 - [Usage Examples](Usage-examples.md)
 - [Charting](Charting.md)
+- [Execution Decision Matrix](Execution-Decision-Matrix.md)
+- [Migration and Version Compatibility](Migration-and-Version-Compatibility.md)
+- [Examples Expected Outputs](Examples-Expected-Outputs.md)
+- [Performance Characterization](Performance-Characterization.md)
 - [Documentation Quality Rubric](Documentation-Quality-Rubric.md)

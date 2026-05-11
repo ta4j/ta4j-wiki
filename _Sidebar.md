@@ -1,10 +1,16 @@
 ## Start Here
 - [Home](Home.md)
 - [Getting Started](Getting-started.md)
-- [Canonical User Journey](Canonical-User-Journey.md)
+- [Usage Examples](Usage-examples.md)
 - [Backtesting](Backtesting.md)
 - [Live Trading](Live-trading.md)
-- [Usage Examples](Usage-examples.md)
+- [Live Trading Runbook](Live-Trading-Runbook.md)
+- [Troubleshooting Hub](Troubleshooting-Hub.md)
+- [Canonical User Journey](Canonical-User-Journey.md)
+- [Execution Decision Matrix](Execution-Decision-Matrix.md)
+- [Migration and Version Compatibility](Migration-and-Version-Compatibility.md)
+- [Examples Expected Outputs](Examples-Expected-Outputs.md)
+- [Performance Characterization](Performance-Characterization.md)
 - [FAQ](FAQ.md)
 - [Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)
 

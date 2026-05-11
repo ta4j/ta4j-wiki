@@ -6,6 +6,15 @@ This guide takes you from a fresh checkout to a working strategy, then shows how
 2. `BacktestExecutor` for large batches
 3. Manual loops with `BaseTradingRecord` when fills arrive asynchronously
 
+Canonical onboarding lane:
+
+1. This page (`Getting Started`)
+2. [Usage Examples](Usage-examples.md)
+3. [Backtesting](Backtesting.md)
+4. [Live Trading](Live-trading.md)
+5. [Live Trading Runbook](Live-Trading-Runbook.md)
+6. [Troubleshooting Hub](Troubleshooting-Hub.md)
+
 ## Prerequisites
 
 - JDK 21 or newer

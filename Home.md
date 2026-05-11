@@ -26,11 +26,14 @@ The current wiki reflects ta4j's newer unified trading stack:
 
 ## Start Here
 
+- **Primary onboarding lane**: [Getting Started](Getting-started.md) -> [Usage Examples](Usage-examples.md) -> [Backtesting](Backtesting.md) -> [Live Trading](Live-trading.md) -> [Live Trading Runbook](Live-Trading-Runbook.md) -> [Troubleshooting Hub](Troubleshooting-Hub.md)
 - **[Getting Started](Getting-started.md)** - Install ta4j, build a strategy, and pick the right driver
 - **[Canonical User Journey](Canonical-User-Journey.md)** - Follow the end-to-end production path from data ingestion to live operations
 - **[Backtesting](Backtesting.md)** - `BarSeriesManager`, `BacktestExecutor`, supplied records, and manual simulation loops
 - **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
 - **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops
+- **[Execution Decision Matrix](Execution-Decision-Matrix.md)** - Choose execution and simulation path by workload
+- **[Migration and Version Compatibility](Migration-and-Version-Compatibility.md)** - Preferred APIs and incremental migration guidance
 - **[Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)** - Version-by-version changelog and migration notes
 
 ## Core Concepts

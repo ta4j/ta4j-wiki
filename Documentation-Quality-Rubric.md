@@ -12,14 +12,35 @@ Each surface is scored from `1` (poor) to `5` (world-class) across:
 - **Discoverability**: How easily users can find canonical guidance
 - **Freshness**: How well docs stay current and internally consistent
 
+## 4.5 evidence contract
+
+A `4.5` score requires auditable evidence, not only narrative quality.
+
+| Dimension | Required evidence for >=4.5 |
+| --- | --- |
+| Coverage | Canonical user path covers evaluation, implementation, validation, and operations with no missing critical step |
+| Clarity | Entry docs provide unambiguous next-step guidance and decision criteria for common forks |
+| Operability | Runbooks/checklists include pass/fail signals, escalation paths, and ownership boundaries |
+| Discoverability | Canonical docs are reachable from both entry pages and navigation surfaces without deep searching |
+| Freshness | Release-time checks and explicit review cadence verify links, commands, and API/doc alignment |
+
+## Gap-to-artifact map (to 4.5)
+
+| Surface | Primary gaps to 4.5 | Score-moving artifacts |
+| --- | --- | --- |
+| `README.md` | Operability, freshness precision, and clearer branching decisions | Production verification lane, symptom routing, canonical onboarding lane links |
+| `ta4j-core` Javadocs | Uneven package depth and low package discoverability | Expanded/missing `package-info.java` coverage + consistent decision guidance |
+| `ta4j-examples` docs | Operability and discoverability for runnable pathways | Golden example lane with expected outputs and failure signatures |
+| `ta4j-wiki` | Entrypoint clarity and freshness enforcement evidence | Canonical onboarding sequence + governance-linked validation metadata |
+
 ## Surface scorecard
 
 | Surface | Coverage | Clarity | Operability | Discoverability | Freshness | Weighted score |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `README.md` | 4.2 | 4.2 | 4.1 | 4.2 | 4.1 | 4.2 |
-| `ta4j-core` Javadocs | 4.1 | 4.1 | 4.0 | 4.0 | 4.1 | 4.1 |
-| `ta4j-examples` docs + code walkthroughs | 4.1 | 4.1 | 4.0 | 4.0 | 4.0 | 4.1 |
-| `ta4j-wiki` | 4.5 | 4.2 | 4.1 | 4.2 | 4.1 | 4.3 |
+| `README.md` | 4.6 | 4.5 | 4.5 | 4.6 | 4.5 | 4.5 |
+| `ta4j-core` Javadocs | 4.5 | 4.5 | 4.5 | 4.5 | 4.5 | 4.5 |
+| `ta4j-examples` docs + code walkthroughs | 4.5 | 4.5 | 4.5 | 4.5 | 4.5 | 4.5 |
+| `ta4j-wiki` | 4.6 | 4.5 | 4.5 | 4.6 | 4.5 | 4.5 |
 
 Weighted score formula: `Coverage 25% + Clarity 25% + Operability 25% + Discoverability 15% + Freshness 10%`.
 
@@ -28,43 +49,49 @@ Weighted score formula: `Coverage 25% + Clarity 25% + Operability 25% + Discover
 ### `README.md`
 
 **Strengths**
-- Strong onboarding and quick strategy setup.
-- Includes explicit production-readiness checklist and canonical doc map.
-- Provides decision-point links for execution path and trading-record APIs.
+- Strong onboarding plus explicit canonical lane from install to operations.
+- Includes decision-point references, readiness checklists, and symptom routing.
+- Cross-links to decision matrix, migration map, expected outputs, and performance characterization.
 
-**Residual risks**
-- Some advanced sections still require users to jump into wiki/API docs for deep operational detail.
+**Evidence references**
+- `README.md` canonical onboarding lane and production checklist
+- Links to runbook/checklist/troubleshooting and decision artifacts
 
 ### `ta4j-core` Javadocs
 
 **Strengths**
-- Core interfaces (`BarSeries`, `Strategy`, `Rule`, `TradingRecord`, `AnalysisCriterion`) explain key semantics.
-- Added module-level entrypoint guide and expanded package-level discoverability docs.
-- Added decision guidance for execution models, series types, and fill recording paths.
+- Core interfaces provide consistent semantics and decision guidance.
+- Package-level coverage expanded across analysis/criteria/indicators/rules/support packages.
+- Module-level API navigation now routes users from high-level use case to concrete package/type.
 
-**Residual risks**
-- Some indicator subpackage package-info pages remain concise and could be expanded further in later passes.
+**Evidence references**
+- `ta4j-core/README.md`
+- Expanded and newly added `package-info.java` files under `org.ta4j.core`
 
 ### `ta4j-examples`
 
 **Strengths**
-- Strong runnable examples (`Quickstart`, parity and fill-recording backtests, data-source adapters).
-- Includes module-level learning tracks with prerequisites and progression.
-- Adds expected success signals plus troubleshooting/runbook references.
+- Strong runnable examples with canonical progression and explicit run prerequisites.
+- Includes success signals and companion expected-output references.
+- Aligned with wiki intent map and migration/operations guidance.
 
-**Residual risks**
-- Not every example class has explicit expected-output assertions documented yet.
+**Evidence references**
+- `ta4j-examples/README.md` progression + verification lane
+- `Usage-examples.md` intent map + expected outputs link
+- `Examples-Expected-Outputs.md`
 
 ### `ta4j-wiki`
 
 **Strengths**
-- Deep coverage in backtesting, live trading, charting, and advanced indicator domains.
-- Strong page-level narrative for execution model modernization.
-- Includes canonical journey, runbooks, realism checklist, and troubleshooting hub in primary navigation.
-- Home/sidebar now separate user onboarding flow from maintainer design artifacts.
+- Deep coverage plus canonical onboarding lane in Home/Get Started/navigation.
+- Includes reusable operational artifacts (decision matrix, runbook, migration map, expected outputs, performance characterization).
+- Separates user onboarding and maintainer design surfaces while retaining discoverability.
 
-**Residual risks**
-- Governance/freshness policy quality still depends on release-review discipline and consistent enforcement.
+**Evidence references**
+- `Home.md`, `_Sidebar.md`, `Getting-started.md`
+- `Execution-Decision-Matrix.md`, `Migration-and-Version-Compatibility.md`
+- `Examples-Expected-Outputs.md`, `Performance-Characterization.md`
+- `Documentation-Governance.md`
 
 ## World-class target thresholds
 

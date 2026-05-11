@@ -70,3 +70,10 @@ Before opening an issue:
 2. Capture strategy parameters and execution model
 3. Include reproducible command and expected vs actual behavior
 4. Include logs or chart snapshots that isolate the discrepancy
+
+Escalation flow:
+
+1. Check [Execution Decision Matrix](Execution-Decision-Matrix.md) for model-assumption mismatch
+2. Verify canonical run behavior with [Examples Expected Outputs](Examples-Expected-Outputs.md)
+3. Apply operational recovery steps in [Live Trading Runbook](Live-Trading-Runbook.md)
+4. Open an issue through [Found a Bug?](https://github.com/ta4j/ta4j/issues/new/choose)

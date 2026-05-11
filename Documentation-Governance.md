@@ -14,6 +14,11 @@ User-facing documentation should satisfy:
 
 Use [Documentation Quality Rubric](Documentation-Quality-Rubric.md) for scored audits.
 
+4.5 bar policy:
+
+- Scores at `>=4.5` must be supported by explicit evidence in the rubric's evidence contract.
+- Score updates must include a short justification note tied to changed artifacts/checks.
+
 ## Canonical ownership model
 
 - `README.md`: entrypoint and high-level orientation
@@ -42,6 +47,7 @@ Automation:
 
 - `scripts/docs-integrity-check.sh`
 - `prepare-release.yml` runs this check before versioning and release-note commits
+- Canonical docs gate includes entry docs, runbooks/checklists, decision matrix, migration map, expected outputs, and performance characterization pages
 
 Required release checkpoint:
 
@@ -68,3 +74,12 @@ Freshness SLA for primary user docs (`README`, `ta4j-examples/README`, `Home`, `
 - **Change-window SLA**: update docs within the same PR when behavior/API changes.
 - **Release SLA**: no unresolved TODO markers or broken references at release prepare time.
 - **Navigation SLA**: new high-value pages must be linked from `Home` or `_Sidebar` before merge.
+
+Dimension-to-evidence review checklist (required before scoring >=4.5):
+
+- [ ] Coverage evidence: canonical path includes build, backtest, live, and incident handling references
+- [ ] Clarity evidence: entry pages define exact next-step routing for primary user intents
+- [ ] Operability evidence: checklist/runbook includes validation signals and escalation flow
+- [ ] Discoverability evidence: canonical artifacts are visible in both entry copy and nav menus
+- [ ] Freshness evidence: integrity checks and release checklist cover all canonical docs
+- [ ] Canonical artifact set exists and passes integrity checks before release preparation

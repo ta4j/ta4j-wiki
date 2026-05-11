@@ -14,6 +14,7 @@ If you are deciding where to start, use this map:
 - Deep Elliott workflows: [Elliott Wave analysis](#elliott-wave-analysis)
 
 For a curated progression, also see the module-level examples index: [`ta4j-examples/README.md`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/README.md).
+For verification signals and common failure patterns, see [Examples Expected Outputs](Examples-Expected-Outputs.md).
 
 ## Start quickly
 
@@ -76,3 +77,6 @@ For new live code:
 ## More examples
 
 The examples module also contains data-source adapters, charting helpers, Elliott Wave demos, and indicator showcases. If a workflow is documented in the wiki but missing a runnable example, contributions are welcome.
+
+For compatibility migration between legacy and preferred APIs, see
+[Migration and Version Compatibility](Migration-and-Version-Compatibility.md).
