@@ -42,3 +42,8 @@
 - [Alternative Libraries](Alternative-libraries.md)
 - [Related Projects](Related-projects.md)
 - [XLS Testing](XLS-Testing.md)
+
+## Maintainer Design Docs
+- [Architecture Proposals](architecture/proposed/)
+- [Architecture Archive](architecture/archive/)
+- [Completed Features](completed-features/README.md)

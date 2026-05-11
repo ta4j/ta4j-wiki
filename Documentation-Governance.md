@@ -23,6 +23,12 @@ Use [Documentation Quality Rubric](Documentation-Quality-Rubric.md) for scored a
   - [Backtesting](Backtesting.md), [Live Trading](Live-trading.md): execution usage guidance
   - [Live Trading Runbook](Live-Trading-Runbook.md), [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md), [Troubleshooting Hub](Troubleshooting-Hub.md): production operations
 
+Owner roles:
+
+- **Feature author** owns doc updates for changed APIs/examples in the same change set.
+- **Release reviewer** enforces the release-note-to-docs delta checklist.
+- **Maintainer on duty** refreshes scorecard and freshness status before a release cut.
+
 ## Release-time documentation checks
 
 Release preparation must validate:
@@ -36,6 +42,10 @@ Automation:
 
 - `scripts/docs-integrity-check.sh`
 - `prepare-release.yml` runs this check before versioning and release-note commits
+
+Required release checkpoint:
+
+- Release PR is not ready until docs integrity passes and the release-note-to-docs delta checklist is complete.
 
 ## Release-note to docs delta checklist
 
@@ -52,3 +62,9 @@ For each release PR, reviewers must confirm:
 - Run a rubric refresh before each minor/patch release
 - Re-run docs integrity checks in every release-prep workflow
 - Track recurring user confusion patterns and resolve them in docs, not only in chat/issues
+
+Freshness SLA for primary user docs (`README`, `ta4j-examples/README`, `Home`, `Getting-started`, `Backtesting`, `Live-trading`):
+
+- **Change-window SLA**: update docs within the same PR when behavior/API changes.
+- **Release SLA**: no unresolved TODO markers or broken references at release prepare time.
+- **Navigation SLA**: new high-value pages must be linked from `Home` or `_Sidebar` before merge.

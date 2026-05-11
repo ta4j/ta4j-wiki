@@ -12,6 +12,11 @@ The current wiki reflects ta4j's newer unified trading stack:
 - Manual loops are still the right tool when orders and fills are decoupled, partial fills matter, or your broker confirms executions asynchronously.
 - `LiveTradingRecord` and `ExecutionFill` remain available only as 0.22.x compatibility facades. New code should use `BaseTradingRecord` and `TradeFill`.
 
+## Choose your audience path
+
+- **Production users and integrators** should start in [Start Here](#start-here), then follow [Canonical User Journey](Canonical-User-Journey.md).
+- **Maintainers and design contributors** should use architecture and delivery artifacts under [`architecture/`](architecture/) and [`completed-features/`](completed-features/), which are not part of the primary user onboarding path.
+
 ## What’s Newer On Current Master
 
 - **Configurable backtest execution models**: `BarSeriesManager` and `BacktestExecutor` can now stay on the default next-open model or switch to current-close, slippage, or stop-limit execution.
@@ -60,3 +65,9 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Roadmap & Tasks](Roadmap-and-Tasks.md)** - Planned work and known gaps
 - **[Alternative Libraries](Alternative-libraries.md)** - Comparable TA libraries
 - **[Related Projects](Related-projects.md)** - Ecosystem projects built around ta4j
+
+## Maintainer design docs
+
+- **[Architecture proposals](architecture/proposed/)** - Active design drafts and TODO PRDs
+- **[Architecture archive](architecture/archive/)** - Historical decisions and implementation records
+- **[Completed feature dossiers](completed-features/README.md)** - Delivered PRD/checklist records

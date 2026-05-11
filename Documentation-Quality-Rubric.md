@@ -16,10 +16,10 @@ Each surface is scored from `1` (poor) to `5` (world-class) across:
 
 | Surface | Coverage | Clarity | Operability | Discoverability | Freshness | Weighted score |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `README.md` | 4.0 | 4.0 | 3.0 | 3.0 | 3.0 | 3.4 |
-| `ta4j-core` Javadocs | 3.5 | 4.0 | 3.5 | 2.5 | 4.0 | 3.5 |
-| `ta4j-examples` docs + code walkthroughs | 4.0 | 4.0 | 3.5 | 2.5 | 3.5 | 3.5 |
-| `ta4j-wiki` | 4.5 | 4.0 | 3.5 | 3.5 | 3.5 | 3.8 |
+| `README.md` | 4.2 | 4.2 | 4.1 | 4.2 | 4.1 | 4.2 |
+| `ta4j-core` Javadocs | 4.1 | 4.1 | 4.0 | 4.0 | 4.1 | 4.1 |
+| `ta4j-examples` docs + code walkthroughs | 4.1 | 4.1 | 4.0 | 4.0 | 4.0 | 4.1 |
+| `ta4j-wiki` | 4.5 | 4.2 | 4.1 | 4.2 | 4.1 | 4.3 |
 
 Weighted score formula: `Coverage 25% + Clarity 25% + Operability 25% + Discoverability 15% + Freshness 10%`.
 
@@ -29,45 +29,42 @@ Weighted score formula: `Coverage 25% + Clarity 25% + Operability 25% + Discover
 
 **Strengths**
 - Strong onboarding and quick strategy setup.
-- Good examples for data sourcing, backtesting, and live-style record updates.
+- Includes explicit production-readiness checklist and canonical doc map.
+- Provides decision-point links for execution path and trading-record APIs.
 
-**Gaps**
-- Contains stale placeholders and generic wiki links where precise links are needed.
-- Includes at least one broken example reference.
-- Operational checklists are still too thin for production users.
+**Residual risks**
+- Some advanced sections still require users to jump into wiki/API docs for deep operational detail.
 
 ### `ta4j-core` Javadocs
 
 **Strengths**
 - Core interfaces (`BarSeries`, `Strategy`, `Rule`, `TradingRecord`, `AnalysisCriterion`) explain key semantics.
-- New execution and analysis APIs include practical notes.
+- Added module-level entrypoint guide and expanded package-level discoverability docs.
+- Added decision guidance for execution models, series types, and fill recording paths.
 
-**Gaps**
-- No module-level architecture narrative in `ta4j-core`.
-- Package docs are uneven in depth and practical guidance.
-- Decision support is weak (for example, when to choose one execution or numeric model over another).
+**Residual risks**
+- Some indicator subpackage package-info pages remain concise and could be expanded further in later passes.
 
 ### `ta4j-examples`
 
 **Strengths**
 - Strong runnable examples (`Quickstart`, parity and fill-recording backtests, data-source adapters).
-- Good code readability and practical logging.
+- Includes module-level learning tracks with prerequisites and progression.
+- Adds expected success signals plus troubleshooting/runbook references.
 
-**Gaps**
-- Missing module-level index page for progression and intent-based discovery.
-- No explicit beginner-to-production learning path.
-- Setup and expected output verification guidance is inconsistent across examples.
+**Residual risks**
+- Not every example class has explicit expected-output assertions documented yet.
 
 ### `ta4j-wiki`
 
 **Strengths**
 - Deep coverage in backtesting, live trading, charting, and advanced indicator domains.
 - Strong page-level narrative for execution model modernization.
+- Includes canonical journey, runbooks, realism checklist, and troubleshooting hub in primary navigation.
+- Home/sidebar now separate user onboarding flow from maintainer design artifacts.
 
-**Gaps**
-- Audience boundaries are blurred (user docs and maintainers' architecture artifacts share one space).
-- Troubleshooting is fragmented across multiple pages.
-- End-to-end journey orchestration is implied rather than explicitly canonical.
+**Residual risks**
+- Governance/freshness policy quality still depends on release-review discipline and consistent enforcement.
 
 ## World-class target thresholds
 

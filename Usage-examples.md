@@ -2,6 +2,19 @@
 
 The [`ta4j-examples`](https://github.com/ta4j/ta4j/tree/master/ta4j-examples/src/main/java/ta4jexamples) module is the runnable companion to this wiki. Each example is a standalone `main` program you can open in your IDE or run with Maven.
 
+## Choose by intent
+
+If you are deciding where to start, use this map:
+
+- First successful run: [Start quickly](#start-quickly)
+- Build and compare strategy logic: [Strategy patterns](#strategy-patterns)
+- Validate execution assumptions and metrics: [Backtesting & analytics](#backtesting--analytics)
+- Integrate bot loops and fill-driven recording: [Bots & live trading](#bots--live-trading)
+- Debug indicators and visual behavior: [Indicators & visualization](#indicators--visualization)
+- Deep Elliott workflows: [Elliott Wave analysis](#elliott-wave-analysis)
+
+For a curated progression, also see the module-level examples index: [`ta4j-examples/README.md`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/README.md).
+
 ## Start quickly
 
 - **[Quickstart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/Quickstart.java)** - Load data, build a strategy, run a backtest, and render the result
