@@ -15,7 +15,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 ## Choose your audience path
 
 - **Production users and integrators** should start in [Start Here](#start-here), then follow [Canonical User Journey](Canonical-User-Journey.md).
-- **Maintainers and design contributors** should use architecture and delivery artifacts under [`architecture/`](architecture/) and [`completed-features/`](completed-features/), which are not part of the primary user onboarding path.
+- **Maintainers and design contributors** should use architecture and delivery artifacts under [`architecture/`](architecture/) and [`completed-features/README.md`](completed-features/README.md), which are not part of the primary user onboarding path.
 
 ## What’s Newer On Current Master
 
@@ -71,6 +71,6 @@ The current wiki reflects ta4j's newer unified trading stack:
 
 ## Maintainer design docs
 
-- **[Architecture proposals](architecture/proposed/)** - Active design drafts and TODO PRDs
-- **[Architecture archive](architecture/archive/)** - Historical decisions and implementation records
+- **[Architecture proposals](architecture/proposed/index.md)** - Active design drafts and TODO PRDs
+- **[Architecture archive](architecture/archive/index.md)** - Historical decisions and implementation records
 - **[Completed feature dossiers](completed-features/README.md)** - Delivered PRD/checklist records

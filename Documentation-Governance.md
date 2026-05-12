@@ -45,8 +45,8 @@ Release preparation must validate:
 
 Automation:
 
-- `scripts/docs-integrity-check.sh`
-- `prepare-release.yml` runs this check before versioning and release-note commits
+- [`scripts/docs-integrity-check.sh`](https://github.com/ta4j/ta4j/blob/master/scripts/docs-integrity-check.sh) (in the `ta4j` repository)
+- [`prepare-release.yml`](https://github.com/ta4j/ta4j/blob/master/.github/workflows/prepare-release.yml) runs this check before versioning and release-note commits
 - Canonical docs gate includes entry docs, runbooks/checklists, decision matrix, migration map, expected outputs, and performance characterization pages
 
 Required release checkpoint:

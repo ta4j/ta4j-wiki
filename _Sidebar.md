@@ -50,6 +50,6 @@
 - [XLS Testing](XLS-Testing.md)
 
 ## Maintainer Design Docs
-- [Architecture Proposals](architecture/proposed/)
-- [Architecture Archive](architecture/archive/)
+- [Architecture Proposals](architecture/proposed/index.md)
+- [Architecture Archive](architecture/archive/index.md)
 - [Completed Features](completed-features/README.md)
