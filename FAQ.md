@@ -1,4 +1,7 @@
 # Frequently Asked Questions
+
+For production incidents or debugging workflows, start with the [Troubleshooting Hub](Troubleshooting-Hub.md).
+
 ### Is there a ta4j chat?
 We are at [discord](https://discord.gg/HX9MbWZ). Create your account and join!
 

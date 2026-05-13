@@ -12,6 +12,11 @@ The current wiki reflects ta4j's newer unified trading stack:
 - Manual loops are still the right tool when orders and fills are decoupled, partial fills matter, or your broker confirms executions asynchronously.
 - `LiveTradingRecord` and `ExecutionFill` remain available only as 0.22.x compatibility facades. New code should use `BaseTradingRecord` and `TradeFill`.
 
+## Choose your audience path
+
+- **Production users and integrators** should start in [Start Here](#start-here), then follow [Canonical User Journey](Canonical-User-Journey.md).
+- **Maintainers and design contributors** should use architecture and delivery artifacts under [`architecture/`](architecture/) and [`completed-features/README.md`](completed-features/README.md), which are not part of the primary user onboarding path.
+
 ## What’s Newer On Current Master
 
 - **Configurable backtest execution models**: `BarSeriesManager` and `BacktestExecutor` can now stay on the default next-open model or switch to current-close, slippage, or stop-limit execution.
@@ -21,10 +26,14 @@ The current wiki reflects ta4j's newer unified trading stack:
 
 ## Start Here
 
+- **Primary onboarding lane**: [Getting Started](Getting-started.md) -> [Usage Examples](Usage-examples.md) -> [Backtesting](Backtesting.md) -> [Live Trading](Live-trading.md) -> [Live Trading Runbook](Live-Trading-Runbook.md) -> [Troubleshooting Hub](Troubleshooting-Hub.md)
 - **[Getting Started](Getting-started.md)** - Install ta4j, build a strategy, and pick the right driver
+- **[Canonical User Journey](Canonical-User-Journey.md)** - Follow the end-to-end production path from data ingestion to live operations
 - **[Backtesting](Backtesting.md)** - `BarSeriesManager`, `BacktestExecutor`, supplied records, and manual simulation loops
 - **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
 - **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops
+- **[Execution Decision Matrix](Execution-Decision-Matrix.md)** - Choose execution and simulation path by workload
+- **[Migration and Version Compatibility](Migration-and-Version-Compatibility.md)** - Preferred APIs and incremental migration guidance
 - **[Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)** - Version-by-version changelog and migration notes
 
 ## Core Concepts
@@ -59,3 +68,9 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Roadmap & Tasks](Roadmap-and-Tasks.md)** - Planned work and known gaps
 - **[Alternative Libraries](Alternative-libraries.md)** - Comparable TA libraries
 - **[Related Projects](Related-projects.md)** - Ecosystem projects built around ta4j
+
+## Maintainer design docs
+
+- **[Architecture proposals](architecture/proposed/index.md)** - Active design drafts and TODO PRDs
+- **[Architecture archive](architecture/archive/index.md)** - Historical decisions and implementation records
+- **[Completed feature dossiers](completed-features/README.md)** - Delivered PRD/checklist records
