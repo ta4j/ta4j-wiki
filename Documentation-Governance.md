@@ -83,3 +83,57 @@ Dimension-to-evidence review checklist (required before scoring >=4.5):
 - [ ] Discoverability evidence: canonical artifacts are visible in both entry copy and nav menus
 - [ ] Freshness evidence: integrity checks and release checklist cover all canonical docs
 - [ ] Canonical artifact set exists and passes integrity checks before release preparation
+
+## Consolidation baseline snapshot (2026-05-13)
+
+This snapshot records overlap metrics before the "documentation surface-area consolidation" rollout.
+
+### Baseline metrics
+
+- Wiki top-level pages (`*.md`, excluding `_Footer.md`): `38`
+- Wiki sidebar links: `48` total / `44` local targets / `38` unique local targets
+- Wiki sidebar duplicate targets: `6`
+  - `Backtesting.md`
+  - `Live-Candle-vs-Closed-Candle-Evaluation.md`
+  - `Live-Trading-Runbook.md`
+  - `Live-trading.md`
+  - `Troubleshooting-Hub.md`
+  - `Usage-examples.md`
+- Root `README.md` wiki links: `30` total / `18` unique destinations
+- `ta4j-examples/README.md` wiki links: `11` total / `9` unique destinations
+
+### Baseline overlap and consistency findings
+
+- Execution-choice guidance appears in multiple entry pages (`Home`, `Getting-started`, `Backtesting`) instead of one canonical decision surface.
+- Onboarding and "where to go next" guidance is duplicated across root/module READMEs plus wiki entry pages.
+- Wiki-link style is inconsistent in repo docs:
+  - `.github/CONTRIBUTING.md` currently points to `github.com/ta4j/ta4j-wiki/wiki/...`
+  - Other docs mostly point to `ta4j.github.io/ta4j-wiki/...`
+- Runtime baseline wording is inconsistent:
+  - Root docs and contributing docs state Java/JDK 25+
+  - `ta4j-examples/README.md` states JDK 21+
+
+### Target metrics
+
+- Sidebar duplicate targets: `6` -> `<=1`
+- Root `README.md` wiki link repetition (total vs unique gap): reduce by at least `40%`
+- Execution-choice decision tables: consolidate to a single canonical page
+- Broken links after each phase: `0`
+
+## Consolidation progress snapshot (2026-05-13)
+
+Latest post-change metrics:
+
+- Wiki top-level pages: `40` (increased temporarily due quickstart/reference split plus one deprecation stub)
+- Wiki sidebar links: `41` total / `37` local targets / `37` unique local targets
+- Wiki sidebar duplicate targets: `0` (target met)
+- Root `README.md` wiki links: `25` total / `17` unique destinations (total references reduced from baseline)
+- Execution-choice table ownership: consolidated to [`Execution-Decision-Matrix.md`](Execution-Decision-Matrix.md)
+- Link-integrity status:
+  - `scripts/docs-integrity-check.sh`: pass
+  - Wiki local-link smoke check: `missing_links 0`
+
+Notes:
+
+- The temporary page-count increase is intentional for phase-3 split-by-intent (`Charting`/`Elliott` quickstarts) and deprecation-safe routing (`Alternative-libraries` stub).
+- Future cleanup can remove stubs after the cooling window and collapse quickstarts if discoverability data shows no benefit.

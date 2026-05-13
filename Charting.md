@@ -2,6 +2,9 @@
 
 Ta4j provides powerful charting capabilities through the `ChartWorkflow` class and its fluent `ChartBuilder` API. You can create sophisticated trading charts with candlestick data, indicators, trading records, and analysis criteria overlays.
 
+For a concise first-run path, use [Charting Quickstart](Charting-Quickstart.md).
+This page is the detailed charting reference.
+
 ## Overview
 
 The charting system in ta4j-examples uses JFreeChart to render professional-quality trading charts. The refactored architecture (introduced in 0.19, enhanced in 0.21.0) separates concerns into dedicated components:
