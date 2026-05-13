@@ -1,23 +1,14 @@
 # Getting Started
 
-This guide takes you from a fresh checkout to a working strategy, then shows how to choose between ta4j's three main execution styles:
+This guide takes you from a fresh checkout to a working strategy.
+For execution-path selection and full onboarding routing, use canonical pages:
 
-1. `BarSeriesManager` for straightforward historical runs
-2. `BacktestExecutor` for large batches
-3. Manual loops with `BaseTradingRecord` when fills arrive asynchronously
-
-Canonical onboarding lane:
-
-1. This page (`Getting Started`)
-2. [Usage Examples](Usage-examples.md)
-3. [Backtesting](Backtesting.md)
-4. [Live Trading](Live-trading.md)
-5. [Live Trading Runbook](Live-Trading-Runbook.md)
-6. [Troubleshooting Hub](Troubleshooting-Hub.md)
+- [Execution Decision Matrix](Execution-Decision-Matrix.md)
+- [Canonical User Journey](Canonical-User-Journey.md)
 
 ## Prerequisites
 
-- JDK 21 or newer
+- JDK 25 or newer
 - Maven, Gradle, or an IDE that can import Maven projects
 - Basic Java familiarity
 
@@ -25,37 +16,15 @@ If technical analysis is new to you, skim [Wikipedia](https://en.wikipedia.org/w
 
 ## Install ta4j
 
-Start with the latest released line unless you specifically want unreleased `master` APIs:
+Use the canonical dependency snippets in the repository README:
 
-```xml
-<dependency>
-  <groupId>org.ta4j</groupId>
-  <artifactId>ta4j-core</artifactId>
-  <version>0.22.3</version>
-</dependency>
-```
+- [ta4j README install section](https://github.com/ta4j/ta4j#install-in-seconds) for latest stable and snapshot versions
 
-If you want the newest development APIs described on this wiki, install the current snapshot locally first:
+If you need current `master` APIs that are not yet on Maven Central, install locally first:
 
 ```bash
 mvn -pl ta4j-core -am install
 ```
-
-Then depend on `ta4j-core` with the snapshot version:
-
-```xml
-<dependency>
-  <groupId>org.ta4j</groupId>
-  <artifactId>ta4j-core</artifactId>
-  <version>0.22.4-SNAPSHOT</version>
-</dependency>
-```
-
-```groovy
-implementation "org.ta4j:ta4j-core:0.22.4-SNAPSHOT"
-```
-
-If you are consuming a released build from Maven Central instead, replace the version with the newest released `0.22.x` number from [Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md). If a page mentions an API you do not see in `0.22.3` yet, that is your cue to build the current snapshot locally.
 
 Prefer to inspect the code? Clone [ta4j](https://github.com/ta4j/ta4j) and import the root Maven project. `ta4j-core` and `ta4j-examples` live side by side.
 
@@ -125,16 +94,9 @@ Strategy strategy = new BaseStrategy("SMA crossover", entryRule, exitRule);
 strategy.setUnstableBars(30);
 ```
 
-### 3. Pick the right execution path
+### 3. Run your first backtest
 
-| Goal | Recommended path | Why |
-| --- | --- | --- |
-| One strategy over historical bars | `BarSeriesManager` | Minimal wiring and deterministic trade-execution models |
-| Same backtest loop, but with a preconfigured record | `BarSeriesManager.run(strategy, tradingRecord, ...)` | Keep a specific `ExecutionMatchPolicy`, fee model, or record instance |
-| Large parameter sweeps | `BacktestExecutor` | Batched execution, runtime reports, and weighted ranked statements |
-| Live or paper execution with confirmed fills | Manual loop + `BaseTradingRecord` | Signal generation stays separate from fill recording |
-
-For the common case, start with `BarSeriesManager`:
+For execution-path decisions, use [Execution Decision Matrix](Execution-Decision-Matrix.md). For the common starter case, run one strategy with `BarSeriesManager`:
 
 ```java
 BarSeriesManager manager = new BarSeriesManager(series);

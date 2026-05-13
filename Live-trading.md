@@ -20,12 +20,8 @@ You still own:
 
 ## Choose The Live Execution Path
 
-| Situation | Recommended path | Why |
-| --- | --- | --- |
-| Single-threaded bot with synchronous fills | `BaseBarSeries` + `BaseTradingRecord` | Simple loop, minimal moving pieces |
-| Multi-threaded ingestion and evaluation | `ConcurrentBarSeries` + `BaseTradingRecord` | Thread-safe reads and writes |
-| Partial fills, fee capture, broker order IDs, or reconciliation | `TradingRecord.operate(fill)` or `operate(Trade.fromFills(...))` | Preserve the exact fill stream without a separate live-only API |
-| Legacy adapter that still exposes `LiveTradingRecord` or `ExecutionFill` | Keep temporarily, migrate when practical | Compatibility only while moving toward `TradeFill` / `Trade` |
+Use [Execution Decision Matrix](Execution-Decision-Matrix.md) for canonical path selection.
+This page focuses on live-architecture mechanics after the path is selected.
 
 For new code, start with `BaseTradingRecord`. `LiveTradingRecord` is a deprecated compatibility facade over the same underlying model.
 
@@ -102,15 +98,33 @@ This is the most important live-trading rule in the current stack:
 
 Do not mutate the record when you merely emit an order intent if your exchange can reject, partially fill, or delay that order.
 
-```java
-int endIndex = series.getEndIndex();
-Num lastPrice = series.getBar(endIndex).getClosePrice();
-Num amount = series.numFactory().one();
+### Closed candle vs live candle
 
-if (strategy.shouldEnter(endIndex, tradingRecord)) {
-    orderRouter.submitBuy(lastPrice, amount);
-} else if (strategy.shouldExit(endIndex, tradingRecord)) {
-    orderRouter.submitSell(lastPrice, amount);
+ta4j evaluates whatever bar state currently exists in your series:
+
+- replacing the latest bar during a period means **live-candle evaluation**
+- evaluating only after appending a completed bar means **closed-candle evaluation**
+
+If you are new to live execution, start with closed-candle evaluation first. It is easier to reason about and avoids repeated intra-bar signals while you validate your end-to-end integration.
+
+For a deeper guide (including duplicate-entry prevention), read [Live Candle vs Closed Candle Evaluation](Live-Candle-vs-Closed-Candle-Evaluation.md).
+
+```java
+int lastEntryBarIndex = -1;
+int lastExitBarIndex = -1;
+
+while (true) {
+    int endIndex = series.getEndIndex();
+    Num lastPrice = series.getBar(endIndex).getClosePrice();
+    Num amount = series.numFactory().one();
+
+    if (strategy.shouldEnter(endIndex, tradingRecord) && endIndex != lastEntryBarIndex) {
+        orderRouter.submitBuy(lastPrice, amount);
+        lastEntryBarIndex = endIndex;
+    } else if (strategy.shouldExit(endIndex, tradingRecord) && endIndex != lastExitBarIndex) {
+        orderRouter.submitSell(lastPrice, amount);
+        lastExitBarIndex = endIndex;
+    }
 }
 ```
 

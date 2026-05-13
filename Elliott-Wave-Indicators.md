@@ -2,6 +2,9 @@
 
 A comprehensive guide to using ta4j's Elliott Wave analysis tools, from basic concepts to advanced trading strategies.
 
+For a concise entry path, use [Elliott Wave Quickstart](Elliott-Wave-Quickstart.md).
+This page is the deep reference and advanced guide.
+
 ## Table of Contents
 
 1. [Introduction to Elliott Wave Theory](#introduction-to-elliott-wave-theory)

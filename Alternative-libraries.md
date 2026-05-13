@@ -1,4 +1,9 @@
-# Alternative Libraries
+# Alternative Libraries (Deprecated)
 
-Still not convinced by ta4j? Check out other libs for technical analysis:
-  * [TA-lib](https://ta-lib.org/)
+This page has been merged into [Related Projects](Related-projects.md) to reduce documentation surface area and overlap.
+
+Use:
+
+- [Related Projects](Related-projects.md#alternative-libraries)
+
+This stub remains for link compatibility during a deprecation cooling window.
