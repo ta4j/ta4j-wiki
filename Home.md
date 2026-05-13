@@ -42,6 +42,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Data Sources](Data-Sources.md)** - Loading bars or trades from files and HTTP providers
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
+- **[Indicator Family Analysis](Indicator-Family-Analysis.md)** - Group similar indicators so research and confluence workflows do not double-count redundant signals
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
