@@ -110,16 +110,21 @@ If you are new to live execution, start with closed-candle evaluation first. It 
 For a deeper guide (including duplicate-entry prevention), read [Live Candle vs Closed Candle Evaluation](Live-Candle-vs-Closed-Candle-Evaluation.md).
 
 ```java
-int endIndex = series.getEndIndex();
-Num lastPrice = series.getBar(endIndex).getClosePrice();
-Num amount = series.numFactory().one();
 int lastEntryBarIndex = -1;
+int lastExitBarIndex = -1;
 
-if (strategy.shouldEnter(endIndex, tradingRecord) && endIndex != lastEntryBarIndex) {
-    orderRouter.submitBuy(lastPrice, amount);
-    lastEntryBarIndex = endIndex;
-} else if (strategy.shouldExit(endIndex, tradingRecord)) {
-    orderRouter.submitSell(lastPrice, amount);
+while (true) {
+    int endIndex = series.getEndIndex();
+    Num lastPrice = series.getBar(endIndex).getClosePrice();
+    Num amount = series.numFactory().one();
+
+    if (strategy.shouldEnter(endIndex, tradingRecord) && endIndex != lastEntryBarIndex) {
+        orderRouter.submitBuy(lastPrice, amount);
+        lastEntryBarIndex = endIndex;
+    } else if (strategy.shouldExit(endIndex, tradingRecord) && endIndex != lastExitBarIndex) {
+        orderRouter.submitSell(lastPrice, amount);
+        lastExitBarIndex = endIndex;
+    }
 }
 ```
 

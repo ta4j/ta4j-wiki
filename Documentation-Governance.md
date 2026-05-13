@@ -124,7 +124,7 @@ This snapshot records overlap metrics before the "documentation surface-area con
 
 Latest post-change metrics:
 
-- Wiki top-level pages: `40` (increased temporarily due quickstart/reference split plus one deprecation stub)
+- Wiki top-level pages: `40` (increased temporarily due to quickstart/reference split plus one deprecation stub)
 - Wiki sidebar links: `41` total / `37` local targets / `37` unique local targets
 - Wiki sidebar duplicate targets: `0` (target met)
 - Root `README.md` wiki links: `25` total / `17` unique destinations (total references reduced from baseline)

@@ -44,9 +44,11 @@ Use this mode if you want intra-candle reactions:
 - add de-duplication protection
 
 ```java
+int lastEntryBarIndex = -1;
 int index = series.getEndIndex();
 if (strategy.shouldEnter(index, tradingRecord) && index != lastEntryBarIndex) {
     submitBuyOrder();
+    lastEntryBarIndex = index;
 }
 ```
 
