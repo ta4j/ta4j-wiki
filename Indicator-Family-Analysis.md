@@ -25,6 +25,13 @@ IndicatorFamilyResult result = manager.analyze(indicators, 0.90);
 
 Use `LinkedHashMap` when result order matters. The map keys become the names shown in families and pair-similarity output.
 
+The default manager uses a 120-bar rolling correlation window. To analyze a shorter or longer horizon, pass the window length to the constructor:
+
+```java
+IndicatorFamilyManager shortHorizonManager = new IndicatorFamilyManager(series, 40);
+IndicatorFamilyResult shortHorizonResult = shortHorizonManager.analyze(indicators, 0.90);
+```
+
 ## Reading Results
 
 `IndicatorFamilyResult` contains:
@@ -66,6 +73,7 @@ for (double threshold : List.of(0.80, 0.90, 0.97)) {
 - Lower thresholds create broader behavior groups.
 - Higher thresholds keep only tight substitutes together.
 - Large changes in family count mean the candidate set is threshold-sensitive and should be reviewed before using family membership as a hard rule.
+- The constructor's correlation window controls the lookback used to calculate pair similarity; keep it aligned with the timeframe and horizon you are studying.
 
 ## Runnable Example
 
