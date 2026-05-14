@@ -45,12 +45,14 @@ IndicatorFamilyResult shortHorizonResult = shortHorizonManager.analyze(indicator
 Example interpretation:
 
 ```java
+Num threshold = series.numFactory().numOf("0.90");
+
 for (IndicatorFamilyResult.Family family : result.families()) {
     System.out.println(family.familyId() + ": " + family.indicatorNames());
 }
 
 for (IndicatorFamilyResult.PairSimilarity pair : result.pairSimilarities()) {
-    if (pair.similarity() >= 0.90) {
+    if (pair.similarity().isGreaterThanOrEqual(threshold)) {
         System.out.println(pair.firstIndicatorName() + " ~ "
                 + pair.secondIndicatorName() + " = " + pair.similarity());
     }
