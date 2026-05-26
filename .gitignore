@@ -2,3 +2,4 @@ _site/
 GEMFILE
 GEMFILE.lock
 /.idea/
+.agents/
