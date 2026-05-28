@@ -308,7 +308,6 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.candles` | **ThreeBlackCrowsIndicator** | Three black crows. |
 | `org.ta4j.core.indicators.candles` | **ThreeInsideUpIndicator** | Three inside up. |
 | `org.ta4j.core.indicators.candles` | **ThreeInsideDownIndicator** | Three inside down. |
-| `org.ta4j.core.indicators.candles` | **AbstractMarubozuIndicator** | Base class for marubozu pattern indicators (body-to-range ratio threshold). |
 
 **Short usage**  
 - **What it is:** Single- or multi-candle pattern detectors returning boolean (or equivalent) at each bar.  
@@ -357,8 +356,6 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
-| `org.ta4j.core.indicators` | **AbstractFractalConfirmationIndicator** | Base class for Bill Williams fractal confirmation indicators. |
-| `org.ta4j.core.indicators` | **AbstractRecentFractalSwingIndicator** | Base class for most-recent fractal swing high/low price indicators. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotLowIndicator** | True at ZigZag pivot low bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagStateIndicator** | ZigZag state (e.g. current segment direction and levels). |

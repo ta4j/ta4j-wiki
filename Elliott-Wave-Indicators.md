@@ -80,10 +80,10 @@ The Elliott Wave indicators in ta4j are built on several key principles:
 
 ### Internal Implementation Boundary
 
-Some Elliott package classes are internal implementation details (for example, scenario-rule/scoring internals used to build ranked alternatives).
+Some Elliott package classes are internal implementation details (for example, `ElliottScenarioRuleSupport` and generator/scoring helpers used to build ranked alternatives).
 
-- These internals are intentionally not surfaced in general wiki pages.
-- This dedicated Elliott page is the right place to discuss Elliott internals when needed.
+- Public strategy rules live in `org.ta4j.core.rules.elliott` and are documented below.
+- Package-private abstract indicator bases are omitted from [Indicators Inventory](Indicators-Inventory.md).
 
 ### Component Hierarchy
 
@@ -498,7 +498,14 @@ ElliottWaveFacade facade = ElliottWaveFacade.from(
 );
 ```
 
-When a custom Fibonacci tolerance is provided, the phase indicator uses a custom `ElliottFibonacciValidator` with that tolerance instead of the default (0.05). When a compressor is provided, `filteredWaveCount()` uses it to filter swings before counting; otherwise, `filteredWaveCount()` returns the same as `waveCount()`.
+When a custom Fibonacci tolerance is provided, both `phase()` and `scenarios()` share the same `ElliottFibonacciValidator` instance (default tolerance is `0.05`). This keeps phase validation and scenario ranking aligned on the same Fibonacci bands. You can also construct `ElliottFibonacciValidator` directly when building custom generators or tests:
+
+```java
+Num tolerance = series.numFactory().numOf(0.25);
+ElliottFibonacciValidator validator = new ElliottFibonacciValidator(series.numFactory(), tolerance);
+```
+
+When a compressor is provided, `filteredWaveCount()` uses it to filter swings before counting; otherwise, `filteredWaveCount()` returns the same as `waveCount()`.
 
 ---
 
@@ -672,6 +679,7 @@ SwingDetector detector = SwingDetectors.fractal(5);
 ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
     .swingDetector(detector)
     .degree(ElliottDegree.INTERMEDIATE)
+    .logicProfile(ElliottLogicProfile.ORTHODOX_CLASSICAL) // optional 0.22.7 preset
     .higherDegrees(1)
     .lowerDegrees(1)
     .minConfidence(0.15)
@@ -713,6 +721,10 @@ Each per-degree `ElliottAnalysisResult` includes:
 | `trendBias` | Aggregate directional bias across scenarios |
 
 Use `breakdownFor(ElliottScenario)` to get the confidence breakdown for a specific scenario.
+
+### ElliottLogicProfile presets (0.22.7)
+
+`ElliottLogicProfile` packages reusable runner defaults (hierarchical swing sensitivity, enabled scenario families, and confidence-model style). Apply a preset with `ElliottWaveAnalysisRunner.Builder#logicProfile(...)` and override individual builder settings afterward when needed. Presets include `ORTHODOX_CLASSICAL`, `HIERARCHICAL_SWING`, `BTC_RELAXED_IMPULSE`, `BTC_RELAXED_CORRECTIVE`, and `ANCHOR_FIRST_HYBRID`.
 
 ### Walk-forward adapters
 
@@ -1421,6 +1433,47 @@ if (!set.isEmpty()) {
 ---
 
 ## Integration with Trading Strategies
+
+### Built-in scenario rules (`org.ta4j.core.rules.elliott`)
+
+ta4j ships public `Rule` implementations that read the base case from an `ElliottScenarioIndicator` (typically `facade.scenarios()`). All rules evaluate the ranked **base** scenario unless noted otherwise.
+
+| Rule | Purpose |
+| --- | --- |
+| `ElliottScenarioValidRule` | Base scenario exists and reference price is finite |
+| `ElliottScenarioConfidenceRule` | Base confidence meets a minimum threshold |
+| `ElliottScenarioDirectionRule` | Base scenario is bullish or bearish |
+| `ElliottImpulsePhaseRule` | Base scenario is impulse-typed and in allowed `ElliottPhase` values |
+| `ElliottScenarioAlternationRule` | Wave 2/4 alternation meets a minimum duration ratio |
+| `ElliottScenarioCompletionRule` | Base scenario `expectsCompletion()` is true |
+| `ElliottScenarioRiskRewardRule` | Base scenario risk/reward meets a minimum |
+| `ElliottScenarioTargetReachedRule` | Price has reached the scenario primary target |
+| `ElliottScenarioStopViolationRule` | Price breached the corrective stop |
+| `ElliottScenarioInvalidationRule` | Price invalidated the base scenario (useful as an exit trigger) |
+| `ElliottScenarioTimeStopRule` | Trade exceeded the maximum wave-duration window |
+| `ElliottTrendBiasRule` | Aggregated `ElliottTrendBias` direction and strength thresholds |
+
+Example wiring with a tolerance-aware facade:
+
+```java
+Num fibTolerance = series.numFactory().numOf(0.25);
+ElliottWaveFacade facade = ElliottWaveFacade.fractal(
+        series, 5, ElliottDegree.INTERMEDIATE, Optional.of(fibTolerance), Optional.empty());
+ElliottScenarioIndicator scenarios = facade.scenarios();
+ClosePriceIndicator close = new ClosePriceIndicator(series);
+
+Rule entryRule = new ElliottScenarioValidRule(scenarios, close)
+        .and(new ElliottScenarioConfidenceRule(scenarios, 0.6))
+        .and(new ElliottImpulsePhaseRule(scenarios, ElliottPhase.WAVE3))
+        .and(new ElliottScenarioDirectionRule(scenarios, true))
+        .and(new ElliottTrendBiasRule(scenarios, true, 0.5));
+
+Rule exitRule = new ElliottScenarioInvalidationRule(scenarios, close)
+        .or(new ElliottScenarioTargetReachedRule(scenarios, close, true))
+        .or(new ElliottScenarioTimeStopRule(scenarios, 2.0));
+```
+
+Prefer these rules over ad-hoc anonymous `Rule` implementations when the built-in semantics match your strategy.
 
 ### Basic Scenario-Aware Rule
 
