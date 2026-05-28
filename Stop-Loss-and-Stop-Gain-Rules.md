@@ -60,6 +60,15 @@ Best when:
 - Volatility regimes shift frequently.
 - You want stops that widen in high vol and tighten in low vol.
 
+## Entry hygiene rules (0.22.7)
+
+These rules complement stop exits when gating new entries:
+
+- `EdgeHealthyRule` — requires an edge indicator (typically `EntryEdgeIndicator`) to stay above a minimum level and optionally above a minimum slope (`EdgeDecaySlopeIndicator`).
+- `LossTriggeredCooldownRule` — blocks entries for a configurable number of bars after a losing closed position; supports optional reset rules and trade-side filters.
+
+Use them with regime filters (`TrendScoreIndicator`, `CompressionIndicator`) rather than as standalone risk controls.
+
 ## Quick selection guide
 
 - Trend-following swing systems:
@@ -233,6 +242,7 @@ See also:
 ## Maintainer rationale notes
 
 - Stop-rule family coverage mirrors the expanded hierarchy added in commit `89cd2271` (`BaseVolatility*`, fixed-amount, trailing, and stop-price model interfaces).
+- Documented entry hygiene rules `EdgeHealthyRule` and `LossTriggeredCooldownRule` (0.22.7).
 - ATR constructor guidance reflects commit `1fa097ef` and current `AverageTrueRange*` constructors that accept `ATRIndicator` directly.
 - Added positive-coefficient note for `AverageTrueRangeTrailingStopGainRule` based on its input validation in `requirePositiveAtrCoefficient(...)`.
 - Stop-price helper examples now include `StopLossRule.stopLossPriceFromDistance(...)`, `StopGainRule.stopGainPriceFromDistance(...)`, and `StopGainRule.trailingStopGainPriceFromDistance(...)`, which are used by the fixed-amount and volatility rule implementations.

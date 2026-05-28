@@ -7,7 +7,9 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Category | Highlights | Docs |
 | --- | --- | --- |
 | Trend / Moving Averages | SMA, EMA, HMA, VIDYA, Jurik, Displaced variants, SuperTrend, Renko helpers. | [Moving Average Indicators](Moving-Average-Indicators.md) |
-| Momentum & Oscillators | RSI family, NetMomentum (new), MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
+| Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
+| Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
+| Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory](Indicators-Inventory.md) §11 |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
@@ -78,6 +80,31 @@ ta4j's volume package includes price/volume pressure oscillators that complement
 - `KlingerVolumeOscillatorIndicator` applies the Klinger volume-force formula and returns the short/long EMA spread (default `34/55`).
 
 Use them as participation or divergence filters; avoid treating them as standalone entries when volume quality is poor.
+
+## Regime and signal-quality workflow (0.22.7)
+
+ta4j 0.22.7 adds composite regime and edge-scoring indicators for strategy gating:
+
+- **Trend pressure:** `TrendScoreIndicator` (−100 to +100) combines EMA alignment, MACD histogram state, and signed ADX strength/change.
+- **Trend cooldown:** `TrendConclusionIndicator` (0–100) estimates whether a prior trend has likely cooled (ADX fade, MACD mean reversion, price recenter, compression).
+- **Contraction:** `CompressionIndicator` (0–100) scores tightening regimes from inverted ATR, Bollinger width, and Donchian width percentile ranks.
+- **Signal edge:** `EntryEdgeIndicator` reports realized entry edge in basis points using only matured forward returns (no look-ahead).
+- **Edge trajectory:** `EdgeDecaySlopeIndicator` tracks whether edge is improving or decaying over a lookback window.
+- **Stretch:** `StretchZScoreIndicator` normalizes deviation between any source/reference pair (close vs SMA, price vs VWAP, etc.).
+
+Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggeredCooldownRule` (see [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)).
+
+## Advanced correlation workflow (0.22.7)
+
+Beyond Pearson/`CorrelationCoefficientIndicator`, ta4j now ships:
+
+- `KendallTauIndicator` and `SpearmanRankCorrelationIndicator` for rank-based association.
+- `LaggedCorrelationIndicator` for lead/lag analysis between two series.
+- `DistanceCorrelationIndicator` for non-linear dependence (prefer modest windows; O(n²) per index).
+- `MutualInformationIndicator` for binned mutual information (interpret as discretized MI for the configured bin count).
+- `RegimeSegmentedCorrelationIndicator` for Pearson correlation over bars where a Boolean regime is active.
+
+Use `SampleType` and `getCountOfUnstableBars()` when mixing rolling statistics with strategy warm-up.
 
 ## MACD-V momentum-state workflow (0.22.3)
 

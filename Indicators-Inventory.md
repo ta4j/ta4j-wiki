@@ -139,9 +139,10 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **ChopIndicator** | Choppiness Index (0–100); measures trend vs range. |
 | `org.ta4j.core.indicators` | **UlcerIndexIndicator** | Ulcer Index; depth and duration of drawdowns. |
 | `org.ta4j.core.indicators` | **SqueezeProIndicator** | Squeeze Pro; momentum in low volatility (e.g. Bollinger vs Keltner). |
+| `org.ta4j.core.indicators` | **CompressionIndicator** | Composite contraction score (0–100) from inverted ATR, Bollinger width, and Donchian width percentile ranks. |
 
 **Short usage**  
-- **What it is:** ATR measures volatility; Bollinger/Keltner/Donchian define channels; Chandelier/Chop/Ulcer/SqueezePro add exit or regime context.  
+- **What it is:** ATR measures volatility; Bollinger/Keltner/Donchian define channels; Chandelier/Chop/Ulcer/SqueezePro add exit or regime context; CompressionIndicator scores tightening regimes.
 - **Theory:** Volatility expands in trends and contracts in consolidation; bands and ATR-based stops adapt to current volatility.  
 - **When to use:** Stops (ATR, Chandelier), breakout/mean-reversion (bands, %B), and filtering (Chop, SqueezePro).  
 - **When not to use:** When volatility input (e.g. ATR) is not yet stable (respect unstable bars).  
@@ -225,9 +226,14 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.trend` | **UpTrendIndicator** | Boolean: price in uptrend (e.g. above MA). |
 | `org.ta4j.core.indicators.trend` | **DownTrendIndicator** | Boolean: price in downtrend. |
 | `org.ta4j.core.indicators` | **VortexIndicator** | Vortex (+VI, −VI, and oscillator) trend-strength/direction indicator. |
+| `org.ta4j.core.indicators` | **TrendScoreIndicator** | Directional composite (−100 to +100) from EMA alignment, MACD histogram, and signed ADX strength/change. |
+| `org.ta4j.core.indicators` | **TrendConclusionIndicator** | Composite (0–100) estimating whether a strong trend has cooled (ADX fade, MACD mean reversion, price recenter, compression). |
+| `org.ta4j.core.indicators` | **EntryEdgeIndicator** | Rolling realized entry edge in basis points vs an unconditional baseline; uses only matured forward returns (no look-ahead). |
+| `org.ta4j.core.indicators` | **EdgeDecaySlopeIndicator** | Rolling slope of an edge indicator; positive values indicate improving edge, negative values indicate decay. |
+| `org.ta4j.core.indicators` | **StretchZScoreIndicator** | Z-score of deviation between a source and reference indicator (e.g. price vs SMA or VWAP stretch). |
 
 **Short usage**  
-- **What it is:** ADX/DI measure trend strength and direction; Aroon and Ichimoku add structure; SuperTrend gives a single trend line.  
+- **What it is:** ADX/DI measure trend strength and direction; Aroon and Ichimoku add structure; SuperTrend gives a single trend line; TrendScore/TrendConclusion compress multi-factor regime context; EntryEdge/EdgeDecaySlope quantify signal quality over time.
 - **Theory:** Trend strength (ADX) filters choppy markets; Ichimoku and SuperTrend provide levels and direction.  
 - **When to use:** Filtering entries (e.g. only when ADX &gt; 25), trend-following exits (SuperTrend), and multi-timeframe structure (Ichimoku).  
 - **When not to use:** In ranging markets (ADX low) for trend-only strategies; SuperTrend can whipsaw in chop.  
@@ -302,6 +308,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.candles` | **ThreeBlackCrowsIndicator** | Three black crows. |
 | `org.ta4j.core.indicators.candles` | **ThreeInsideUpIndicator** | Three inside up. |
 | `org.ta4j.core.indicators.candles` | **ThreeInsideDownIndicator** | Three inside down. |
+| `org.ta4j.core.indicators.candles` | **AbstractMarubozuIndicator** | Base class for marubozu pattern indicators (body-to-range ratio threshold). |
 
 **Short usage**  
 - **What it is:** Single- or multi-candle pattern detectors returning boolean (or equivalent) at each bar.  
@@ -350,6 +357,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
+| `org.ta4j.core.indicators` | **AbstractFractalConfirmationIndicator** | Base class for Bill Williams fractal confirmation indicators. |
+| `org.ta4j.core.indicators` | **AbstractRecentFractalSwingIndicator** | Base class for most-recent fractal swing high/low price indicators. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotLowIndicator** | True at ZigZag pivot low bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagStateIndicator** | ZigZag state (e.g. current segment direction and levels). |
@@ -436,8 +445,14 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.statistics` | **VarianceIndicator** | Variance of source over period; defaults to sample variance and supports explicit sample/population modes. |
 | `org.ta4j.core.indicators.statistics` | **MeanDeviationIndicator** | Mean absolute deviation. |
 | `org.ta4j.core.indicators.statistics` | **CovarianceIndicator** | Covariance between two indicators. |
-| `org.ta4j.core.indicators.statistics` | **CorrelationCoefficientIndicator** | Correlation between two series; supports sample/population variance normalization. |
+| `org.ta4j.core.indicators.statistics` | **CorrelationCoefficientIndicator** | Correlation between two series; supports sample/population variance normalization; unstable bars follow variance/covariance warm-up. |
 | `org.ta4j.core.indicators.statistics` | **PearsonCorrelationIndicator** | Pearson correlation. |
+| `org.ta4j.core.indicators.statistics` | **KendallTauIndicator** | Rolling Kendall tau-b rank correlation (ordinal association with tie corrections). |
+| `org.ta4j.core.indicators.statistics` | **SpearmanRankCorrelationIndicator** | Rolling Spearman rank correlation (Pearson on ranks with average-rank ties). |
+| `org.ta4j.core.indicators.statistics` | **LaggedCorrelationIndicator** | Rolling Pearson correlation with configurable lag between the two series. |
+| `org.ta4j.core.indicators.statistics` | **DistanceCorrelationIndicator** | Rolling distance correlation (detects linear and non-linear dependence; O(n²) per index). |
+| `org.ta4j.core.indicators.statistics` | **MutualInformationIndicator** | Rolling mutual information from equal-width binned windows (natural log, nats). |
+| `org.ta4j.core.indicators.statistics` | **RegimeSegmentedCorrelationIndicator** | Rolling Pearson correlation using only bars where a Boolean regime indicator is true. |
 | `org.ta4j.core.indicators.statistics` | **SimpleLinearRegressionIndicator** | Moving simple linear regression (slope/intercept). |
 | `org.ta4j.core.indicators.statistics` | **StandardErrorIndicator** | Standard error of regression (or estimate); supports sample/population standard-deviation modes. |
 | `org.ta4j.core.indicators.statistics` | **SigmaIndicator** | Z-score (value in standard deviations from mean); supports sample/population standard-deviation modes. |
@@ -448,9 +463,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.numeric` | **NumericIndicator** | Wraps a numeric expression (e.g. from indicator arithmetic) as an indicator. |
 
 **Short usage**  
-- **What it is:** Variance, std dev, correlation, regression, z-score, growth rate; numeric combinators (binary/unary); sample/population mode selection via `SampleType`.
+- **What it is:** Variance, std dev, correlation (Pearson, Kendall, Spearman, lagged, distance, regime-segmented), mutual information, regression, z-score, growth rate; numeric combinators (binary/unary); sample/population mode selection via `SampleType`.
 - **Theory:** Statistics describe distribution and relationship between series; operations allow custom formulas.  
-- **When to use:** Volatility (std dev), normalization (z-score), and composing indicators (Binary/Unary).  
+- **When to use:** Volatility (std dev), normalization (z-score), lead/lag analysis (`LaggedCorrelationIndicator`), non-linear dependence checks (`DistanceCorrelationIndicator`), and regime-conditioned correlation (`RegimeSegmentedCorrelationIndicator`).
 - **When not to use:** When period is too short for stable statistics.  
 - *Future: use cases, example code.*
 
