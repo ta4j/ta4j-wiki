@@ -28,6 +28,7 @@ For strategy entries/exits, prefer the public rules in `org.ta4j.core.rules.elli
 
 ```java
 ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
+        .degree(ElliottDegree.INTERMEDIATE)
         .logicProfile(ElliottLogicProfile.ORTHODOX_CLASSICAL) // optional 0.22.7 preset
         .build();
 ElliottWaveAnalysisResult result = runner.analyze(series);
