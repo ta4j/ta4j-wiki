@@ -221,15 +221,19 @@ Use composite indicators to filter entries when trend quality or signal edge is 
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 SMAIndicator fast = new SMAIndicator(close, 9);
 SMAIndicator slow = new SMAIndicator(close, 21);
-Indicator<Boolean> entrySignal = new CrossIndicator(fast, slow);
+// CrossIndicator(up, low) is true when up crosses below low; use (slow, fast) for a bullish cross.
+Indicator<Boolean> entrySignal = new CrossIndicator(slow, fast);
 
 TrendScoreIndicator trendScore = new TrendScoreIndicator(series, 9, 21, 9, 14, 14);
 EntryEdgeIndicator entryEdge = new EntryEdgeIndicator(entrySignal, series, 5, 20);
 EdgeDecaySlopeIndicator edgeSlope = new EdgeDecaySlopeIndicator(entryEdge, 10);
 
 Rule signalRule = new BooleanIndicatorRule(entrySignal);
-Rule trendFilter = new OverIndicatorRule(trendScore, numOf(25));
-Rule edgeFilter = new EdgeHealthyRule(entryEdge, 50, edgeSlope, 0);
+Rule trendFilter = new OverIndicatorRule(trendScore, series.numFactory().numOf(25));
+Rule edgeFilter = new EdgeHealthyRule(entryEdge,
+        new ConstantIndicator<>(series, series.numFactory().numOf(50)),
+        edgeSlope,
+        null);
 Rule cooldown = new LossTriggeredCooldownRule(series, 5);
 
 Rule entryRule = signalRule.and(trendFilter).and(edgeFilter).and(cooldown);
