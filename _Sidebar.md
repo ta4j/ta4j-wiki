@@ -20,6 +20,7 @@
 - [Data Sources](Data-Sources.md)
 - [Num](Num.md)
 - [Technical Indicators](Technical-indicators.md)
+- [Indicator Family Analysis](Indicator-Family-Analysis.md)
 - [Indicators Inventory](Indicators-Inventory.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
 - [Bill Williams Indicators](Bill-Williams-Indicators.md)
