@@ -27,6 +27,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Synchronize README from Home
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/sync-readme-from-home.sh
+          bash scripts/sync-readme-from-home.sh
+          git diff --exit-code -- README.md
       - name: Configure Pages
         uses: actions/configure-pages@v6
       - name: Build with Jekyll
@@ -41,7 +48,9 @@ jobs:
 
           test -f index.md
           test -f Home.md
+          test -f README.md
           grep -Fq "{% include_relative Home.md %}" index.md
+          cmp -s Home.md README.md
           test -f ./_site/index.html
           grep -Fq "https://javadoc.io/doc/org.ta4j/ta4j-core" ./_site/index.html
 
