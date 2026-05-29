@@ -213,6 +213,37 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 - **Live trading** – Feed real-time bars into a moving `BarSeries`, call `strategy.shouldEnter(index, record)` / `shouldExit(...)`, then execute trades through your broker (see [Live Trading](Live-trading.md)).
 - **Diagnostics** – Mirror the approach in `ta4jexamples.logging.StrategyExecutionLogging` to trace which rule triggered each trade.
 
+## Regime and edge gating (0.22.7)
+
+Use composite indicators to filter entries when trend quality or signal edge is weak:
+
+```java
+ClosePriceIndicator close = new ClosePriceIndicator(series);
+SMAIndicator fast = new SMAIndicator(close, 9);
+SMAIndicator slow = new SMAIndicator(close, 21);
+// CrossIndicator(up, low) is true when up crosses below low; use (slow, fast) for a bullish cross.
+Indicator<Boolean> entrySignal = new CrossIndicator(slow, fast);
+
+TrendScoreIndicator trendScore = new TrendScoreIndicator(series, 9, 21, 9, 14, 14);
+EntryEdgeIndicator entryEdge = new EntryEdgeIndicator(entrySignal, series, 5, 20);
+EdgeDecaySlopeIndicator edgeSlope = new EdgeDecaySlopeIndicator(entryEdge, 10);
+
+Rule signalRule = new BooleanIndicatorRule(entrySignal);
+Rule trendFilter = new OverIndicatorRule(trendScore, series.numFactory().numOf(25));
+Rule edgeFilter = new EdgeHealthyRule(entryEdge,
+        new ConstantIndicator<>(series, series.numFactory().numOf(50)),
+        edgeSlope,
+        null);
+Rule cooldown = new LossTriggeredCooldownRule(series, 5);
+
+Rule entryRule = signalRule.and(trendFilter).and(edgeFilter).and(cooldown);
+```
+
+- `EdgeHealthyRule` enforces minimum edge level and optional minimum edge slope.
+- `LossTriggeredCooldownRule` blocks new entries for N bars after a losing closed position (optional reset rule and side filter).
+
+See [Indicators Inventory](Indicators-Inventory.md) for `TrendConclusionIndicator`, `CompressionIndicator`, and `StretchZScoreIndicator`.
+
 ## Best practices
 
 - Normalize indicator scales when combining oscillators with price-based rules.
@@ -228,3 +259,4 @@ That JSON payload captures the full rule graph, making it safe to persist strate
 - Kept MACD-V regime examples aligned with `MomentumStateRule` and `MACDVMomentumStateStrategy` updates (commit `161f7656`).
 - Short-first guidance follows `Strategy#getStartingType()` and `BaseStrategy(..., TradeType)` from commit `b112d34b`.
 - Serialization examples now use `Strategy#toJson()`, `Strategy.fromJson(...)`, `Rule#toJson()`, and `Rule.fromJson(...)` from `org.ta4j.core.Strategy` / `org.ta4j.core.Rule` rather than only the lower-level `StrategySerialization` API introduced in commit `b62d9bad`.
+- Added regime/edge gating section for `TrendScoreIndicator`, `EntryEdgeIndicator`, `EdgeHealthyRule`, and `LossTriggeredCooldownRule` (ta4j 0.22.7, commits `fd6e1284` and follow-ups).
