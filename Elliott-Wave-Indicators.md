@@ -3,6 +3,7 @@
 A comprehensive guide to using ta4j's Elliott Wave analysis tools, from basic concepts to advanced trading strategies.
 
 For a concise entry path, use [Elliott Wave Quickstart](Elliott-Wave-Quickstart.md).
+For a shareable daily macro-cycle report, see [Run a live five-outlook snapshot](Elliott-Wave-Quickstart.md#run-a-live-five-outlook-snapshot).
 This page is the deep reference and advanced guide.
 
 ## Table of Contents
