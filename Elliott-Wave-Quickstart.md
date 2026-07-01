@@ -41,6 +41,7 @@ Use this path when you want report generation or standalone analysis steps.
 ## 3) Run a live five-outlook snapshot
 
 Use the EW Snapshot Analysis workflow when you want a shareable, current macro-cycle report for a daily live instrument.
+This workflow is pending the ta4j repository change in [ta4j/ta4j#1544](https://github.com/ta4j/ta4j/pull/1544); until that PR lands, use the local command below.
 
 1. Open the ta4j repository's **Actions** tab.
 2. Select **EW Snapshot Analysis**.
@@ -55,7 +56,7 @@ The same workflow can analyze other supported daily live instruments, for exampl
 For a local run, use `ElliottWavePresetDemo` with a daily duration:
 
 ```bash
-./mvnw -pl ta4j-examples exec:java \
+./mvnw -pl ta4j-examples -am exec:java \
   -Dexec.mainClass=ta4jexamples.analysis.elliottwave.ElliottWavePresetDemo \
   -Dexec.args="live Coinbase BTC-USD PT1D 1825"
 ```
