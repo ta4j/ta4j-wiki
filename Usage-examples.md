@@ -26,6 +26,7 @@ For verification signals and common failure patterns, see [Examples Expected Out
 - **[IndicatorsToCsv](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToCsv.java)** - Export indicator values for spreadsheet analysis
 - **[IndicatorsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java)** - Plot price plus indicator overlays
 - **[CandlestickChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java)** - Candlestick chart overlays
+- **[Forecast Indicators](Forecast-Indicators.md)** - Build forward-looking return and price distributions, then reduce them to rule-friendly point forecasts
 - **[Charting](Charting.md)** - Full `ChartWorkflow` guide
 - **[ElliottWaveIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveIndicatorSuiteDemo.java)** - Full Elliott Wave indicator-suite run with charts and scenario analysis
 - **[ElliottWavePresetDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWavePresetDemo.java)** - Preset Elliott Wave launcher for ossified BTC/ETH/SP500 datasets or live datasource arguments

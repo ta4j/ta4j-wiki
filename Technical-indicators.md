@@ -10,6 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
 | Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory §11](Indicators-Inventory.md#11-statistics--numeric) |
+| Forecasting | Log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, distribution reducers. | [Forecast Indicators](Forecast-Indicators.md) |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
@@ -93,6 +94,19 @@ ta4j 0.22.7 adds composite regime and edge-scoring indicators for strategy gatin
 - **Stretch:** `StretchZScoreIndicator` normalizes deviation between any source/reference pair (close vs SMA, price vs VWAP, etc.).
 
 Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggeredCooldownRule` (see [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)).
+
+## Forecast workflow (0.22.9)
+
+ta4j's forecast package adds distribution-valued indicators for forward-looking research and strategy filters:
+
+- `LogReturnIndicator` creates reusable log-return inputs from close prices or any numeric source indicator.
+- `EwmaReturnForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility.
+- `MonteCarloReturnForecastIndicator` simulates cumulative log-return distributions over a configured horizon.
+- `LogReturnToPriceForecastIndicator` converts return distributions to price distributions at the decision index.
+- `ForwardForecastIndicator` and `ForecastReducers` reduce a distribution to one `Num` value for normal ta4j rule composition.
+- `ForecastIndicators` provides convenience factories for the standard EWMA-volatility close-price forecast pipeline.
+
+Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
 
 ## Advanced correlation workflow (0.22.7)
 
