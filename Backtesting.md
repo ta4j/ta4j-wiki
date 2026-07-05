@@ -8,13 +8,8 @@ Backtesting estimates how a strategy would have behaved over historical data. In
 
 ## Choose The Right Backtest Driver
 
-| Need | Recommended path | Notes |
-| --- | --- | --- |
-| One strategy, minimal setup | `BarSeriesManager.run(strategy)` | Creates a fresh `BaseTradingRecord` through the manager's configured factory and defaults to next-open execution |
-| One strategy with a preconfigured record | `BarSeriesManager.run(strategy, tradingRecord, ...)` | Reuse a record instance or keep a custom `ExecutionMatchPolicy` / fee setup |
-| Many strategies or tuning | `BacktestExecutor` | Builds on the same next-open default, collects `TradingStatement`s, and adds telemetry plus ranking helpers |
-| Event-driven or fill-driven replay | Manual loop + `BaseTradingRecord` | Use when fills do not happen exactly where the default execution model would place them |
-| Older live-oriented adapters | `LiveTradingRecord` | Compatibility facade only; not recommended for new backtests |
+Use [Execution Decision Matrix](Execution-Decision-Matrix.md) as the canonical path selector.
+This page focuses on backtesting mechanics after a path is selected.
 
 The main thing to keep in mind is that you do **not** need a manual loop just to get open-lot views, recorded fees, or open-position criteria. `BaseTradingRecord` already exposes `getCurrentPosition()`, `getOpenPositions()`, and recorded-fee-aware metrics.
 

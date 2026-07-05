@@ -8,6 +8,7 @@ This hub centralizes common ta4j issues for production-minded users.
 | --- | --- | --- |
 | Indicator output does not match external charting tool | Warmup or initialization differences; data-length dependence | [FAQ](FAQ.md), [Technical Indicators](Technical-indicators.md) |
 | Strategy behaves differently in live vs backtest | Execution assumptions differ (fill timing, partial fills, costs) | [Backtesting](Backtesting.md), [Live Trading](Live-trading.md) |
+| Strategy keeps buying (or selling) repeatedly on one candle | Live-candle evaluation without `tradingRecord` context or fill-sync/de-dup guards | [Live Candle vs Closed Candle Evaluation](Live-Candle-vs-Closed-Candle-Evaluation.md), [Live Trading](Live-trading.md) |
 | Unrealized/open-position numbers look wrong | Trade recording mismatch or lot policy misunderstanding | [Live Trading](Live-trading.md), [Live Trading Runbook](Live-Trading-Runbook.md) |
 | Results change after enabling moving windows | Historical bars evicted by `setMaximumBarCount` | [Bar Series and Bars](Bar-series-and-bars.md) |
 | Noisy or unstable leaderboard across reruns | Overfitting, weak validation geometry, or non-deterministic data pipeline | [Walk-Forward Research](Walk-Forward-Research.md), [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md) |
@@ -41,6 +42,8 @@ Read:
 ### Execution and trading-record issues
 
 - Distinguish order intent from confirmed fills
+- Decide explicitly between closed-candle and live-candle evaluation
+- Use `shouldEnter(index, tradingRecord)` / `shouldExit(index, tradingRecord)` in live loops
 - Verify `ExecutionMatchPolicy` behavior for partial exits
 - Reconcile local record state with broker/account state after failures
 
@@ -48,6 +51,7 @@ Read:
 
 - [Backtesting](Backtesting.md)
 - [Live Trading](Live-trading.md)
+- [Live Candle vs Closed Candle Evaluation](Live-Candle-vs-Closed-Candle-Evaluation.md)
 - [Live Trading Runbook](Live-Trading-Runbook.md)
 
 ### Evaluation and model-quality issues

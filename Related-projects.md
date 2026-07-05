@@ -24,4 +24,10 @@ This section contains applications which make use of ta4j:
 |TAcharting|A charting application for downloading and plotting indicators, trading records and bar series|[GitHub](https://github.com/team172011/TAcharting)|
 |Cassandre|A trading bot framework for developing your own strategy |[Link](https://trading-bot.cassandre.tech), [GitHub](https://github.com/cassandre-tech/cassandre-trading-bot)|
 
+### Alternative libraries
+
+If you are evaluating alternatives, start here:
+
+- [TA-lib](https://ta-lib.org/)
+
 Please edit this list or drop a note in the issues tracker if you want to add other projects.
