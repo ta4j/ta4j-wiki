@@ -47,13 +47,11 @@ The current wiki reflects ta4j's newer unified trading stack:
 
 ## Pick The Right Execution Path
 
-| Need | Recommended path | Why |
-| --- | --- | --- |
-| One strategy over historical data | `BarSeriesManager` + default `BaseTradingRecord` | Fastest path with minimal wiring |
-| Backtest with a preconfigured record | `BarSeriesManager.run(strategy, providedRecord, ...)` | Keep a specific `ExecutionMatchPolicy`, fee model, or reusable record instance |
-| Large batch runs or tuning | `BacktestExecutor` | Runtime telemetry, weighted leaderboards, progress callbacks, and batching |
-| Live or paper trading with confirmed fills | Manual loop + `BaseTradingRecord` | Signals and broker fills stay separate; stream `TradingRecord.operate(fill)` or batch `Trade.fromFills(...)` |
-| Maintaining older live adapters | `LiveTradingRecord` / `ExecutionFill` | Compatibility only while migrating toward `BaseTradingRecord` / `TradeFill` |
+Use the canonical matrix for execution choices:
+
+- [Execution Decision Matrix](Execution-Decision-Matrix.md) for driver and simulation-path selection
+- [Backtesting](Backtesting.md) for implementation patterns once you choose a backtest path
+- [Live Trading](Live-trading.md) for fill-driven and event-driven live loops
 
 ## Where To Go Next
 
@@ -66,7 +64,6 @@ The current wiki reflects ta4j's newer unified trading stack:
 - Explore the [ta4j repository](https://github.com/ta4j/ta4j) and its `ta4j-examples` module
 - **[How to Contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md)** - Development setup and contribution workflow
 - **[Roadmap & Tasks](Roadmap-and-Tasks.md)** - Planned work and known gaps
-- **[Alternative Libraries](Alternative-libraries.md)** - Comparable TA libraries
 - **[Related Projects](Related-projects.md)** - Ecosystem projects built around ta4j
 
 ## Maintainer design docs
