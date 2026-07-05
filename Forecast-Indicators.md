@@ -21,9 +21,9 @@ This example builds the standard EWMA-volatility Monte Carlo pipeline and return
 
 ```java
 import org.ta4j.core.BarSeries;
+import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.forecast.DriftMode;
 import org.ta4j.core.indicators.forecast.EwmaReturnForecastStateConfig;
-import org.ta4j.core.indicators.forecast.ForecastDistribution;
 import org.ta4j.core.indicators.forecast.ForecastDistributionIndicator;
 import org.ta4j.core.indicators.forecast.ForecastIndicators;
 import org.ta4j.core.indicators.forecast.MonteCarloForecastConfig;
@@ -54,17 +54,19 @@ MonteCarloForecastConfig forecastConfig = MonteCarloForecastConfig.builder()
 ForecastDistributionIndicator priceForecast =
         ForecastIndicators.ewmaVolatilityClosePriceForecast(close, stateConfig, forecastConfig);
 
-int index = series.getEndIndex();
-ForecastDistribution<Num> distribution = priceForecast.getValue(index);
+Indicator<Num> downsideForecast = priceForecast.quantile(0.05);
+Indicator<Num> medianForecast = priceForecast.median();
+Indicator<Num> upsideForecast = priceForecast.quantile(0.95);
 
-if (distribution.isStable()) {
-    Num downside = distribution.quantile(0.05);
-    Num median = distribution.median();
-    Num upside = distribution.quantile(0.95);
-}
+int index = series.getEndIndex();
+Num downside = downsideForecast.getValue(index);
+Num median = medianForecast.getValue(index);
+Num upside = upsideForecast.getValue(index);
 ```
 
-At each index, `ForecastDistribution<Num>` contains:
+Use `ForecastDistributionIndicator` projection methods for strategy rules, chart overlays, and other ta4j data flows. Each projection shifts the index lookup onto a normal `Indicator<Num>` and returns `NaN` while the source distribution is unstable.
+
+The raw `ForecastDistribution<Num>` snapshot remains useful for diagnostics and metadata. At each index, it contains:
 
 - `index()`: the decision index where the forecast was made.
 - `horizon()`: the configured number of bars ahead.
@@ -74,7 +76,7 @@ At each index, `ForecastDistribution<Num>` contains:
 - `quantiles()`: configured quantile probabilities to values.
 - `quantile(probability)`: one configured quantile value.
 
-Only request quantiles that were configured in `MonteCarloForecastConfig`. For example, `distribution.quantile(0.05)` is available only if `0.05` was included in `quantiles(...)`.
+Only request quantile projections that were configured in `MonteCarloForecastConfig`. For example, `priceForecast.quantile(0.05)` returns useful values only if `0.05` was included in `quantiles(...)`.
 
 ## Point Projection Indicators
 
@@ -205,7 +207,7 @@ Unstable values can also occur after warm-up when:
 - The historical lookback does not contain enough valid returns.
 - A price forecast cannot be converted because the decision-index price is invalid or non-positive.
 
-Always check `distribution.isStable()` before reading summary values in reporting code. Projection indicators return `NaN` for unstable distributions, which normal ta4j rules will treat as not satisfying comparisons.
+Prefer projection indicators for rule and indicator composition. If you intentionally inspect raw `ForecastDistribution` snapshots in reporting or diagnostics, check `isStable()` before reading summary values. Projection indicators return `NaN` for unstable distributions, which normal ta4j rules will treat as not satisfying comparisons.
 
 ## Avoiding Look-Ahead Bias
 
@@ -281,9 +283,9 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `distribution.isStable()` is false early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
-| A configured quantile throws when requested. | The probability was not included in `quantiles(...)`. | Add that exact probability to `MonteCarloForecastConfig`. |
-| Point forecast is `NaN`. | The source distribution is unstable or the projection requested a missing quantile. | Check `isStable()` on the distribution source and config. |
+| Projection values are `NaN` early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
+| Quantile projection is `NaN` at a stable index. | The probability was not included in `quantiles(...)`. | Add that exact probability to `MonteCarloForecastConfig`. |
+| Point forecast is `NaN`. | The source distribution is unstable, the projection requested a missing quantile, or source data is invalid. | Check warm-up, configured quantiles, and source price/return validity. |
 | Price forecast is unstable while return forecast is stable. | Decision-index price is non-positive or invalid. | Check the source price indicator and data feed. |
 | Live forecasts disappear with a moving series. | The series evicted bars required by the lookback. | Increase `setMaximumBarCount` or reduce lookback after validation. |
 
