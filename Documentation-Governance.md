@@ -21,7 +21,8 @@ Use [Documentation Quality Rubric](Documentation-Quality-Rubric.md) for scored a
 
 ## Canonical ownership model
 
-- `README.md`: entrypoint and high-level orientation
+- `Home.md`: canonical wiki homepage source
+- `README.md`: repository landing page copy generated verbatim from `Home.md` via `scripts/sync-readme-from-home.sh`
 - `ta4j-examples/README.md`: runnable progression and example discovery
 - Wiki:
   - [Canonical User Journey](Canonical-User-Journey.md): end-to-end flow
@@ -33,6 +34,12 @@ Owner roles:
 - **Feature author** owns doc updates for changed APIs/examples in the same change set.
 - **Release reviewer** enforces the release-note-to-docs delta checklist.
 - **Maintainer on duty** refreshes scorecard and freshness status before a release cut.
+
+Homepage sync workflow:
+
+- Edit `Home.md` directly.
+- Run `bash scripts/sync-readme-from-home.sh` before commit to refresh `README.md`.
+- CI re-runs the sync script and fails if committed `README.md` is out of date.
 
 ## Release-time documentation checks
 
