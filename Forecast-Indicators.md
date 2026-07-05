@@ -4,6 +4,8 @@ Forecast indicators estimate a future return or price distribution from data ava
 
 The forecast API lives mostly in `org.ta4j.core.indicators.forecast`. `LogReturnIndicator` is a normal helper indicator in `org.ta4j.core.indicators.helpers`, `EWMAIndicator` is a reusable average in `org.ta4j.core.indicators.averages`, and forecast summaries use the walk-forward prediction model via `PredictionSnapshot.Forecast`.
 
+**Release status:** These APIs are introduced by the matching ta4j feature branch for CF-289 and should be published with ta4j 0.22.9 or newer. Until that ta4j change is merged and released, use this guide with the matching ta4j branch rather than the current release artifacts.
+
 ## When to use them
 
 Use forecast indicators when you want to answer questions such as:
