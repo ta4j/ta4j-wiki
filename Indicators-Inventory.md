@@ -532,17 +532,15 @@ Forecast types live in `org.ta4j.core.indicators.forecast` unless noted. They pr
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Numeric helper indicator for `log(x[i] / x[i - barCount])`, often used as the input to return forecasts. |
-| `org.ta4j.core.indicators.forecast` | **ForecastDistributionIndicator** | `Indicator<ForecastDistribution<T>>` marker interface for distribution-valued forecast indicators. |
+| `org.ta4j.core.indicators.forecast` | **ForecastDistributionIndicator** | `Indicator<ForecastDistribution<Num>>` interface for distribution-valued forecast indicators, with mean/median/std-dev/quantile projection methods returning `Indicator<Num>`. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Recursive EWMA estimator for return mean, drift, variance, and volatility state. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnForecastIndicator** | Monte Carlo cumulative log-return forecast distribution indicator. |
 | `org.ta4j.core.indicators.forecast` | **LogReturnToPriceForecastIndicator** | Converts cumulative log-return forecast distributions to price forecast distributions. |
-| `org.ta4j.core.indicators.forecast` | **ForwardForecastIndicator** | Adapts a forecast distribution indicator into a point forecast indicator with a reducer. |
+| `org.ta4j.core.indicators.forecast` | **ForwardForecastIndicator** | Adapts a forecast distribution indicator into a point forecast indicator. |
 | `org.ta4j.core.indicators.forecast` | **ForecastIndicators** | Convenience factories for standard forecast pipelines such as EWMA-volatility close-price forecasts. |
-| `org.ta4j.core.indicators.forecast` | **ForecastDistribution** | Immutable distribution summary with mean, median, standard deviation, quantiles, sample count, horizon, and defined state. |
-| `org.ta4j.core.indicators.forecast` | **ForecastReducer** | Functional interface that reduces a numeric forecast distribution to one `Num` value. |
-| `org.ta4j.core.indicators.forecast` | **ForecastReducers** | Built-in reducers for mean, median, standard deviation, and configured quantiles. |
+| `org.ta4j.core.indicators.forecast` | **ForecastDistribution** | Immutable distribution summary with mean, median, standard deviation, quantiles, sample count, horizon, and stable state. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateConfig** | Builder-backed EWMA state configuration with initialization count, decay factor, and drift mode. |
-| `org.ta4j.core.indicators.forecast` | **ReturnForecastState** | Record containing return-state index, observation count, defined flag, mean, drift, variance, and volatility. |
+| `org.ta4j.core.indicators.forecast` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloForecastConfig** | Builder-backed Monte Carlo configuration for horizon, iterations, lookback, seed, shock model, volatility mode, and quantiles. |
 | `org.ta4j.core.indicators.forecast` | **DriftMode** | Enum selecting zero drift or rolling-mean drift for return forecasts. |
 | `org.ta4j.core.indicators.forecast` | **ShockModel** | Enum selecting historical bootstrap, standardized empirical, or normal shocks. |
@@ -551,7 +549,7 @@ Forecast types live in `org.ta4j.core.indicators.forecast` unless noted. They pr
 **Short usage**
 - **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
 - **Theory:** The standard pipeline converts prices to log returns, estimates EWMA return state, simulates horizon returns with Monte Carlo shocks, and optionally converts cumulative log returns back to prices.
-- **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point forecasts reduced to regular ta4j indicators.
+- **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
 - **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
 - See also: [Forecast Indicators](Forecast-Indicators.md).
 

@@ -10,7 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
 | Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory §11](Indicators-Inventory.md#11-statistics--numeric) |
-| Forecasting | Log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, distribution reducers. | [Forecast Indicators](Forecast-Indicators.md) |
+| Forecasting | Log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, point projection indicators. | [Forecast Indicators](Forecast-Indicators.md) |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
@@ -103,7 +103,7 @@ ta4j's forecast package adds distribution-valued indicators for forward-looking 
 - `EwmaReturnForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility.
 - `MonteCarloReturnForecastIndicator` simulates cumulative log-return distributions over a configured horizon.
 - `LogReturnToPriceForecastIndicator` converts return distributions to price distributions at the decision index.
-- `ForwardForecastIndicator` and `ForecastReducers` reduce a distribution to one `Num` value for normal ta4j rule composition.
+- `ForecastDistributionIndicator` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
 - `ForecastIndicators` provides convenience factories for the standard EWMA-volatility close-price forecast pipeline.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
@@ -139,7 +139,7 @@ Indicators should be evaluated the same way strategies are—prefer realistic da
 
 - Every indicator extends `CachedIndicator`, so once a value is computed (except for the most recent bar) it is reused.
 - Mutating the latest bar (common with streaming data) invalidates just that slot; the rest stays cached.
-- Use `indicator.getCountOfUnstableBars()` / `indicator.isStable(index)` to understand when the values become reliable (and pass that number to `strategy.setUnstableBars(...)`).
+- Use `indicator.getCountOfUnstableBars()` / `indicator.isStable()` to understand when the values become reliable (and pass that number to `strategy.setUnstableBars(...)`).
 - When using moving `BarSeries` via `setMaximumBarCount`, cached entries older than the oldest remaining bar disappear. Always guard against `NaN` if you try to access evicted indexes.
 
 ## Creating custom indicators
@@ -148,7 +148,7 @@ Sub-class `CachedIndicator<Num>` or compose existing indicators with operations.
 
 - Accept dependencies via constructor injections (`Indicator<Num> base`) rather than pulling directly from a `BarSeries`.
 - Respect the `Num` abstraction: use `Num` arithmetic (`plus`, `minus`, etc.) and produce values via the series `NumFactory`.
-- Override `getUnstableBars()` / `isStable()` when your indicator requires warm-up bars (e.g., multi-stage EMAs).
+- Override `getCountOfUnstableBars()` when your indicator requires warm-up bars (e.g., multi-stage EMAs).
 - If you need state across indices, store it in the indicator (ta4j handles thread safety by design if you limit state to the calculation path).
 
 ## Tips

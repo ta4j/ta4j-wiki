@@ -51,13 +51,13 @@ MonteCarloForecastConfig forecastConfig = MonteCarloForecastConfig.builder()
         .quantiles(0.05, 0.5, 0.95)
         .build();
 
-ForecastDistributionIndicator<Num> priceForecast =
+ForecastDistributionIndicator priceForecast =
         ForecastIndicators.ewmaVolatilityClosePriceForecast(close, stateConfig, forecastConfig);
 
 int index = series.getEndIndex();
 ForecastDistribution<Num> distribution = priceForecast.getValue(index);
 
-if (distribution.defined()) {
+if (distribution.isStable()) {
     Num downside = distribution.quantile(0.05);
     Num median = distribution.median();
     Num upside = distribution.quantile(0.95);
@@ -69,30 +69,26 @@ At each index, `ForecastDistribution<Num>` contains:
 - `index()`: the decision index where the forecast was made.
 - `horizon()`: the configured number of bars ahead.
 - `sampleCount()`: the number of simulated samples summarized.
-- `defined()`: whether the forecast is usable.
+- `isStable()`: whether the forecast is usable at this decision index.
 - `mean()`, `median()`, `standardDeviation()`: summary values.
 - `quantiles()`: configured quantile probabilities to values.
 - `quantile(probability)`: one configured quantile value.
 
 Only request quantiles that were configured in `MonteCarloForecastConfig`. For example, `distribution.quantile(0.05)` is available only if `0.05` was included in `quantiles(...)`.
 
-## Point Forecasts
+## Point Projection Indicators
 
-Many rules and indicators need one `Num` value. Use `ForwardForecastIndicator` with a reducer when you want one point from a distribution.
+Many rules and indicators need one `Num` value per index. `ForecastDistributionIndicator` exposes projection methods that return normal `Indicator<Num>` instances.
 
 ```java
 import org.ta4j.core.Indicator;
-import org.ta4j.core.indicators.forecast.ForecastReducers;
-import org.ta4j.core.indicators.forecast.ForwardForecastIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.OverIndicatorRule;
 import org.ta4j.core.Rule;
 
-Indicator<Num> medianForecast =
-        new ForwardForecastIndicator(priceForecast, ForecastReducers.median());
-
-Indicator<Num> downsideForecast =
-        new ForwardForecastIndicator(priceForecast, ForecastReducers.quantile(0.05));
+Indicator<Num> medianForecast = priceForecast.median();
+Indicator<Num> downsideForecast = priceForecast.quantile(0.05);
+Indicator<Num> forecastWidth = priceForecast.standardDeviation();
 
 Rule forecastAboveCurrentPrice = new OverIndicatorRule(medianForecast, close);
 ```
@@ -104,7 +100,7 @@ Indicator<Num> medianPriceForecast =
         ForecastIndicators.ewmaVolatilityMedianClosePriceForecast(close, stateConfig, forecastConfig);
 ```
 
-Reducers return `NaN` when the source distribution is undefined or when the requested quantile is missing. That makes reduced forecasts safe to compose with normal ta4j rules and indicators.
+Projection indicators return `NaN` when the source distribution is unstable or when the requested quantile is missing. That makes projected forecasts safe to compose with normal ta4j rules and indicators, including `UnaryOperationIndicator` and `BinaryOperationIndicator`.
 
 ## Manual Pipeline
 
@@ -117,10 +113,10 @@ graph TD
     LR --> MC["MonteCarloReturnForecastIndicator"]
     EWMA --> MC
     MC --> PRICE["LogReturnToPriceForecastIndicator"]
-    PRICE --> REDUCE["ForwardForecastIndicator (optional)"]
+    PRICE --> PROJECT["median(), quantile(), mean(), standardDeviation()"]
 ```
 
-Use the manual pipeline when you need direct access to return forecasts, a custom price source, a custom reducer, or intermediate state diagnostics.
+Use the manual pipeline when you need direct access to return forecasts, a custom price source, custom point projections, or intermediate state diagnostics.
 
 ```java
 import org.ta4j.core.indicators.forecast.EwmaReturnForecastStateIndicator;
@@ -134,10 +130,10 @@ LogReturnIndicator returns = new LogReturnIndicator(close);
 EwmaReturnForecastStateIndicator state =
         new EwmaReturnForecastStateIndicator(returns, stateConfig);
 
-ForecastDistributionIndicator<Num> returnForecast =
+ForecastDistributionIndicator returnForecast =
         new MonteCarloReturnForecastIndicator(returns, state, forecastConfig);
 
-ForecastDistributionIndicator<Num> priceForecast =
+ForecastDistributionIndicator priceForecast =
         new LogReturnToPriceForecastIndicator(close, returnForecast);
 ```
 
@@ -155,7 +151,7 @@ forecastPrice = priceAtDecisionIndex * exp(cumulativeLogReturn)
 
 | Setting | Default | Meaning | Common tuning |
 | --- | --- | --- | --- |
-| `initializationBarCount` | `30` | Number of valid return observations required before state is defined. | Increase for slower, steadier estimates; decrease for faster adaptation. |
+| `initializationBarCount` | `30` | Number of valid return observations required before state is stable. | Increase for slower, steadier estimates; decrease for faster adaptation. |
 | `decayFactor` | `0.94` | EWMA persistence in `(0, 1)`. Higher values react more slowly. | Use higher values for daily data and lower values for shorter bars only after validation. |
 | `driftMode` | `DriftMode.ZERO` | Drift used in simulated paths. | Prefer `ZERO` as a conservative default; use `ROLLING_MEAN` only when the rolling mean has validated predictive value. |
 
@@ -191,9 +187,9 @@ The state output is a `ReturnForecastState` with rolling `mean`, forecast `drift
 | `CONSTANT` | Uses the decision-index volatility for every simulated step in a path. | Simple, reproducible, and usually the first model to validate. |
 | `EWMA` | Updates path volatility after each simulated step using `volatilityDecayFactor`. | More dynamic, but adds another assumption that must be tested. |
 
-## Warm-Up and Undefined Values
+## Warm-Up and Unstable Values
 
-Forecast indicators deliberately return undefined distributions until enough valid data is available.
+Forecast indicators deliberately return unstable distributions until enough valid data is available.
 
 Important warm-up rules:
 
@@ -202,14 +198,14 @@ Important warm-up rules:
 - `MonteCarloReturnForecastIndicator` is unstable until both the state is stable and the configured return lookback is available.
 - With the default one-bar log return and default `lookbackBarCount(252)`, the standard Monte Carlo return forecast first becomes eligible at index `252` when all returns are valid.
 
-Undefined values can also occur after warm-up when:
+Unstable values can also occur after warm-up when:
 
 - A source price is zero, negative, `NaN`, or infinite.
 - A return in the required initialization window is invalid.
 - The historical lookback does not contain enough valid returns.
 - A price forecast cannot be converted because the decision-index price is invalid or non-positive.
 
-Always check `distribution.defined()` before reading summary values in reporting code. Point-forecast reducers return `NaN` for undefined distributions, which normal ta4j rules will treat as not satisfying comparisons.
+Always check `distribution.isStable()` before reading summary values in reporting code. Projection indicators return `NaN` for unstable distributions, which normal ta4j rules will treat as not satisfying comparisons.
 
 ## Avoiding Look-Ahead Bias
 
@@ -249,7 +245,7 @@ Use a low quantile to avoid entries when the downside tail is too close.
 
 ```java
 Indicator<Num> fifthPercentilePrice =
-        new ForwardForecastIndicator(priceForecast, ForecastReducers.quantile(0.05));
+        priceForecast.quantile(0.05);
 
 Rule downsideAboveStop = new OverIndicatorRule(fifthPercentilePrice, plannedStopPrice);
 ```
@@ -258,7 +254,7 @@ Rule downsideAboveStop = new OverIndicatorRule(fifthPercentilePrice, plannedStop
 
 ### Distribution Width Filter
 
-Use `ForecastReducers.standardDeviation()` when you want to avoid forecasts that are too uncertain, or require enough spread for a volatility strategy. The result is in the same unit as the distribution: log-return units for return forecasts and price units for price forecasts.
+Use `priceForecast.standardDeviation()` when you want to avoid forecasts that are too uncertain, or require enough spread for a volatility strategy. The result is in the same unit as the distribution: log-return units for return forecasts and price units for price forecasts.
 
 ## Choosing Return or Price Space
 
@@ -279,16 +275,16 @@ Use price forecasts when:
 
 The Monte Carlo indicator mixes the configured seed with the decision index and horizon. That means the same seed, index, horizon, inputs, and configuration produce the same distribution independent of call order. This is important for cached indicators, tests, and chart rendering.
 
-Do not rely on a seed to make an invalid forecast defined. Reproducibility only applies once the data and warm-up requirements are satisfied.
+Do not rely on a seed to make an invalid forecast stable. Reproducibility only applies once the data and warm-up requirements are satisfied.
 
 ## Common Problems
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `distribution.defined()` is false early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
+| `distribution.isStable()` is false early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
 | A configured quantile throws when requested. | The probability was not included in `quantiles(...)`. | Add that exact probability to `MonteCarloForecastConfig`. |
-| Point forecast is `NaN`. | The source distribution is undefined or the reducer requested a missing quantile. | Check `defined()` on the distribution source and config. |
-| Price forecast is undefined while return forecast is defined. | Decision-index price is non-positive or invalid. | Check the source price indicator and data feed. |
+| Point forecast is `NaN`. | The source distribution is unstable or the projection requested a missing quantile. | Check `isStable()` on the distribution source and config. |
+| Price forecast is unstable while return forecast is stable. | Decision-index price is non-positive or invalid. | Check the source price indicator and data feed. |
 | Live forecasts disappear with a moving series. | The series evicted bars required by the lookback. | Increase `setMaximumBarCount` or reduce lookback after validation. |
 
 ## API Map
@@ -302,8 +298,7 @@ Do not rely on a seed to make an invalid forecast defined. Reproducibility only 
 | `MonteCarloForecastConfig` | `org.ta4j.core.indicators.forecast` | Monte Carlo horizon, iteration, seed, shock, volatility, and quantile settings. |
 | `MonteCarloReturnForecastIndicator` | `org.ta4j.core.indicators.forecast` | Cumulative log-return forecast distribution indicator. |
 | `ForecastDistribution` | `org.ta4j.core.indicators.forecast` | Immutable distribution summary record. |
-| `ForecastDistributionIndicator` | `org.ta4j.core.indicators.forecast` | Indicator interface for distribution-valued forecasts. |
+| `ForecastDistributionIndicator` | `org.ta4j.core.indicators.forecast` | Indicator interface for distribution-valued forecasts with point projection methods. |
 | `LogReturnToPriceForecastIndicator` | `org.ta4j.core.indicators.forecast` | Converts cumulative log-return distributions to price distributions. |
-| `ForwardForecastIndicator` | `org.ta4j.core.indicators.forecast` | Reduces a distribution to one `Num` point forecast. |
-| `ForecastReducers` | `org.ta4j.core.indicators.forecast` | Built-in reducers for mean, median, standard deviation, and quantiles. |
+| `ForwardForecastIndicator` | `org.ta4j.core.indicators.forecast` | Adapter used by point projection methods to expose one `Num` forecast. |
 | `ForecastIndicators` | `org.ta4j.core.indicators.forecast` | Convenience factories for standard forecast pipelines. |
