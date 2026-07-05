@@ -97,14 +97,14 @@ Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggered
 
 ## Forecast workflow (0.22.9)
 
-ta4j's forecast package adds distribution-valued indicators for forward-looking research and strategy filters:
+ta4j's forecast package adds prediction-valued indicators for forward-looking research and strategy filters:
 
 - `LogReturnIndicator` creates reusable log-return inputs from close prices or any numeric source indicator.
-- `EwmaReturnForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility.
+- `EWMAIndicator` provides reusable explicit-decay smoothing for forecast and non-forecast workflows.
+- `ForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility from mean and variance indicators.
 - `MonteCarloReturnForecastIndicator` simulates cumulative log-return distributions over a configured horizon.
 - `LogReturnToPriceForecastIndicator` converts return distributions to price distributions at the decision index.
-- `ForecastDistributionIndicator` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
-- `ForecastIndicators` provides convenience factories for the standard EWMA-volatility close-price forecast pipeline.
+- `ForecastPredictionIndicator` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
 
