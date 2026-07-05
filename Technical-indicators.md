@@ -139,7 +139,7 @@ Indicators should be evaluated the same way strategies are—prefer realistic da
 
 - Every indicator extends `CachedIndicator`, so once a value is computed (except for the most recent bar) it is reused.
 - Mutating the latest bar (common with streaming data) invalidates just that slot; the rest stays cached.
-- Use `indicator.getCountOfUnstableBars()` / `indicator.isStable()` to understand when the values become reliable (and pass that number to `strategy.setUnstableBars(...)`).
+- Compare the current index with `indicator.getCountOfUnstableBars()` before trusting early values, or pass that number to `strategy.setUnstableBars(...)`.
 - When using moving `BarSeries` via `setMaximumBarCount`, cached entries older than the oldest remaining bar disappear. Always guard against `NaN` if you try to access evicted indexes.
 
 ## Creating custom indicators
