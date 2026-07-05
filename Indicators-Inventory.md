@@ -534,10 +534,10 @@ Forecast types live in `org.ta4j.core.indicators.forecast` unless noted. They pr
 | `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Numeric helper indicator for `log(x[i] / x[i - barCount])`, often used as the input to return forecasts. |
 | `org.ta4j.core.indicators.averages` | **EWMAIndicator** | Reusable exponentially weighted moving average indicator with explicit decay and SMA initialization. |
 | `org.ta4j.core.indicators.forecast` | **ForecastPredictionIndicator** | `Indicator<PredictionSnapshot.Forecast<Num>>` interface with mean/median/std-dev/quantile projection methods returning `Indicator<Num>`. |
-| `org.ta4j.core.indicators.forecast` | **ForecastStateIndicator** | Builds return forecast state from mean and variance indicators, with `ofEwma(...)` for the standard EWMA state pipeline. |
+| `org.ta4j.core.indicators.forecast` | **ForecastStateIndicator** | Builds return forecast state from EWMA defaults or explicit mean and variance indicators. |
 | `org.ta4j.core.indicators.forecast` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
-| `org.ta4j.core.indicators.forecast` | **MonteCarloReturnForecastIndicator** | Monte Carlo cumulative log-return forecast indicator with builder-owned configuration. |
-| `org.ta4j.core.indicators.forecast` | **LogReturnToPriceForecastIndicator** | Converts cumulative log-return forecasts to price forecasts. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloReturnForecastIndicator** | Monte Carlo cumulative log-return forecast indicator with constructor defaults and a builder for advanced configuration. |
+| `org.ta4j.core.indicators.forecast` | **LogReturnToPriceForecastIndicator** | Converts cumulative log-return forecasts to price forecasts, with constructor defaults for close-price forecasts. |
 | `org.ta4j.core.indicators.forecast` | **ForwardForecastIndicator** | Adapts a forecast prediction indicator into a point forecast indicator. |
 | `org.ta4j.core.walkforward` | **PredictionSnapshot.Forecast** | Walk-forward prediction summary type used by forecast indicators, with mean, median, standard deviation, quantiles, sample count, horizon, and stable state. |
 

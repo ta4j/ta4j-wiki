@@ -103,7 +103,7 @@ ta4j's forecast package adds prediction-valued indicators for forward-looking re
 - `EWMAIndicator` provides reusable explicit-decay smoothing for forecast and non-forecast workflows.
 - `ForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility from mean and variance indicators.
 - `MonteCarloReturnForecastIndicator` simulates cumulative log-return distributions over a configured horizon.
-- `LogReturnToPriceForecastIndicator` converts return distributions to price distributions at the decision index.
+- `LogReturnToPriceForecastIndicator` converts return distributions to price distributions at the decision index, and can build the default close-price forecast directly from a price indicator and horizon.
 - `ForecastPredictionIndicator` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
