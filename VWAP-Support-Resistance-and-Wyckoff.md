@@ -25,6 +25,7 @@ Combined, they answer:
 - `VWAPStandardDeviationIndicator`: volume-weighted standard deviation around VWAP.
 - `VWAPBandIndicator`: VWAP bands (`VWAP +/- multiplier * stdDev`).
 - `VWAPZScoreIndicator`: normalized deviation (`deviation / stdDev`).
+- `StretchZScoreIndicator`: generic stretch z-score between any source/reference pair (for example close vs VWAP or vs a band midpoint).
 
 ### Support/resistance family
 
