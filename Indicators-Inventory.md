@@ -539,7 +539,8 @@ Forecast types live in `org.ta4j.core.indicators.forecast` unless noted. They pr
 | `org.ta4j.core.indicators.forecast` | **ReturnForecastStateIndicator** | Indicator interface for hidden state derived from a `ReturnIndicator`. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
 | `org.ta4j.core.indicators.forecast` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
-| `org.ta4j.core.indicators.forecast` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation and can convert to price forecasts. |
+| `org.ta4j.core.indicators.forecast` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Constructor-first Monte Carlo price forecast indicator that infers the price source from `LogReturnIndicator`. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
 | `org.ta4j.core.indicators.forecast` | **LogReturnToPriceForecastIndicator** | Reducer that converts an explicit cumulative log-return projection to price forecasts. |
 | `org.ta4j.core.indicators.forecast` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
@@ -547,7 +548,7 @@ Forecast types live in `org.ta4j.core.indicators.forecast` unless noted. They pr
 
 **Short usage**
 - **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
-- **Theory:** The standard pipeline converts prices to log returns, estimates EWMA return state, simulates horizon returns with Monte Carlo shocks, and optionally converts cumulative log returns back to prices.
+- **Theory:** The standard pipeline converts prices to log returns, estimates EWMA return state, and projects horizon prices with Monte Carlo shocks; explicit return projections remain available for advanced tuning.
 - **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
 - **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
 - See also: [Forecast Indicators](Forecast-Indicators.md).
