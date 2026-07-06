@@ -75,11 +75,11 @@ The raw `PredictionSnapshot.Forecast<Num>` summary remains useful for diagnostic
 - `quantiles()`: configured quantile probabilities to values.
 - `quantile(probability)`: one configured quantile value.
 
-Only request quantile projections that were configured on the underlying Monte Carlo projection. For example, `priceForecast.quantile(0.05)` works with the default quantile set, while advanced return-projection builders must include any non-default probabilities in `quantiles(...)`.
+Only request quantiles that were configured on the underlying Monte Carlo projection. For example, `priceForecast.getValue(index).quantile(0.05)` and `priceForecast.quantile(0.05).getValue(index)` both work with the default quantile set, while advanced return-projection builders must include any non-default probabilities in `quantiles(...)`.
 
 ## Point Projection Indicators
 
-Many rules and indicators need one `Num` value per index. `ForecastProjectionIndicator` exposes projection methods that return normal `Indicator<Num>` instances.
+Direct `priceForecast.getValue(index)` access returns the full forecast summary. When rules and other indicators need one `Num` value per index, `ForecastProjectionIndicator` exposes convenience projection methods that adapt summary fields into normal `Indicator<Num>` instances.
 
 ```java
 import org.ta4j.core.Indicator;
@@ -90,6 +90,7 @@ import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.OverIndicatorRule;
 
 ClosePriceIndicator close = new ClosePriceIndicator(series);
+// Adapter forms of priceForecast.getValue(index).median()/quantile(...).
 Indicator<Num> medianForecast = priceForecast.median();
 Indicator<Num> downsideForecast = priceForecast.quantile(0.05);
 Indicator<Num> upsideForecast = priceForecast.quantile(0.95);
@@ -98,7 +99,7 @@ Indicator<Num> forecastWidth = BinaryOperationIndicator.difference(upsideForecas
 Rule forecastAboveCurrentPrice = new OverIndicatorRule(medianForecast, close);
 ```
 
-Projection indicators return `NaN` when the source forecast is unstable or when the requested quantile is missing. That makes projected forecasts safe to compose with normal ta4j rules and indicators, including `UnaryOperationIndicator` and `BinaryOperationIndicator`.
+These helper indicators are equivalent to reading the same field from `priceForecast.getValue(index)` at the same index. They return `NaN` when the source forecast is unstable or when the requested quantile is missing. That makes projected forecasts safe to compose with normal ta4j rules and indicators, including `UnaryOperationIndicator` and `BinaryOperationIndicator`.
 
 ## Pipeline
 
@@ -107,7 +108,8 @@ graph TD
     CP["ClosePriceIndicator or another price Indicator<Num>"] --> LR["LogReturnIndicator"]
     LR --> STATE["new EwmaReturnForecastStateIndicator(returns)"]
     STATE --> PRICE["new MonteCarloPriceForecastIndicator(state, horizon)"]
-    PRICE --> PROJECT["median(), quantile(), mean(), standardDeviation()"]
+    PRICE --> DIRECT["getValue(index).median(), quantile(...), mean()"]
+    PRICE --> PROJECT["median(), quantile(), mean(), standardDeviation() adapters"]
 ```
 
 Use this pipeline for normal strategy rules, chart overlays, and reports in price units. The API intentionally avoids a god factory so the return source, state model, and projection model remain reusable and testable.
@@ -206,7 +208,7 @@ For live trading:
 
 ### Median Direction Filter
 
-Use the median point forecast as a directional filter:
+Use the median point forecast as a directional filter. The rule needs an `Indicator<Num>`, so use the projection-helper adapter for the same value available from `priceForecast.getValue(index).median()`.
 
 ```java
 ClosePriceIndicator close = new ClosePriceIndicator(series);
@@ -219,7 +221,7 @@ This is intentionally minimal. In real strategies, add costs, slippage, and a re
 
 ### Downside Risk Filter
 
-Use a low quantile to avoid entries when the downside tail is too close.
+Use a low quantile to avoid entries when the downside tail is too close. The direct value is `priceForecast.getValue(index).quantile(0.05)`; the helper form adapts that value for rule composition.
 
 ```java
 Indicator<Num> fifthPercentilePrice =
@@ -232,7 +234,7 @@ Rule downsideAboveStop = new OverIndicatorRule(fifthPercentilePrice, plannedStop
 
 ### Forecast Width Filter
 
-Use a price-quantile spread when you want to avoid forecasts that are too uncertain, or require enough spread for a volatility strategy.
+Use a price-quantile spread when you want to avoid forecasts that are too uncertain, or require enough spread for a volatility strategy. For one-off reporting, subtract the direct quantile values from `priceForecast.getValue(index)`; for indicators or rules, use the equivalent helper adapters.
 
 ```java
 import org.ta4j.core.indicators.numeric.BinaryOperationIndicator;
