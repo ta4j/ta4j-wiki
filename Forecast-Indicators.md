@@ -76,13 +76,15 @@ Many rules and indicators need one `Num` value per index. `ForecastProjectionInd
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Rule;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.numeric.BinaryOperationIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.OverIndicatorRule;
 
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 Indicator<Num> medianForecast = priceForecast.median();
 Indicator<Num> downsideForecast = priceForecast.quantile(0.05);
-Indicator<Num> forecastWidth = priceForecast.standardDeviation();
+Indicator<Num> upsideForecast = priceForecast.quantile(0.95);
+Indicator<Num> forecastWidth = BinaryOperationIndicator.difference(upsideForecast, downsideForecast);
 
 Rule forecastAboveCurrentPrice = new OverIndicatorRule(medianForecast, close);
 ```
@@ -221,7 +223,18 @@ Rule downsideAboveStop = new OverIndicatorRule(fifthPercentilePrice, plannedStop
 
 ### Forecast Width Filter
 
-Use `priceForecast.standardDeviation()` when you want to avoid forecasts that are too uncertain, or require enough spread for a volatility strategy. The result is in the same unit as the forecast summary: log-return units for return forecasts and price units for price forecasts.
+Use a price-quantile spread when you want to avoid forecasts that are too uncertain, or require enough spread for a volatility strategy.
+
+```java
+import org.ta4j.core.indicators.numeric.BinaryOperationIndicator;
+
+Indicator<Num> fifthPercentilePrice = priceForecast.quantile(0.05);
+Indicator<Num> ninetyFifthPercentilePrice = priceForecast.quantile(0.95);
+Indicator<Num> forecastWidth =
+        BinaryOperationIndicator.difference(ninetyFifthPercentilePrice, fifthPercentilePrice);
+```
+
+`standardDeviation()` is most useful on return forecasts. For price forecasts, prefer quantile spreads because the log-return-to-price reducer maps summary fields instead of recomputing dispersion from transformed price samples.
 
 ## Choosing Return or Price Space
 

@@ -70,7 +70,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **NumIndicator** | Wraps a Num value as an indicator. |
 | `org.ta4j.core.indicators.helpers` | **TradeCountIndicator** | Number of trades in the bar (when available). |
 | `org.ta4j.core.indicators.helpers` | **UnstableIndicator** | Returns NaN for indices within the unstable period; used for warm-up. |
-| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Log return of a numeric source: `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | CF-289 branch-only until ta4j 0.22.9: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
 
 **Short usage (per-indicator expansion)**  
 - **What it is:** As in the table (e.g. close price, true range, running sum).  
