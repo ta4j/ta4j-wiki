@@ -30,23 +30,32 @@ import org.ta4j.core.indicators.forecast.MonteCarloPriceForecastIndicator;
 import org.ta4j.core.indicators.forecast.ReturnForecastStateIndicator;
 import org.ta4j.core.indicators.helpers.LogReturnIndicator;
 import org.ta4j.core.num.Num;
+import org.ta4j.core.walkforward.PredictionSnapshot;
 
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
 ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 
+int index = series.getEndIndex();
+PredictionSnapshot.Forecast<Num> forecast = priceForecast.getValue(index);
+if (forecast.isStable()) {
+    Num directDownside = forecast.quantile(0.05);
+    Num directMedian = forecast.median();
+    Num directUpside = forecast.quantile(0.95);
+}
+
+// Equivalent convenience path: same values at the same index, easier to compose.
 Indicator<Num> downsideForecast = priceForecast.quantile(0.05);
 Indicator<Num> medianForecast = priceForecast.median();
 Indicator<Num> upsideForecast = priceForecast.quantile(0.95);
 
-int index = series.getEndIndex();
-Num downside = downsideForecast.getValue(index);
-Num median = medianForecast.getValue(index);
-Num upside = upsideForecast.getValue(index);
+Num helperDownside = downsideForecast.getValue(index);
+Num helperMedian = medianForecast.getValue(index);
+Num helperUpside = upsideForecast.getValue(index);
 ```
 
-Use `ForecastProjectionIndicator` projection methods for strategy rules, chart overlays, and other ta4j data flows. Each projection shifts the index lookup onto a normal `Indicator<Num>` and returns `NaN` while the source forecast is unstable.
+Direct `priceForecast.getValue(index)` access is the normal `Indicator` path when reporting or inspecting a full forecast summary. `ForecastProjectionIndicator` methods such as `median()` and `quantile(...)` are convenience adapters for strategy rules, chart overlays, and other ta4j data flows that need one `Indicator<Num>` value per index. Each projection returns `NaN` while the source forecast is unstable.
 
 The setup has three business decisions:
 
