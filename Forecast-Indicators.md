@@ -273,7 +273,7 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Projection values are `NaN` early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
+| Projection values are `NaN` early in the series. | Warm-up and lookback requirements are not met. | Start reading after `priceForecast.getCountOfUnstableBars()` or set the same unstable-bar count on the strategy. |
 | Direct quantile lookup returns `null`. | The probability was valid but was not included in `quantiles(...)`. | Use `forecast.hasQuantile(probability)` before direct `forecast.quantile(probability)`, or configure that probability on the Monte Carlo builder. |
 | Quantile projection is `NaN` at a stable index. | The probability was valid but was not included in `quantiles(...)`. | The default quantile set includes `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`; for other probabilities add that exact value with `MonteCarloReturnProjectionIndicator.builder(state).quantiles(...)`. |
 | Point forecast is `NaN`. | The source forecast is unstable, the projection requested a missing quantile, or source data is invalid. | Check warm-up, configured quantiles, and source price/return validity. |
