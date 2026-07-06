@@ -97,6 +97,8 @@ Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggered
 
 ## Forecast workflow (0.22.9)
 
+This workflow is documented from the CF-289 feature branch and is branch-only until the ta4j 0.22.9 release includes these APIs.
+
 ta4j's forecast package adds prediction-valued indicators for forward-looking research and strategy filters:
 
 - `LogReturnIndicator` creates reusable log-return inputs from close prices or any numeric source indicator.
