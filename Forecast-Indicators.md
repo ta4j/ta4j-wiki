@@ -24,15 +24,22 @@ This example builds an EWMA-volatility Monte Carlo pipeline and projects forecas
 ```java
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.Indicator;
-import org.ta4j.core.indicators.forecast.ForecastPredictionIndicator;
-import org.ta4j.core.indicators.forecast.LogReturnToPriceForecastIndicator;
+import org.ta4j.core.indicators.forecast.EwmaReturnForecastStateIndicator;
+import org.ta4j.core.indicators.forecast.ForecastProjectionProvider;
+import org.ta4j.core.indicators.forecast.MonteCarloReturnProjectionIndicator;
+import org.ta4j.core.indicators.forecast.ReturnForecastProjectionProvider;
+import org.ta4j.core.indicators.forecast.ReturnForecastStateProvider;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.LogReturnIndicator;
 import org.ta4j.core.num.Num;
 
 BarSeries series = ...;
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 
-ForecastPredictionIndicator priceForecast = new LogReturnToPriceForecastIndicator(close, 5);
+LogReturnIndicator returns = new LogReturnIndicator(close);
+ReturnForecastStateProvider state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastProjectionProvider projection = new MonteCarloReturnProjectionIndicator(state, 5);
+ForecastProjectionProvider<?> priceForecast = projection.toPriceForecast(close);
 
 Indicator<Num> downsideForecast = priceForecast.quantile(0.05);
 Indicator<Num> medianForecast = priceForecast.median();
@@ -44,9 +51,16 @@ Num median = medianForecast.getValue(index);
 Num upside = upsideForecast.getValue(index);
 ```
 
-Use `ForecastPredictionIndicator` projection methods for strategy rules, chart overlays, and other ta4j data flows. Each projection shifts the index lookup onto a normal `Indicator<Num>` and returns `NaN` while the source forecast is unstable.
+Use `ForecastProjectionProvider` projection methods for strategy rules, chart overlays, and other ta4j data flows. Each projection shifts the index lookup onto a normal `Indicator<Num>` and returns `NaN` while the source forecast is unstable.
 
-The short constructor path creates log returns internally, then uses EWMA return state with a 30-bar initialization window, `0.94` decay, zero drift, standardized empirical shocks, 1,000 simulations, a 252-return lookback, and default quantiles of `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`.
+The setup has three business decisions and one optional reducer:
+
+- `LogReturnIndicator` declares the source stream as log returns through the `ReturnIndicator` semantic contract.
+- `EwmaReturnForecastStateIndicator` provides hidden return state from that log-return stream.
+- `MonteCarloReturnProjectionIndicator` projects cumulative log returns from the state provider.
+- `projection.toPriceForecast(close)` uses `LogReturnToPriceForecastIndicator` internally to convert cumulative log returns into decision-index prices.
+
+The default EWMA state uses a 30-bar initialization window, `0.94` decay, and zero drift. The default Monte Carlo projection uses standardized empirical shocks, 1,000 simulations, a 252-return lookback, and default quantiles of `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`.
 
 The raw `PredictionSnapshot.Forecast<Num>` summary remains useful for diagnostics and metadata. At each index, it contains:
 
@@ -58,11 +72,11 @@ The raw `PredictionSnapshot.Forecast<Num>` summary remains useful for diagnostic
 - `quantiles()`: configured quantile probabilities to values.
 - `quantile(probability)`: one configured quantile value.
 
-Only request quantile projections that were configured on `MonteCarloReturnForecastIndicator.Builder`. For example, `priceForecast.quantile(0.05)` returns useful values only if `0.05` was included in `quantiles(...)`.
+Only request quantile projections that were configured on `MonteCarloReturnProjectionIndicator.Builder`. For example, `priceForecast.quantile(0.05)` returns useful values only if `0.05` was included in `quantiles(...)`.
 
 ## Point Projection Indicators
 
-Many rules and indicators need one `Num` value per index. `ForecastPredictionIndicator` exposes projection methods that return normal `Indicator<Num>` instances.
+Many rules and indicators need one `Num` value per index. `ForecastProjectionProvider` exposes projection methods that return normal `Indicator<Num>` instances.
 
 ```java
 import org.ta4j.core.Indicator;
@@ -84,18 +98,16 @@ Projection indicators return `NaN` when the source forecast is unstable or when 
 ```mermaid
 graph TD
     CP["ClosePriceIndicator or another price Indicator<Num>"] --> LR["LogReturnIndicator"]
-    LR --> MC["new MonteCarloReturnForecastIndicator(returns, horizon)"]
-    MC -. "default EWMA state" .-> STATE["new ForecastStateIndicator(...)"]
-    MC --> PRICE["LogReturnToPriceForecastIndicator"]
-    CP --> PRICE_SHORT["new LogReturnToPriceForecastIndicator(close, horizon)"]
-    PRICE_SHORT -. "default return forecast" .-> MC
+    LR --> STATE["new EwmaReturnForecastStateIndicator(returns)"]
+    STATE --> MC["new MonteCarloReturnProjectionIndicator(state, horizon)"]
+    MC --> PRICE["projection.toPriceForecast(close)"]
+    CP --> PRICE
     PRICE --> PROJECT["median(), quantile(), mean(), standardDeviation()"]
-    PRICE_SHORT --> PROJECT
 ```
 
-Use this pipeline when you need direct access to return forecasts, a custom price source, custom point projections, or intermediate state diagnostics. The API intentionally avoids a god factory so each stage remains reusable and testable while the common constructor keeps setup small.
+Use this pipeline when you need direct access to return forecasts, a custom price source, custom point projections, or intermediate state diagnostics. The API intentionally avoids a god factory so each stage remains reusable and testable.
 
-`MonteCarloReturnForecastIndicator` produces a cumulative log-return forecast over the configured horizon. `LogReturnToPriceForecastIndicator` converts it to a price forecast with:
+`MonteCarloReturnProjectionIndicator` produces a cumulative log-return forecast over the configured horizon. `LogReturnToPriceForecastIndicator` converts it to a price forecast with:
 
 ```text
 forecastPrice = priceAtDecisionIndex * exp(cumulativeLogReturn)
@@ -105,24 +117,24 @@ forecastPrice = priceAtDecisionIndex * exp(cumulativeLogReturn)
 
 ### EWMA State
 
-`new ForecastStateIndicator(...)` estimates rolling return state from a log-return source. You only need to create it yourself when you want to override the default state used by `new MonteCarloReturnForecastIndicator(returns, horizon)`.
+`new EwmaReturnForecastStateIndicator(returns)` estimates rolling return state from a log-return source. Its constructors accept `ReturnIndicator`, not arbitrary `Indicator<Num>`, and reject return streams whose `ReturnRepresentation` is not `LOG`.
 
 | Parameter | Default in examples | Meaning | Common tuning |
 | --- | --- | --- | --- |
 | `initializationBarCount` | `30` | Number of valid return observations required before state is stable. | Increase for slower, steadier estimates; decrease for faster adaptation. |
 | `decayFactor` | `0.94` | EWMA persistence in `(0, 1)`. Higher values react more slowly. | Use higher values for daily data and lower values for shorter bars only after validation. |
-| `driftMode` | `ForecastStateIndicator.DriftMode.ZERO` | Drift used in simulated paths. | Prefer `ZERO` as a conservative default; use `ROLLING_MEAN` only when the rolling mean has validated predictive value. |
+| `driftMode` | `EwmaReturnForecastStateIndicator.DriftMode.ZERO` | Drift used in simulated paths. | Prefer `ZERO` as a conservative default; use `ROLLING_MEAN` only when the rolling mean has validated predictive value. |
 
 The state output is a `ReturnForecastState` with rolling `mean`, forecast `drift`, `variance`, and `volatility`.
 
 ### Monte Carlo Forecast
 
-`new MonteCarloReturnForecastIndicator(returns, horizon)` is the standard constructor for default EWMA Monte Carlo forecasts. Use the builder only when you need to tune the simulation settings beyond horizon and EWMA state.
+`new MonteCarloReturnProjectionIndicator(state, horizon)` is the standard constructor for EWMA Monte Carlo forecasts. It accepts a `ReturnForecastStateProvider`, validates that the provider is log-return based, and uses `state.getReturnIndicator()` for historical shocks. Use the builder only when you need to tune simulation settings beyond horizon.
 
 | Constructor or builder method | Default | Meaning | Common tuning |
 | --- | --- | --- | --- |
-| `new MonteCarloReturnForecastIndicator(returns)` | `1` bar | Default one-bar forecast. | Use for next-bar forecasts. |
-| `new MonteCarloReturnForecastIndicator(returns, horizon)` | caller supplied | Number of bars ahead to forecast. | Match the holding period or evaluation label. |
+| `new MonteCarloReturnProjectionIndicator(state)` | `1` bar | Default one-bar forecast from the supplied state provider. | Use for next-bar forecasts. |
+| `new MonteCarloReturnProjectionIndicator(state, horizon)` | caller supplied | Number of bars ahead to forecast. | Match the holding period or evaluation label. |
 | `iterationCount(...)` | `1_000` | Number of simulated paths. | Increase for smoother quantiles; reduce only for latency-sensitive live loops after measuring. |
 | `lookbackBarCount(...)` | `252` | Number of historical returns used for empirical shocks. | Match the market regime window you want represented. |
 | `seed(...)` | `42L` | Base random seed. | Keep fixed for reproducible research and tests. |
@@ -135,16 +147,16 @@ The state output is a `ReturnForecastState` with rolling `mean`, forecast `drift
 
 | Shock model | Behavior | Use when |
 | --- | --- | --- |
-| `MonteCarloReturnForecastIndicator.ShockModel.HISTORICAL_BOOTSTRAP` | Samples raw historical returns from the lookback window. | You want the recent empirical return distribution without rescaling by current volatility. |
-| `MonteCarloReturnForecastIndicator.ShockModel.STANDARDIZED_EMPIRICAL` | Samples standardized residuals and scales them by the current EWMA state. | You want empirical tail shape with current volatility and drift. This is the default. |
-| `MonteCarloReturnForecastIndicator.ShockModel.NORMAL` | Draws standard normal shocks and scales them by the current EWMA state. | You want a simple parametric baseline and accept thinner tails than many markets show. |
+| `MonteCarloReturnProjectionIndicator.ShockModel.HISTORICAL_BOOTSTRAP` | Samples raw historical returns from the lookback window. | You want the recent empirical return distribution without rescaling by current volatility. |
+| `MonteCarloReturnProjectionIndicator.ShockModel.STANDARDIZED_EMPIRICAL` | Samples standardized residuals and scales them by the current EWMA state. | You want empirical tail shape with current volatility and drift. This is the default. |
+| `MonteCarloReturnProjectionIndicator.ShockModel.NORMAL` | Draws standard normal shocks and scales them by the current EWMA state. | You want a simple parametric baseline and accept thinner tails than many markets show. |
 
 ### Volatility Update Modes
 
 | Mode | Behavior | Tradeoff |
 | --- | --- | --- |
-| `MonteCarloReturnForecastIndicator.VolatilityUpdateMode.CONSTANT` | Uses the decision-index volatility for every simulated step in a path. | Simple, reproducible, and usually the first model to validate. |
-| `MonteCarloReturnForecastIndicator.VolatilityUpdateMode.EWMA` | Updates path volatility after each simulated step using `volatilityDecayFactor`. | More dynamic, but adds another assumption that must be tested. |
+| `MonteCarloReturnProjectionIndicator.VolatilityUpdateMode.CONSTANT` | Uses the decision-index volatility for every simulated step in a path. | Simple, reproducible, and usually the first model to validate. |
+| `MonteCarloReturnProjectionIndicator.VolatilityUpdateMode.EWMA` | Updates path volatility after each simulated step using `volatilityDecayFactor`. | More dynamic, but adds another assumption that must be tested. |
 
 ## Warm-Up and Unstable Values
 
@@ -154,8 +166,8 @@ Important warm-up rules:
 
 - `LogReturnIndicator` is unstable for `source.getCountOfUnstableBars() + barCount` bars.
 - `EWMAIndicator` is unstable for `source.getCountOfUnstableBars() + barCount - 1` bars.
-- `ForecastStateIndicator` is unstable until its EWMA mean and variance sources are stable.
-- `MonteCarloReturnForecastIndicator` is unstable until both the state is stable and the configured return lookback is available.
+- `EwmaReturnForecastStateIndicator` is unstable until its EWMA mean and variance sources are stable.
+- `MonteCarloReturnProjectionIndicator` is unstable until both the state is stable and the configured return lookback is available.
 - With the default one-bar log return and default `lookbackBarCount(252)`, the standard Monte Carlo return forecast first becomes eligible at index `252` when all returns are valid.
 
 Unstable values can also occur after warm-up when:
@@ -228,7 +240,7 @@ Use price forecasts when:
 - Strategy rules compare the forecast to current price, stops, targets, support, resistance, or chart overlays.
 - You want report output in user-facing price units.
 
-`LogReturnToPriceForecastIndicator` is the bridge between the two.
+`LogReturnToPriceForecastIndicator` is the reducer bridge between the two. It accepts an explicit price indicator plus an explicit `ReturnForecastProjectionProvider` and rejects non-log return projections.
 
 ## Reproducibility Notes
 
@@ -241,8 +253,9 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Projection values are `NaN` early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
-| Quantile projection is `NaN` at a stable index. | The probability was not included in `quantiles(...)`. | The default constructor includes `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`; for other probabilities add that exact value with `MonteCarloReturnForecastIndicator.builder(...).quantiles(...)`. |
+| Quantile projection is `NaN` at a stable index. | The probability was not included in `quantiles(...)`. | The default quantile set includes `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`; for other probabilities add that exact value with `MonteCarloReturnProjectionIndicator.builder(state).quantiles(...)`. |
 | Point forecast is `NaN`. | The source forecast is unstable, the projection requested a missing quantile, or source data is invalid. | Check warm-up, configured quantiles, and source price/return validity. |
+| A constructor rejects the return input. | The stream declares a non-log `ReturnRepresentation`. | Use `LogReturnIndicator` or another `ReturnIndicator` that explicitly returns `ReturnRepresentation.LOG`. Decimal, percentage, and multiplicative returns need separate projection support. |
 | Price forecast is unstable while return forecast is stable. | Decision-index price is non-positive or invalid. | Check the source price indicator and data feed. |
 | Live forecasts disappear with a moving series. | The series evicted bars required by the lookback. | Increase `setMaximumBarCount` or reduce lookback after validation. |
 
@@ -251,14 +264,18 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 | Type | Package | Purpose |
 | --- | --- | --- |
 | `LogReturnIndicator` | `org.ta4j.core.indicators.helpers` | Normal numeric helper indicator for `log(x[i] / x[i - n])`. |
+| `ReturnIndicator` | `org.ta4j.core.indicators` | Semantic contract for indicators that promise return-stream output in a declared `ReturnRepresentation`. |
 | `EWMAIndicator` | `org.ta4j.core.indicators.averages` | Reusable EWMA indicator with explicit decay and SMA initialization. |
-| `ForecastStateIndicator` | `org.ta4j.core.indicators.forecast` | Converts EWMA or explicit mean and variance indicators into `ReturnForecastState`. |
-| `ForecastStateIndicator.DriftMode` | `org.ta4j.core.indicators.forecast` | Nested enum selecting zero drift or rolling-mean drift. |
+| `ForecastStateProvider` | `org.ta4j.core.indicators.forecast` | Interface for hidden-state providers used by forecast projections. |
+| `ReturnForecastStateProvider` | `org.ta4j.core.indicators.forecast` | Interface for hidden-state providers derived from a `ReturnIndicator`. |
+| `EwmaReturnForecastStateIndicator` | `org.ta4j.core.indicators.forecast` | Builds `ReturnForecastState` from a log-return `ReturnIndicator` using EWMA mean and variance. |
+| `EwmaReturnForecastStateIndicator.DriftMode` | `org.ta4j.core.indicators.forecast` | Nested enum selecting zero drift or rolling-mean drift. |
 | `ReturnForecastState` | `org.ta4j.core.indicators.forecast` | State record consumed by return forecast indicators. |
-| `MonteCarloReturnForecastIndicator` | `org.ta4j.core.indicators.forecast` | Cumulative log-return forecast indicator with constructor defaults and a builder for advanced configuration. |
-| `MonteCarloReturnForecastIndicator.ShockModel` | `org.ta4j.core.indicators.forecast` | Nested enum selecting historical bootstrap, standardized empirical, or normal shocks. |
-| `MonteCarloReturnForecastIndicator.VolatilityUpdateMode` | `org.ta4j.core.indicators.forecast` | Nested enum selecting constant or EWMA path volatility. |
-| `ForecastPredictionIndicator` | `org.ta4j.core.indicators.forecast` | Indicator interface for forecast summaries with point projection methods. |
-| `LogReturnToPriceForecastIndicator` | `org.ta4j.core.indicators.forecast` | Converts cumulative log-return forecasts to price forecasts. |
+| `ForecastProjectionProvider` | `org.ta4j.core.indicators.forecast` | Indicator interface for forecast summaries with point projection methods. |
+| `ReturnForecastProjectionProvider` | `org.ta4j.core.indicators.forecast` | Interface for return projections that declare a `ReturnRepresentation` and can convert to price forecasts. |
+| `MonteCarloReturnProjectionIndicator` | `org.ta4j.core.indicators.forecast` | Cumulative log-return projection provider with constructor defaults and a builder for advanced simulation settings. |
+| `MonteCarloReturnProjectionIndicator.ShockModel` | `org.ta4j.core.indicators.forecast` | Nested enum selecting historical bootstrap, standardized empirical, or normal shocks. |
+| `MonteCarloReturnProjectionIndicator.VolatilityUpdateMode` | `org.ta4j.core.indicators.forecast` | Nested enum selecting constant or EWMA path volatility. |
+| `LogReturnToPriceForecastIndicator` | `org.ta4j.core.indicators.forecast` | Reducer that converts an explicit cumulative log-return projection to a price projection. |
 | `ForwardForecastIndicator` | `org.ta4j.core.indicators.forecast` | Adapter used by point projection methods to expose one `Num` forecast. |
 | `PredictionSnapshot.Forecast` | `org.ta4j.core.walkforward` | Walk-forward prediction summary type used by forecast indicators. |
