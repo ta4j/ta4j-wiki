@@ -73,9 +73,10 @@ The raw `PredictionSnapshot.Forecast<Num>` summary remains useful for diagnostic
 - `isStable()`: whether the forecast is usable at this decision index.
 - `mean()`, `median()`, `standardDeviation()`: summary values.
 - `quantiles()`: configured quantile probabilities to values.
-- `quantile(probability)`: one configured quantile value.
+- `hasQuantile(probability)`: whether a valid quantile probability is available.
+- `quantile(probability)`: one configured quantile value, or `null` when a valid probability was not configured.
 
-Only request quantiles that were configured on the underlying Monte Carlo projection. For example, `priceForecast.getValue(index).quantile(0.05)` and `priceForecast.quantile(0.05).getValue(index)` both work with the default quantile set, while advanced return-projection builders must include any non-default probabilities in `quantiles(...)`.
+Direct lookup and projection helpers handle missing quantiles differently. `priceForecast.getValue(index).quantile(0.90)` returns `null` when `0.90` was not configured, while `priceForecast.quantile(0.90).getValue(index)` returns `NaN` so the result composes safely as an `Indicator<Num>`. Invalid probabilities outside `[0, 1]` still throw.
 
 ## Point Projection Indicators
 
@@ -273,7 +274,8 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Projection values are `NaN` early in the series. | Warm-up and lookback requirements are not met. | Start reading after `forecast.getCountOfUnstableBars()`. |
-| Quantile projection is `NaN` at a stable index. | The probability was not included in `quantiles(...)`. | The default quantile set includes `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`; for other probabilities add that exact value with `MonteCarloReturnProjectionIndicator.builder(state).quantiles(...)`. |
+| Direct quantile lookup returns `null`. | The probability was valid but was not included in `quantiles(...)`. | Use `forecast.hasQuantile(probability)` before direct `forecast.quantile(probability)`, or configure that probability on the Monte Carlo builder. |
+| Quantile projection is `NaN` at a stable index. | The probability was valid but was not included in `quantiles(...)`. | The default quantile set includes `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`; for other probabilities add that exact value with `MonteCarloReturnProjectionIndicator.builder(state).quantiles(...)`. |
 | Point forecast is `NaN`. | The source forecast is unstable, the projection requested a missing quantile, or source data is invalid. | Check warm-up, configured quantiles, and source price/return validity. |
 | A constructor rejects the return input. | The stream declares a non-log `ReturnRepresentation`. | Use `LogReturnIndicator` or another `ReturnIndicator` that explicitly returns `ReturnRepresentation.LOG`. Decimal, percentage, and multiplicative returns need separate projection support. |
 | `MonteCarloPriceForecastIndicator` rejects a custom log-return state. | The state uses a custom `ReturnIndicator` whose source price cannot be inferred. | Use `LogReturnToPriceForecastIndicator` with the explicit price indicator and an explicit `MonteCarloReturnProjectionIndicator`. |
