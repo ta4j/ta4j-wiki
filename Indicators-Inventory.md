@@ -22,7 +22,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 12. [Renko](#12-renko)
 13. [Analysis (PnL, returns, cash flow)](#13-analysis-pnl-returns-cash-flow)
 14. [Charting (ta4j-examples)](#14-charting-ta4j-examples)
-15. [Supporting public types (facades, enums, records)](#15-supporting-public-types-facades-enums-records)
+15. [Forecasting](#15-forecasting)
+16. [Supporting public types (facades, enums, records)](#16-supporting-public-types-facades-enums-records)
 
 ---
 
@@ -69,6 +70,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **NumIndicator** | Wraps a Num value as an indicator. |
 | `org.ta4j.core.indicators.helpers` | **TradeCountIndicator** | Number of trades in the bar (when available). |
 | `org.ta4j.core.indicators.helpers` | **UnstableIndicator** | Returns NaN for indices within the unstable period; used for warm-up. |
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | CF-289 branch-only until ta4j 0.22.9: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
 
 **Short usage (per-indicator expansion)**  
 - **What it is:** As in the table (e.g. close price, true range, running sum).  
@@ -523,7 +525,37 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ---
 
-## 15. Supporting public types (facades, enums, records)
+## 15. Forecasting
+
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds the primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` group state contracts, projection contracts, and conversion bridges. They produce forecast summaries at a decision index using only data available at or before that index. These entries are introduced by the matching CF-289 ta4j feature branch and should be treated as branch-only until the ta4j 0.22.9 release includes them. For tutorial guidance, see [Forecast Indicators](Forecast-Indicators.md).
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Numeric helper indicator for `log(x[i] / x[i - barCount])`, often used as the input to return forecasts. |
+| `org.ta4j.core.indicators` | **ReturnIndicator** | Semantic contract for indicators that declare their return representation. |
+| `org.ta4j.core.indicators.averages` | **EWMAIndicator** | Reusable exponentially weighted moving average indicator with explicit decay and SMA initialization. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForecastProjectionIndicator** | `Indicator<Forecast<Num>>` interface with mean/median/std-dev/quantile projection methods returning `Indicator<Num>`. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastStateIndicator** | Indicator interface for hidden state used by forecast projections. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator** | Indicator interface for hidden state derived from a `ReturnIndicator`. |
+| `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
+| `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Constructor-first Monte Carlo price forecast indicator that infers the price source from `LogReturnIndicator`. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
+| `org.ta4j.core.indicators.forecast.adapters` | **LogReturnToPriceForecastIndicator** | Adapter that converts an explicit cumulative log-return projection to price forecasts. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
+| `org.ta4j.core.indicators.forecast.projection` | **Forecast** | Forecast summary value model used by projection indicators, with mean, median, standard deviation, quantiles, sample count, horizon, and stable state. |
+
+**Short usage**
+- **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
+- **Theory:** The standard pipeline converts prices to log returns, estimates EWMA return state, and projects horizon prices with Monte Carlo shocks; explicit return projections remain available for advanced tuning.
+- **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
+- **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
+- See also: [Forecast Indicators](Forecast-Indicators.md).
+
+---
+
+## 16. Supporting public types (facades, enums, records)
 
 These types live in `org.ta4j.core.indicators` and its subpackages and are part of the public indicator API surface, even though they are not all `*Indicator` classes.
 
@@ -595,7 +627,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 
 ## Summary
 
-- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis.
+- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis. Forecasting entries above are CF-289 branch-only until the matching ta4j release includes them.
 - The inventory also tracks supporting public types (facades, enums, records, interfaces) in indicator packages that are required for complete API coverage.
 - **ta4j-examples** adds charting-oriented indicators (labels, channel boundary).  
 - All entries above use the **fully qualified name** and **class name** and a **short description as in the ta4j codebase**.  

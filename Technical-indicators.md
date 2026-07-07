@@ -10,6 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
 | Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory §11](Indicators-Inventory.md#11-statistics--numeric) |
+| Forecasting | CF-289 branch-only until ta4j 0.22.9: log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, point projection indicators. | [Forecast Indicators](Forecast-Indicators.md) |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
@@ -94,6 +95,23 @@ ta4j 0.22.7 adds composite regime and edge-scoring indicators for strategy gatin
 
 Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggeredCooldownRule` (see [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)).
 
+## Forecast workflow (0.22.9)
+
+This workflow is documented from the CF-289 feature branch and is branch-only until the ta4j 0.22.9 release includes these APIs.
+
+ta4j's forecast package adds prediction-valued indicators for forward-looking research and strategy filters:
+
+- `LogReturnIndicator` creates reusable log-return inputs from close prices or any numeric source indicator.
+- `ReturnIndicator` marks indicators that semantically produce returns in a declared representation.
+- `EWMAIndicator` provides reusable explicit-decay smoothing for forecast and non-forecast workflows.
+- `EwmaReturnForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility from a log-return `ReturnIndicator`.
+- `MonteCarloPriceForecastIndicator` is the standard constructor-first price forecast path when state comes from `LogReturnIndicator`.
+- `MonteCarloReturnProjectionIndicator` simulates cumulative log-return distributions for return-space workflows or advanced tuning.
+- `LogReturnToPriceForecastIndicator` in `forecast.adapters` converts explicit log-return projections to price distributions when the price source must be supplied directly.
+- `ForecastProjectionIndicator` in `forecast.projection` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
+
+Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
+
 ## Advanced correlation workflow (0.22.7)
 
 Beyond Pearson/`CorrelationCoefficientIndicator`, ta4j now ships:
@@ -125,7 +143,7 @@ Indicators should be evaluated the same way strategies are—prefer realistic da
 
 - Every indicator extends `CachedIndicator`, so once a value is computed (except for the most recent bar) it is reused.
 - Mutating the latest bar (common with streaming data) invalidates just that slot; the rest stays cached.
-- Use `indicator.getCountOfUnstableBars()` / `indicator.isStable(index)` to understand when the values become reliable (and pass that number to `strategy.setUnstableBars(...)`).
+- Compare the current index with `indicator.getCountOfUnstableBars()` before trusting early values, or pass that number to `strategy.setUnstableBars(...)`.
 - When using moving `BarSeries` via `setMaximumBarCount`, cached entries older than the oldest remaining bar disappear. Always guard against `NaN` if you try to access evicted indexes.
 
 ## Creating custom indicators
@@ -134,7 +152,7 @@ Sub-class `CachedIndicator<Num>` or compose existing indicators with operations.
 
 - Accept dependencies via constructor injections (`Indicator<Num> base`) rather than pulling directly from a `BarSeries`.
 - Respect the `Num` abstraction: use `Num` arithmetic (`plus`, `minus`, etc.) and produce values via the series `NumFactory`.
-- Override `getUnstableBars()` / `isStable()` when your indicator requires warm-up bars (e.g., multi-stage EMAs).
+- Override `getCountOfUnstableBars()` when your indicator requires warm-up bars (e.g., multi-stage EMAs).
 - If you need state across indices, store it in the indicator (ta4j handles thread safety by design if you limit state to the calculation path).
 
 ## Tips
