@@ -2,7 +2,7 @@
 
 Forecast indicators estimate a future return or price distribution from data available at a decision index. They are useful when a strategy needs a probabilistic outlook instead of a single backward-looking technical signal.
 
-The forecast API lives under `org.ta4j.core.indicators.forecast`. The root package contains the primary indicators most users instantiate, while state contracts, projection contracts, and conversion adapters live in `forecast.state`, `forecast.projection`, and `forecast.adapters`. `LogReturnIndicator` is a normal helper indicator in `org.ta4j.core.indicators.helpers`, `EWMAIndicator` is a reusable average in `org.ta4j.core.indicators.averages`, and forecast summaries use the walk-forward prediction model via `PredictionSnapshot.Forecast`.
+The forecast API lives under `org.ta4j.core.indicators.forecast`. The root package contains the primary indicators most users instantiate, while state contracts, projection contracts, the `Forecast` value model, and conversion adapters live in `forecast.state`, `forecast.projection`, and `forecast.adapters`. `LogReturnIndicator` is a normal helper indicator in `org.ta4j.core.indicators.helpers`, and `EWMAIndicator` is a reusable average in `org.ta4j.core.indicators.averages`.
 
 **Release status:** These APIs are introduced by the matching ta4j feature branch for CF-289 and should be published with ta4j 0.22.9 or newer. Until that ta4j change is merged and released, use this guide with the matching ta4j branch rather than the current release artifacts.
 
@@ -26,11 +26,11 @@ import org.ta4j.core.BarSeries;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.forecast.EwmaReturnForecastStateIndicator;
 import org.ta4j.core.indicators.forecast.MonteCarloPriceForecastIndicator;
+import org.ta4j.core.indicators.forecast.projection.Forecast;
 import org.ta4j.core.indicators.forecast.projection.ForecastProjectionIndicator;
 import org.ta4j.core.indicators.forecast.state.ReturnForecastStateIndicator;
 import org.ta4j.core.indicators.helpers.LogReturnIndicator;
 import org.ta4j.core.num.Num;
-import org.ta4j.core.walkforward.PredictionSnapshot;
 
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
@@ -38,7 +38,7 @@ ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(return
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 
 int index = series.getEndIndex();
-PredictionSnapshot.Forecast<Num> forecast = priceForecast.getValue(index);
+Forecast<Num> forecast = priceForecast.getValue(index);
 if (forecast.isStable()) {
     Num directDownside = forecast.quantile(0.05);
     Num directMedian = forecast.median();
@@ -70,12 +70,12 @@ The default EWMA state uses a 30-bar initialization window, `0.94` decay, and ze
 The forecasting layer is organized around three responsibilities:
 
 - **Hidden state estimators** build latent state from source indicators. `EwmaReturnForecastStateIndicator` is the initial estimator; its reusable contracts and state record live in `org.ta4j.core.indicators.forecast.state`.
-- **Projection indicators** turn hidden state into a forward `PredictionSnapshot.Forecast<Num>`. `MonteCarloReturnProjectionIndicator` projects cumulative log returns; `MonteCarloPriceForecastIndicator` is the constructor-first price forecast path for the common log-return workflow. Projection contracts and point adapters live in `org.ta4j.core.indicators.forecast.projection`.
+- **Projection indicators** turn hidden state into a forward `Forecast<Num>`. `MonteCarloReturnProjectionIndicator` projects cumulative log returns; `MonteCarloPriceForecastIndicator` is the constructor-first price forecast path for the common log-return workflow. Projection contracts, point adapters, and the forecast summary value model live in `org.ta4j.core.indicators.forecast.projection`.
 - **Adapters and glue** bridge forecast domains or API shapes. `LogReturnToPriceForecastIndicator` lives in `org.ta4j.core.indicators.forecast.adapters` because it converts an explicit log-return projection into price space rather than estimating state or simulating paths itself.
 
 The root `forecast` package intentionally stays focused on the primary indicators users choose and compose. Framework types, data records, and conversion bridges are grouped under subpackages so custom estimators and custom projection models have obvious extension points without turning the root package into a catch-all.
 
-The raw `PredictionSnapshot.Forecast<Num>` summary remains useful for diagnostics and metadata. At each index, it contains:
+The raw `Forecast<Num>` summary remains useful for diagnostics and metadata. At each index, it contains:
 
 - `decisionIndex()` / `index()`: the decision index where the forecast was made.
 - `horizon()`: the configured number of bars ahead.
@@ -211,7 +211,7 @@ Unstable values can also occur after warm-up when:
 - The historical lookback does not contain enough valid returns.
 - A price forecast cannot be converted because the decision-index price is invalid or non-positive.
 
-Prefer projection indicators for rule and indicator composition. If you intentionally inspect raw `PredictionSnapshot.Forecast` summaries in reporting or diagnostics, check `isStable()` before reading summary values. Projection indicators return `NaN` for unstable summaries, which normal ta4j rules will treat as not satisfying comparisons.
+Prefer projection indicators for rule and indicator composition. If you intentionally inspect raw `Forecast` summaries in reporting or diagnostics, check `isStable()` before reading summary values. Projection indicators return `NaN` for unstable summaries, which normal ta4j rules will treat as not satisfying comparisons.
 
 ## Avoiding Look-Ahead Bias
 
@@ -339,4 +339,4 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 | `MonteCarloReturnProjectionIndicator.VolatilityUpdateMode` | `org.ta4j.core.indicators.forecast` | Nested enum selecting constant or EWMA path volatility. |
 | `LogReturnToPriceForecastIndicator` | `org.ta4j.core.indicators.forecast.adapters` | Adapter that converts an explicit cumulative log-return projection to a price projection. |
 | `ForwardForecastIndicator` | `org.ta4j.core.indicators.forecast.projection` | Adapter used by point projection methods to expose one `Num` forecast. |
-| `PredictionSnapshot.Forecast` | `org.ta4j.core.walkforward` | Walk-forward prediction summary type used by forecast indicators. |
+| `Forecast` | `org.ta4j.core.indicators.forecast.projection` | Forecast summary value model used by projection indicators. |
