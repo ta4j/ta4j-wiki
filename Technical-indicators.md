@@ -107,8 +107,8 @@ ta4j's forecast package adds prediction-valued indicators for forward-looking re
 - `EwmaReturnForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility from a log-return `ReturnIndicator`.
 - `MonteCarloPriceForecastIndicator` is the standard constructor-first price forecast path when state comes from `LogReturnIndicator`.
 - `MonteCarloReturnProjectionIndicator` simulates cumulative log-return distributions for return-space workflows or advanced tuning.
-- `LogReturnToPriceForecastIndicator` converts explicit log-return projections to price distributions when the price source must be supplied directly.
-- `ForecastProjectionIndicator` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
+- `LogReturnToPriceForecastIndicator` in `forecast.adapters` converts explicit log-return projections to price distributions when the price source must be supplied directly.
+- `ForecastProjectionIndicator` in `forecast.projection` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
 

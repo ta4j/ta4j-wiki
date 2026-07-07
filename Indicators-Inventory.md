@@ -527,23 +527,23 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 15. Forecasting
 
-Forecast types live in `org.ta4j.core.indicators.forecast` unless noted. They produce forecast summaries at a decision index using only data available at or before that index. These entries are introduced by the matching CF-289 ta4j feature branch and should be treated as branch-only until the ta4j 0.22.9 release includes them. For tutorial guidance, see [Forecast Indicators](Forecast-Indicators.md).
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds the primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` group state contracts, projection contracts, and conversion bridges. They produce forecast summaries at a decision index using only data available at or before that index. These entries are introduced by the matching CF-289 ta4j feature branch and should be treated as branch-only until the ta4j 0.22.9 release includes them. For tutorial guidance, see [Forecast Indicators](Forecast-Indicators.md).
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Numeric helper indicator for `log(x[i] / x[i - barCount])`, often used as the input to return forecasts. |
 | `org.ta4j.core.indicators` | **ReturnIndicator** | Semantic contract for indicators that declare their return representation. |
 | `org.ta4j.core.indicators.averages` | **EWMAIndicator** | Reusable exponentially weighted moving average indicator with explicit decay and SMA initialization. |
-| `org.ta4j.core.indicators.forecast` | **ForecastProjectionIndicator** | `Indicator<PredictionSnapshot.Forecast<Num>>` interface with mean/median/std-dev/quantile projection methods returning `Indicator<Num>`. |
-| `org.ta4j.core.indicators.forecast` | **ForecastStateIndicator** | Indicator interface for hidden state used by forecast projections. |
-| `org.ta4j.core.indicators.forecast` | **ReturnForecastStateIndicator** | Indicator interface for hidden state derived from a `ReturnIndicator`. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForecastProjectionIndicator** | `Indicator<PredictionSnapshot.Forecast<Num>>` interface with mean/median/std-dev/quantile projection methods returning `Indicator<Num>`. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastStateIndicator** | Indicator interface for hidden state used by forecast projections. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator** | Indicator interface for hidden state derived from a `ReturnIndicator`. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
-| `org.ta4j.core.indicators.forecast` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
-| `org.ta4j.core.indicators.forecast` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
+| `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Constructor-first Monte Carlo price forecast indicator that infers the price source from `LogReturnIndicator`. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
-| `org.ta4j.core.indicators.forecast` | **LogReturnToPriceForecastIndicator** | Reducer that converts an explicit cumulative log-return projection to price forecasts. |
-| `org.ta4j.core.indicators.forecast` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
+| `org.ta4j.core.indicators.forecast.adapters` | **LogReturnToPriceForecastIndicator** | Adapter that converts an explicit cumulative log-return projection to price forecasts. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
 | `org.ta4j.core.walkforward` | **PredictionSnapshot.Forecast** | Walk-forward prediction summary type used by forecast indicators, with mean, median, standard deviation, quantiles, sample count, horizon, and stable state. |
 
 **Short usage**
