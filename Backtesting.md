@@ -115,6 +115,12 @@ Choose the ranking style that matches the job:
 - `getTopStrategiesWeighted(...)` plus `WeightedCriterion.of(...)` when you want normalized weighted scoring across different metrics
 - `executeAndKeepTopK(...)` when the candidate set is so large that you want streaming top-K retention with one primary criterion instead of materializing every statement
 
+## Static Multi-Asset Portfolio Backtests
+
+Use the portfolio package when the unit of analysis is one static target-weight portfolio across multiple asset series rather than one strategy over one series. `org.ta4j.core.portfolio` aligns asset-labeled `BarSeries` inputs, applies target weights and rebalance schedules, accounts for transaction costs and residual cash, and returns portfolio snapshots plus a value-series export.
+
+See [Static Portfolio Backtesting](Static-Portfolio-Backtesting.md) for the full workflow and API guide.
+
 ## When A Manual Loop Is The Right Tool
 
 Manual loops still matter, but for a narrower reason than before. Use them when execution itself is the thing you are modeling:

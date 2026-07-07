@@ -30,6 +30,7 @@
 
 ## Build Strategies
 - [Trading Strategies](Trading-strategies.md)
+- [Static Portfolio Backtesting](Static-Portfolio-Backtesting.md)
 - [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md)
 - [Analysis Criteria & Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)

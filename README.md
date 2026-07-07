@@ -44,6 +44,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
+- **[Static Portfolio Backtesting](Static-Portfolio-Backtesting.md)** - Multi-asset target-weight portfolio accounting, rebalances, costs, snapshots, and value-series export
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
 ## Pick The Right Execution Path
@@ -52,6 +53,7 @@ Use the canonical matrix for execution choices:
 
 - [Execution Decision Matrix](Execution-Decision-Matrix.md) for driver and simulation-path selection
 - [Backtesting](Backtesting.md) for implementation patterns once you choose a backtest path
+- [Static Portfolio Backtesting](Static-Portfolio-Backtesting.md) for deterministic multi-asset target-weight portfolio runs
 - [Live Trading](Live-trading.md) for fill-driven and event-driven live loops
 
 ## Where To Go Next
