@@ -124,7 +124,7 @@ ElliottSwingIndicator (alternating swings)
 ├─────────────────────────────────────────────────────────┤
 │ • ElliottWaveAnalysisRunner (one-shot analysis)         │
 │ • SwingDetector             (pluggable swing detection)  │
-│ • Fractal / ZigZag / SlopeChange / multi-scale consensus│
+│ • Fractal / ZigZag; SlopeChange / multi-scale (0.22.9+)  │
 │ • ConfidenceModel / ConfidenceProfile (pluggable weights)│
 └─────────────────────────────────────────────────────────┘
 ```
