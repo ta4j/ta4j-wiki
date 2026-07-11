@@ -4,7 +4,9 @@ Trendlines and swing points are the core building blocks behind support/resistan
 
 ## What you get
 - **Fractal swing detectors**: window-based swing highs/lows with configurable symmetry and tolerance for flat tops/bottoms.
-- **ZigZag swing detectors**: ATR/price-threshold reversals for adaptive swing confirmation without fixed lookahead windows.
+- **ZigZag swing detectors**: OHLC-aware ATR/price-threshold reversals for adaptive swing confirmation without fixed lookahead windows.
+- **Slope-change detector**: sustained rolling-regression slope reversals for slower, rounded turns.
+- **Multi-scale consensus**: tolerant pivot clustering with a configurable detector quorum.
 - **Swing markers**: `SwingPointMarkerIndicator` converts swing indexes into chart-friendly markers (values only on swing bars, `NaN` elsewhere).
 - **Trendlines**: `TrendLineSupportIndicator` / `TrendLineResistanceIndicator` that score every valid line in the lookback window and pick the best candidate with tunable weights and touch tolerance.
 - **Chart-ready metadata**: `getSwingPointIndexes()` and `getCurrentSegment()` expose anchors, slope/intercept, and scoring so you can debug or annotate charts.
@@ -47,7 +49,7 @@ charts.display(plan);
 
 - `precedingHigherBars` / `precedingLowerBars`: how many bars immediately before must be strictly above/below the candidate. Must be ≥ 1 (default convenience constructor uses 3).
 - `followingHigherBars` / `followingLowerBars`: how many bars after must be strictly above/below the candidate. Needs future bars, so swings confirm only after this window elapses.
-- `allowedEqualBars`: how many bars on each side may equal the candidate value (helps catch rounded tops/bottoms instead of rejecting plateaus).
+- `allowedEqualBars`: maximum additional equal bars allowed in the candidate plateau. A plateau is emitted once at its canonical extreme instead of producing duplicate pivots.
 - Defaults: `new RecentFractalSwingLowIndicator(series)` → 3/3/0 on lows (highs mirror the parameters).
 
 Use fractals when you want visually obvious turning points and don’t mind waiting a few bars for confirmation.
@@ -61,21 +63,49 @@ int latestHighIndex = majorHighs.getLatestSwingHighIndex(series.getEndIndex());
 ### ZigZag swings (reversal-threshold based)
 `RecentZigZagSwingHighIndicator` / `RecentZigZagSwingLowIndicator` track swings confirmed when price reverses by at least a configured threshold—no fixed lookahead window.
 
-- Driven by `ZigZagStateIndicator(price, reversalAmount)`.
-- **Price indicator**: typically `HighPriceIndicator`, `LowPriceIndicator`, or `ClosePriceIndicator`.
+- Driven by `ZigZagStateIndicator(high, low, confirmationPrice, reversalAmount)`; the older single-price constructor remains available.
+- **Extreme sources**: use highs to extend upward legs and lows to extend downward legs. Confirmation commonly uses the close so an intrabar wick can set an extreme without confirming its own reversal.
 - **Reversal threshold** (`reversalAmount`): indicator in price units. Defaults to `ATR(14)` in the convenience constructor; pass `ConstantIndicator` for fixed-point thresholds or any indicator for adaptive ones.
+- Dynamic thresholds are anchored when the candidate extreme is established. Later volatility changes therefore cannot move the confirmation boundary for that candidate.
 - Returns `NaN` until a reversal large enough to confirm the prior extreme.
 
 ```java
+HighPriceIndicator high = new HighPriceIndicator(series);
+LowPriceIndicator low = new LowPriceIndicator(series);
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 // Confirm swings after a 1.5 * ATR move
 ATRIndicator atr = new ATRIndicator(series, 14);
 Indicator<Num> atrThreshold = BinaryOperationIndicator.product(atr, 1.5);
-ZigZagStateIndicator zigzagState = new ZigZagStateIndicator(close, atrThreshold);
+ZigZagStateIndicator zigzagState = new ZigZagStateIndicator(high, low, close, atrThreshold);
 
-RecentZigZagSwingLowIndicator zigzagLows = new RecentZigZagSwingLowIndicator(zigzagState, close);
-RecentZigZagSwingHighIndicator zigzagHighs = new RecentZigZagSwingHighIndicator(zigzagState, close);
+RecentZigZagSwingLowIndicator zigzagLows = new RecentZigZagSwingLowIndicator(zigzagState, low);
+RecentZigZagSwingHighIndicator zigzagHighs = new RecentZigZagSwingHighIndicator(zigzagState, high);
 ```
+
+### Choosing a detector
+
+No single formula is best for every turn shape:
+
+| Detector | Best fit | Confirmation trade-off |
+|----------|----------|------------------------|
+| Fractal | Distinct local extrema and fixed timing requirements | Waits for the configured right-side window. |
+| ZigZag | Sharp reversals whose importance is defined by price distance or volatility | Confirms after the reversal threshold is crossed. |
+| `SlopeChangeSwingDetector` | Rounded tops/bottoms where direction changes gradually | Waits for adjacent regression slopes to reverse and persist. |
+| `SwingDetectors.multiScale(...)` | Noisy data where consistent pivots matter more than the earliest signal | Requires a quorum of same-type pivots within an index tolerance. |
+
+```java
+SwingDetector roundedTurns = SwingDetectors.slopeChange(
+        new SlopeChangeConfig(5, 2, 14, 0.0, 0.5));
+
+SwingDetector consensus = SwingDetectors.multiScale(
+        2, // cluster same-type pivots within two bars
+        2, // require two detector votes
+        SwingDetectors.fractal(3),
+        SwingDetectors.adaptiveZigZag(new AdaptiveZigZagConfig(14, 1.5, 0, 0, 1)),
+        roundedTurns);
+```
+
+All detector results are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
 
 ### Showing swings on charts
 `SwingPointMarkerIndicator` outputs prices only at swing indexes (`NaN` elsewhere) so chart overlays become discrete markers instead of lines.
@@ -210,7 +240,7 @@ Strategy trendlineStrategy = new BaseStrategy("Trendline break/bounce", breakout
 ## Best practices & pitfalls
 - Swings need future bars: fractals confirm only after the `following*` window; ZigZag confirms after price moves by the threshold. Guard against `NaN` when rules fire.
 - Align parameters with timeframe: wide windows on low-timeframe data will feel sluggish; on daily/weekly charts they remove noise.
-- Keep price inputs consistent: if your ZigZag tracks highs/lows, feed the same price indicator into `RecentZigZagSwing*` and the trendline.
+- Keep price inputs consistent: pair `RecentZigZagSwingHighIndicator` with the ZigZag state's high source and `RecentZigZagSwingLowIndicator` with its low source.
 - Match lookback to data retention: if you set `series.setMaximumBarCount(250)`, keep trendline `barCount <= 250` or earlier anchors will be evicted.
 - Tune tolerance to the instrument: use absolute/tick-size tolerance for low-priced or fixed-tick assets; percentage works well for equities.
 - Watch performance with dense swing series: if you detect thousands of swings, lower `maxSwingPointsForTrendline` or raise the reversal/plateau thresholds to avoid combinatorial explosions.
