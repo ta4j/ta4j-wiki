@@ -94,7 +94,11 @@ No single formula is best for every turn shape:
 | `SwingDetectors.multiScale(...)` | Noisy data where consistent pivots matter more than the earliest signal | Requires a quorum of same-type pivots within an index tolerance. |
 
 ```java
-SwingDetector roundedTurns = SwingDetectors.slopeChange(
+// Window-only constructor: one confirmation window, ATR(14), filters disabled
+SwingDetector roundedTurns = new SlopeChangeSwingDetector(5);
+
+// Use the config overload when persistence or magnitude filters are required
+SwingDetector filteredRoundedTurns = SwingDetectors.slopeChange(
         new SlopeChangeConfig(5, 2, 14, 0.0, 0.5));
 
 SwingDetector consensus = SwingDetectors.multiScale(
@@ -102,7 +106,7 @@ SwingDetector consensus = SwingDetectors.multiScale(
         2, // require two detector votes
         SwingDetectors.fractal(3),
         SwingDetectors.adaptiveZigZag(new AdaptiveZigZagConfig(14, 1.5, 0, 0, 1)),
-        roundedTurns);
+        filteredRoundedTurns);
 ```
 
 All detector results are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
