@@ -128,11 +128,13 @@ graph TD
 
 Use this pipeline for normal strategy rules, chart overlays, and reports in price units. The API intentionally avoids a god factory so the return source, state model, and projection model remain reusable and testable.
 
-Internally, `MonteCarloPriceForecastIndicator` produces a cumulative log-return forecast over the configured horizon and converts it to a price forecast with:
+Internally, `MonteCarloPriceForecastIndicator` produces a cumulative log-return forecast over the configured horizon. Median and quantile values use the monotonic conversion:
 
 ```text
 forecastPrice = priceAtDecisionIndex * exp(cumulativeLogReturn)
 ```
+
+Price-space mean and standard deviation use the moment-matched lognormal approximation implied by the return forecast's mean and standard deviation. This keeps both fields in price units and makes zero return volatility produce zero price standard deviation.
 
 ## Configuration Guide
 
@@ -290,7 +292,7 @@ Indicator<Num> forecastWidth =
         BinaryOperationIndicator.difference(ninetyFifthPercentilePrice, fifthPercentilePrice);
 ```
 
-`standardDeviation()` is most useful on return forecasts. For price forecasts, prefer quantile spreads because the log-return-to-price reducer maps summary fields instead of recomputing dispersion from transformed price samples.
+For non-normal or strongly asymmetric return forecasts, prefer price quantile spreads over `standardDeviation()`. The price standard deviation is a moment-matched lognormal approximation because a summary-only forecast does not retain the transformed samples needed to recompute exact price dispersion.
 
 ## Choosing Return or Price Space
 
