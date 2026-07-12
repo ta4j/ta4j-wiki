@@ -93,7 +93,7 @@ Forecast<Num> forecast = Forecast.ofSummary(
         quantiles);
 ```
 
-The factory creates a stable forecast, requires a positive count of represented distribution values, validates finite numeric summary fields and non-negative standard deviation, validates probabilities in `[0, 1]`, sorts quantiles, and copies the map. Weighted models report represented neighbors, bootstrap models report draws, conformal wrappers preserve the base forecast count, and an analytic single-model summary reports `1`. Training and calibration observation counts are model metadata and must not be placed in `Forecast.sampleCount()`.
+The factory creates a stable forecast, requires a positive count of represented distribution values, validates finite numeric summary fields and non-negative standard deviation, validates probabilities in `[0, 1]`, requires numeric quantile values to be nondecreasing, sorts quantiles, and copies the map. Weighted models report represented neighbors, bootstrap models report draws, conformal wrappers preserve the base forecast count, and an analytic single-model summary reports `1`. Training and calibration observation counts are model metadata and must not be placed in `Forecast.sampleCount()`.
 
 Use `Forecast.ofSamples(...)` when real samples exist; it calculates the summary for you. Use `Forecast.unstable(...)` when the model is not ready or any numeric summary value is unavailable. Finite high-precision `Num` values remain valid even when their primitive `doubleValue()` would overflow because summary validation stays in the `Num` domain.
 
