@@ -61,6 +61,8 @@ int latestHighIndex = majorHighs.getLatestSwingHighIndex(series.getEndIndex());
 ### ZigZag swings (reversal-threshold based)
 `RecentZigZagSwingHighIndicator` / `RecentZigZagSwingLowIndicator` track swings confirmed when price reverses by at least a configured threshold—no fixed lookahead window.
 
+The OHLC-aware state constructors and state-only recent-swing constructors below are available in ta4j 0.22.9 and later. On 0.22.8, use the released single-price `ZigZagStateIndicator(price, reversalAmount)` and explicit-price recent-swing constructors.
+
 - Driven by `ZigZagStateIndicator(high, low, confirmationPrice, reversalAmount)`; the older single-price constructor remains available.
 - **Extreme sources**: use highs to extend upward legs and lows to extend downward legs. Confirmation commonly uses the close so an intrabar wick can set an extreme without confirming its own reversal.
 - **Reversal threshold** (`reversalAmount`): indicator in price units. Defaults to `ATR(14)` in the convenience constructor; pass `ConstantIndicator` for fixed-point thresholds or any indicator for adaptive ones.
