@@ -213,7 +213,7 @@ Unstable values can also occur after warm-up when:
 
 - A source price is zero, negative, `NaN`, or infinite.
 - A return in the required initialization window is invalid.
-- A custom return state contains unavailable or negative variance/volatility values, or a value that cannot be represented by the source series `NumFactory`.
+- A custom return state has a mismatched index, no represented observations, unavailable or negative variance/volatility values, or a value that cannot be represented by the source series `NumFactory`.
 - The historical lookback does not contain enough valid returns.
 - A price forecast cannot be converted because the decision-index price is invalid or non-positive.
 - A cumulative log-return is finite but its exponential price conversion overflows.
