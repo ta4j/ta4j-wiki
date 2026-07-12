@@ -5,8 +5,6 @@ Trendlines and swing points are the core building blocks behind support/resistan
 ## What you get
 - **Fractal swing detectors**: window-based swing highs/lows with configurable symmetry and tolerance for flat tops/bottoms.
 - **ZigZag swing detectors**: OHLC-aware ATR/price-threshold reversals for adaptive swing confirmation without fixed lookahead windows.
-- **Slope-change detector**: sustained rolling-regression slope reversals for slower, rounded turns.
-- **Multi-scale consensus**: tolerant pivot clustering with a configurable detector quorum.
 - **Swing markers**: `SwingPointMarkerIndicator` converts swing indexes into chart-friendly markers (values only on swing bars, `NaN` elsewhere).
 - **Trendlines**: `TrendLineSupportIndicator` / `TrendLineResistanceIndicator` that score every valid line in the lookback window and pick the best candidate with tunable weights and touch tolerance.
 - **Chart-ready metadata**: `getSwingPointIndexes()` and `getCurrentSegment()` expose anchors, slope/intercept, and scoring so you can debug or annotate charts.
@@ -86,7 +84,7 @@ The state-only recent-swing constructors automatically reuse the matching low or
 high source. Use the explicit-source overloads only when custom pivot pricing is
 intentional.
 
-### Choosing a detector
+### Choosing a trendline swing source
 
 No single formula is best for every turn shape:
 
@@ -94,30 +92,10 @@ No single formula is best for every turn shape:
 |----------|----------|------------------------|
 | Fractal | Distinct local extrema and fixed timing requirements | Waits for the configured right-side window. |
 | ZigZag | Sharp reversals whose importance is defined by price distance or volatility | Confirms after the reversal threshold is crossed. |
-| `SlopeChangeSwingDetector` | Rounded tops/bottoms where direction changes gradually | Waits for adjacent regression slopes to reverse and persist. |
-| `SwingDetectors.consensus(...)` | Noisy data where consistent pivots matter more than the earliest signal | Requires a quorum of same-type pivots within an index tolerance. |
 
-```java
-// Balanced defaults: two confirmation windows and a half-ATR reversal filter
-SwingDetector roundedTurns = SwingDetectors.slopeChange(5);
+These two sources implement `RecentSwingIndicator` and plug directly into trendline and marker indicators. Elliott analysis also supports slope-change and tolerant consensus backends through its separate `SwingDetector` contract; see [Pluggable Swing Detection](Elliott-Wave-Indicators.md#pluggable-swing-detection) for those runner-specific APIs.
 
-// Use the config overload when persistence or magnitude filters are required
-SwingDetector filteredRoundedTurns = SwingDetectors.slopeChange(
-        new SlopeChangeConfig(5, 2, 14, 0.0, 0.5));
-
-SwingDetector consensus = SwingDetectors.consensus(
-        2, // cluster same-type pivots within two bars
-        2, // require two detector votes
-        SwingDetectors.fractal(3),
-        SwingDetectors.adaptiveZigZag(new AdaptiveZigZagConfig(14, 1.5, 0, 0, 1)),
-        filteredRoundedTurns);
-```
-
-`SlopeChangeConfig.defaults(window)` returns the same balanced profile used by
-the window-only detector and factory overload. Construct the record directly
-when you deliberately need different persistence or magnitude filters.
-
-All detector results are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
+Both trendline swing sources are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
 
 ### Showing swings on charts
 `SwingPointMarkerIndicator` outputs prices only at swing indexes (`NaN` elsewhere) so chart overlays become discrete markers instead of lines.
