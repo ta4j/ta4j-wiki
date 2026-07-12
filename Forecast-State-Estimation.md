@@ -22,7 +22,7 @@ A stable built-in state has at least one observation and finite common values. A
 
 ```java
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ForecastStateIndicator<ReturnForecastState> states =
+ReturnForecastStateIndicator<ReturnForecastState> states =
         new EwmaReturnForecastStateIndicator(returns);
 
 ForecastState state = states.getValue(series.getEndIndex());
@@ -33,7 +33,9 @@ if (state.isStable()) {
 }
 ```
 
-`ForecastStateIndicator<S extends ForecastState>` is the normal ta4j `Indicator` extension point for custom estimators. Keep `getValue(i)` causal: it may read source values through `i`, never values after `i`. Return a deterministic unstable state during warm-up rather than leaking partial or non-finite model state.
+`ForecastStateIndicator<S extends ForecastState>` is the normal ta4j `Indicator` extension point for custom estimators. Return-derived estimators should implement `ReturnForecastStateIndicator<S>` instead. Its `getReturnIndicator()` method lets projections reuse the original return stream, and `getReturnRepresentation()` declares whether that stream contains log or decimal returns without another constructor argument.
+
+Keep `getValue(i)` causal: it may read source values through `i`, never values after `i`. Return a deterministic unstable state during warm-up rather than leaking partial or non-finite model state.
 
 ## Feature extraction
 
@@ -46,7 +48,7 @@ ForecastFeatureExtractor<ReturnForecastState> extractor =
 ReturnForecastState state = stateIndicator.getValue(index);
 if (state.isStable()) {
     double[] features = extractor.features(state);
-    // [mean, drift, volatility]
+    // [mean, volatility]
 }
 ```
 
@@ -56,7 +58,7 @@ The standard factories are:
 | --- | --- | --- |
 | `meanDriftVarianceVolatility()` | mean, drift, variance, volatility | Complete generic state comparison. |
 | `driftVolatility()` | drift, volatility | Compact path-simulation or regime features. |
-| `returnStateDefaults()` | mean, drift, volatility | Default return-state similarity features. |
+| `returnStateDefaults()` | mean, volatility | Default return-state similarity without duplicating EWMA mean through drift. |
 
 Each call returns a new array. The built-in extractors reject `null`, unstable states, and selected values that cannot be represented as finite doubles. Keep calculations in `Num` before this boundary; do not convert an entire indicator pipeline to primitives merely to simplify one model.
 
@@ -69,7 +71,7 @@ ForecastFeatureExtractor<ReturnForecastState> riskFeatures = state -> new double
 };
 ```
 
-Custom consumers should reject empty, non-finite, or changing-length vectors. Feature scaling belongs to the consuming model because the correct scaling depends on its distance or regression method.
+Custom extractors and consumers should reject empty, non-finite, or changing-length vectors. The built-in extractors also reject a finite high-precision `Num` when it overflows at the deliberate primitive `double[]` boundary. Feature scaling belongs to the consuming model because the correct scaling depends on its distance or regression method.
 
 ## Creating a forecast summary without samples
 
@@ -84,19 +86,22 @@ Map<Double, Num> quantiles = Map.of(
 Forecast<Num> forecast = Forecast.ofSummary(
         decisionIndex,
         horizon,
-        calibrationObservationCount,
+        representedDistributionValueCount,
         mean,
         median,
         standardDeviation,
         quantiles);
 ```
 
-The factory creates a stable forecast, requires a positive represented sample or observation count, validates probabilities in `[0, 1]`, sorts quantiles, and copies the map. Use `Forecast.ofSamples(...)` when real samples exist; it calculates the summary for you. Use `Forecast.unstable(...)` when the model is not ready.
+The factory creates a stable forecast, requires a positive count of represented distribution values, validates finite numeric summary fields and non-negative standard deviation, validates probabilities in `[0, 1]`, sorts quantiles, and copies the map. Weighted models report represented neighbors, bootstrap models report draws, conformal wrappers preserve the base forecast count, and an analytic single-model summary reports `1`. Training and calibration observation counts are model metadata and must not be placed in `Forecast.sampleCount()`.
+
+Use `Forecast.ofSamples(...)` when real samples exist; it calculates the summary for you. Use `Forecast.unstable(...)` when the model is not ready or any numeric summary value is unavailable. Finite high-precision `Num` values remain valid even when their primitive `doubleValue()` would overflow because summary validation stays in the `Num` domain.
 
 ## Operator checklist
 
 - Set strategy unstable bars from the complete projection pipeline, not only the state estimator.
 - Inspect `observationCount()` when diagnosing warm-up or reset behavior.
+- Treat `sampleCount()` as distribution provenance, not estimator training metadata.
 - Keep feature order and scaling stable across research, replay, and production.
 - Treat forecasts as estimates rather than targets or guarantees.
 - Reject non-finite source data instead of allowing it to contaminate cached state.

@@ -30,13 +30,14 @@ import org.ta4j.core.indicators.forecast.EwmaReturnForecastStateIndicator;
 import org.ta4j.core.indicators.forecast.MonteCarloPriceForecastIndicator;
 import org.ta4j.core.indicators.forecast.projection.Forecast;
 import org.ta4j.core.indicators.forecast.projection.ForecastProjectionIndicator;
+import org.ta4j.core.indicators.forecast.state.ReturnForecastState;
 import org.ta4j.core.indicators.forecast.state.ReturnForecastStateIndicator;
 import org.ta4j.core.indicators.helpers.LogReturnIndicator;
 import org.ta4j.core.num.Num;
 
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastStateIndicator<ReturnForecastState> state = new EwmaReturnForecastStateIndicator(returns);
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 
 int index = series.getEndIndex();
@@ -81,14 +82,14 @@ The raw `Forecast<Num>` summary remains useful for diagnostics and metadata. At 
 
 - `decisionIndex()` / `index()`: the decision index where the forecast was made.
 - `horizon()`: the configured number of bars ahead.
-- `sampleCount()`: the number of simulated samples summarized.
+- `sampleCount()`: the number of distribution values represented by the summary, such as simulated paths, selected neighbors, or bootstrap draws.
 - `isStable()`: whether the forecast is usable at this decision index.
 - `mean()`, `median()`, `standardDeviation()`: summary values.
 - `quantiles()`: configured quantile probabilities to values.
 - `hasQuantile(probability)`: whether a valid quantile probability is available.
 - `quantile(probability)`: one configured quantile value, or `null` when a valid probability was not configured.
 
-Reusable state records implement `ForecastState`, giving generic projections a common index, observation count, stability, mean, drift, variance, and volatility surface. `Forecast.ofSummary(...)` complements sample-based factories for wrappers or models that calculate honest summary statistics without generating samples.
+Reusable state records implement `ForecastState`, giving generic projections a common index, observation count, stability, mean, drift, variance, and volatility surface. Return-derived estimators implement `ReturnForecastStateIndicator<S>` so projections can discover their source return stream and representation. `Forecast.ofSummary(...)` complements sample-based factories for wrappers or models that calculate honest finite summary statistics without generating samples; its sample count describes represented distribution values, never training or calibration rows.
 
 In the CF-289/0.22.9 API, direct lookup and projection helpers handle missing quantiles differently. `priceForecast.getValue(index).quantile(0.90)` returns `null` when `0.90` was not configured, while `priceForecast.quantile(0.90).getValue(index)` returns `NaN` so the result composes safely as an `Indicator<Num>`. Invalid probabilities outside `[0, 1]` still throw.
 
@@ -99,7 +100,7 @@ Direct `priceForecast.getValue(index)` access returns the full forecast summary.
 ```java
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastStateIndicator<ReturnForecastState> state = new EwmaReturnForecastStateIndicator(returns);
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 
@@ -149,7 +150,7 @@ The state output is a `ReturnForecastState` with rolling `mean`, forecast `drift
 
 ### Monte Carlo Forecast
 
-`new MonteCarloPriceForecastIndicator(state, horizon)` is the standard constructor for EWMA Monte Carlo price forecasts. It accepts a `ReturnForecastStateIndicator`, validates that the state indicator is log-return based, and infers the source price indicator from the state's `LogReturnIndicator`. Use `MonteCarloReturnProjectionIndicator.builder(state)` only when you need to tune simulation settings beyond horizon or work directly in return space.
+`new MonteCarloPriceForecastIndicator(state, horizon)` is the standard constructor for EWMA Monte Carlo price forecasts. It accepts a `ReturnForecastStateIndicator<? extends ForecastState>`, validates that the state indicator is log-return based, and infers the source price indicator from the state's `LogReturnIndicator`. Use `MonteCarloReturnProjectionIndicator.builder(state)` only when you need to tune simulation settings beyond horizon or work directly in return space.
 
 | Constructor or builder method | Default | Meaning | Common tuning |
 | --- | --- | --- | --- |
@@ -168,7 +169,7 @@ The constructor-first `MonteCarloPriceForecastIndicator` uses the default quanti
 ```java
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastStateIndicator<ReturnForecastState> state = new EwmaReturnForecastStateIndicator(returns);
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 
 MonteCarloReturnProjectionIndicator returnProjection =
@@ -243,7 +244,7 @@ Use the median point forecast as a directional filter. The rule needs an `Indica
 ```java
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastStateIndicator<ReturnForecastState> state = new EwmaReturnForecastStateIndicator(returns);
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 
@@ -261,7 +262,7 @@ Use a low quantile to avoid entries when the downside tail is too close. The dir
 ```java
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastStateIndicator<ReturnForecastState> state = new EwmaReturnForecastStateIndicator(returns);
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 
 Indicator<Num> fifthPercentilePrice = priceForecast.quantile(0.05);
@@ -278,7 +279,7 @@ Use a price-quantile spread when you want to avoid forecasts that are too uncert
 ```java
 BarSeries series = ...;
 LogReturnIndicator returns = new LogReturnIndicator(series);
-ReturnForecastStateIndicator state = new EwmaReturnForecastStateIndicator(returns);
+ReturnForecastStateIndicator<ReturnForecastState> state = new EwmaReturnForecastStateIndicator(returns);
 ForecastProjectionIndicator priceForecast = new MonteCarloPriceForecastIndicator(state, 5);
 
 Indicator<Num> fifthPercentilePrice = priceForecast.quantile(0.05);
@@ -334,7 +335,7 @@ Do not rely on a seed to make an invalid forecast stable. Reproducibility only a
 | `ForecastState` | `org.ta4j.core.indicators.forecast.state` | Common state surface for generic projection models. |
 | `ForecastFeatureExtractor` | `org.ta4j.core.indicators.forecast.state` | Converts one typed stable state into primitive model features. |
 | `ForecastFeatureExtractors` | `org.ta4j.core.indicators.forecast.state` | Supplies standard defensive feature vectors. |
-| `ReturnForecastStateIndicator` | `org.ta4j.core.indicators.forecast.state` | Indicator interface for hidden state derived from a `ReturnIndicator`. |
+| `ReturnForecastStateIndicator<S>` | `org.ta4j.core.indicators.forecast.state` | Typed indicator interface for hidden state derived from a `ReturnIndicator`; exposes the source and return representation to projections. |
 | `EwmaReturnForecastStateIndicator` | `org.ta4j.core.indicators.forecast` | Builds `ReturnForecastState` from a log-return `ReturnIndicator` using EWMA mean and variance. |
 | `EwmaReturnForecastStateIndicator.DriftMode` | `org.ta4j.core.indicators.forecast` | Nested enum selecting zero drift or rolling-mean drift. |
 | `ReturnForecastState` | `org.ta4j.core.indicators.forecast.state` | State record consumed by return forecast indicators. |

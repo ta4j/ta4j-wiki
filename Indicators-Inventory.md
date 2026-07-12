@@ -539,7 +539,7 @@ Forecast types live under `org.ta4j.core.indicators.forecast`. The root package 
 | `org.ta4j.core.indicators.forecast.state` | **ForecastState** | Common estimator-independent state surface for index, observation count, stability, return mean, drift, variance, and volatility. |
 | `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureExtractor** | Functional boundary that converts a stable typed state into primitive model features. |
 | `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureExtractors** | Standard defensive feature vectors for common and return forecast states. |
-| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator** | Indicator interface for hidden state derived from a `ReturnIndicator`. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator&lt;S&gt;** | Typed indicator interface for hidden state derived from a `ReturnIndicator`, including source and return representation. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
 | `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
 | `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
