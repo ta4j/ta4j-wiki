@@ -782,7 +782,7 @@ Elliott Wave analysis can use different swing detection backends via the **Swing
 | **FractalSwingDetector** | Fixed lookback/lookforward window (fractal-style pivots). |
 | **ZigZagSwingDetector** | ZigZag state with fixed or ATR-based reversal threshold. |
 | **AdaptiveZigZagSwingDetector** | ZigZag with volatility-adaptive threshold (ATR period, multiplier, min/max clamp). |
-| **SlopeChangeSwingDetector** | Causal rolling-regression slope reversal suited to rounded turns. Its window-only constructor supplies conservative persistence and filter defaults; `SlopeChangeConfig` enables full control. |
+| **SlopeChangeSwingDetector** | Causal rolling-regression slope reversal suited to rounded turns. Its window-only constructor supplies balanced two-window persistence and half-ATR filtering; `SlopeChangeConfig` enables full control. |
 | **CompositeSwingDetector** | Combines detectors with exact AND/OR agreement or tolerant same-type pivot clustering and a configurable quorum. |
 
 Use **SwingDetectors** for factory methods:
@@ -798,19 +798,19 @@ SwingDetector fractal = SwingDetectors.fractal(3, 5, 1);
 AdaptiveZigZagConfig config = new AdaptiveZigZagConfig(14, 2.0, 0, 0, 1);
 SwingDetector adaptive = SwingDetectors.adaptiveZigZag(config);
 
-// Rounded turns with defaults: one confirmation window, ATR(14), filters off
-SwingDetector slope = new SlopeChangeSwingDetector(5);
+// Rounded turns with balanced two-window and half-ATR defaults
+SwingDetector slope = SwingDetectors.slopeChange(5);
 
 // Full control over persistence and magnitude filtering
 SwingDetector filteredSlope = SwingDetectors.slopeChange(
     new SlopeChangeConfig(5, 2, 14, 0.0, 0.5));
 
-// Multi-scale consensus: require two votes within a two-bar cluster
-SwingDetector consensus = SwingDetectors.multiScale(
+// Tolerant consensus: require two votes within a two-bar cluster
+SwingDetector consensus = SwingDetectors.consensus(
     2, 2, fractal, adaptive, filteredSlope);
 ```
 
-Choose by turn shape rather than treating one detector as universally superior: ZigZag is strongest for sharp price-distance reversals, fractals provide deterministic fixed-window extrema, and slope-change detection captures gradual turns. Multi-scale consensus trades earlier confirmation for more stable pivots when detectors disagree by a few bars. Every built-in detector is causal at the requested index.
+Choose by turn shape rather than treating one detector as universally superior: ZigZag is strongest for sharp price-distance reversals, fractals provide deterministic fixed-window extrema, and slope-change detection captures gradual turns. Tolerant consensus trades earlier confirmation for more stable pivots when detectors disagree by a few bars. Every built-in detector is causal at the requested index.
 
 ### SwingFilter and MinMagnitudeSwingFilter
 
@@ -830,7 +830,7 @@ ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
 - **SwingDetectorResult**: Pivots and derived swings for a bar index.
 - **SwingPivot** / **SwingPivotType**: Single pivot (index, price, high/low).
 - **AdaptiveZigZagConfig**: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag.
-- **SlopeChangeConfig**: regression window, persistence count, ATR period, minimum slope change, and minimum ATR reversal.
+- **SlopeChangeConfig**: regression window, persistence count, ATR period, minimum slope change, and minimum ATR reversal. `defaults(window)` returns the balanced profile used by `SwingDetectors.slopeChange(window)`.
 
 See [Indicators Inventory](Indicators-Inventory.md#102-elliott-confidence-orgta4jcoreindicatorselliottconfidence) for the full list of swing and confidence types.
 

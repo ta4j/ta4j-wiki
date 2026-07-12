@@ -403,7 +403,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
 | `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
 | `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
-| `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeSwingDetector** | Detects rounded turns from sustained causal changes in rolling regression slope; supports a window-only constructor with conservative defaults. |
+| `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeSwingDetector** | Detects rounded turns from sustained causal changes in rolling regression slope; supports balanced window-only construction. |
 | `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeConfig** | Record: slope window, confirmation persistence, ATR period, and magnitude filters. |
 | `org.ta4j.core.indicators.elliott.swing` | **CompositeSwingDetector** | Combines detectors with exact AND/OR agreement or tolerant clustered quorum voting. |
 | `org.ta4j.core.indicators.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |

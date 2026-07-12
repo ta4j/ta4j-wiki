@@ -78,9 +78,13 @@ ATRIndicator atr = new ATRIndicator(series, 14);
 Indicator<Num> atrThreshold = BinaryOperationIndicator.product(atr, 1.5);
 ZigZagStateIndicator zigzagState = new ZigZagStateIndicator(high, low, close, atrThreshold);
 
-RecentZigZagSwingLowIndicator zigzagLows = new RecentZigZagSwingLowIndicator(zigzagState, low);
-RecentZigZagSwingHighIndicator zigzagHighs = new RecentZigZagSwingHighIndicator(zigzagState, high);
+RecentZigZagSwingLowIndicator zigzagLows = new RecentZigZagSwingLowIndicator(zigzagState);
+RecentZigZagSwingHighIndicator zigzagHighs = new RecentZigZagSwingHighIndicator(zigzagState);
 ```
+
+The state-only recent-swing constructors automatically reuse the matching low or
+high source. Use the explicit-source overloads only when custom pivot pricing is
+intentional.
 
 ### Choosing a detector
 
@@ -91,23 +95,27 @@ No single formula is best for every turn shape:
 | Fractal | Distinct local extrema and fixed timing requirements | Waits for the configured right-side window. |
 | ZigZag | Sharp reversals whose importance is defined by price distance or volatility | Confirms after the reversal threshold is crossed. |
 | `SlopeChangeSwingDetector` | Rounded tops/bottoms where direction changes gradually | Waits for adjacent regression slopes to reverse and persist. |
-| `SwingDetectors.multiScale(...)` | Noisy data where consistent pivots matter more than the earliest signal | Requires a quorum of same-type pivots within an index tolerance. |
+| `SwingDetectors.consensus(...)` | Noisy data where consistent pivots matter more than the earliest signal | Requires a quorum of same-type pivots within an index tolerance. |
 
 ```java
-// Window-only constructor: one confirmation window, ATR(14), filters disabled
-SwingDetector roundedTurns = new SlopeChangeSwingDetector(5);
+// Balanced defaults: two confirmation windows and a half-ATR reversal filter
+SwingDetector roundedTurns = SwingDetectors.slopeChange(5);
 
 // Use the config overload when persistence or magnitude filters are required
 SwingDetector filteredRoundedTurns = SwingDetectors.slopeChange(
         new SlopeChangeConfig(5, 2, 14, 0.0, 0.5));
 
-SwingDetector consensus = SwingDetectors.multiScale(
+SwingDetector consensus = SwingDetectors.consensus(
         2, // cluster same-type pivots within two bars
         2, // require two detector votes
         SwingDetectors.fractal(3),
         SwingDetectors.adaptiveZigZag(new AdaptiveZigZagConfig(14, 1.5, 0, 0, 1)),
         filteredRoundedTurns);
 ```
+
+`SlopeChangeConfig.defaults(window)` returns the same balanced profile used by
+the window-only detector and factory overload. Construct the record directly
+when you deliberately need different persistence or magnitude filters.
 
 All detector results are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
 
