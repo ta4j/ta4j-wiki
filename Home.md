@@ -23,6 +23,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
 - **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
 - **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
+- **Estimator-independent forecast state**: `ForecastState`, standard feature extractors, and summary-only forecast construction let projection models consume stable return-state data without coupling to EWMA internals.
 
 ## Start Here
 
@@ -43,6 +44,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
+- **[Forecast State Estimation](Forecast-State-Estimation.md)** - Common state contracts, primitive feature boundaries, and summary-only forecast construction
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
@@ -69,6 +71,6 @@ Use the canonical matrix for execution choices:
 
 ## Maintainer design docs
 
-- **[Architecture proposals](architecture/proposed/index.md)** - Active design drafts and TODO PRDs
+- **[Architecture proposals](architecture/proposed/index.md)** - Active design drafts and in-progress PRDs
 - **[Architecture archive](architecture/archive/index.md)** - Historical decisions and implementation records
 - **[Completed feature dossiers](completed-features/README.md)** - Delivered PRD/checklist records

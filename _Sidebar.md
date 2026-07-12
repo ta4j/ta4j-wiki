@@ -22,6 +22,7 @@
 - [Technical Indicators](Technical-indicators.md)
 - [Indicators Inventory](Indicators-Inventory.md)
 - [Forecast Indicators](Forecast-Indicators.md)
+- [Forecast State Estimation](Forecast-State-Estimation.md)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
 - [Bill Williams Indicators](Bill-Williams-Indicators.md)
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
