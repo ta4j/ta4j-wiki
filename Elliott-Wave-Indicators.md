@@ -810,7 +810,7 @@ SwingDetector consensus = SwingDetectors.consensus(
     2, 2, fractal, adaptive, filteredSlope);
 ```
 
-Choose by turn shape rather than treating one detector as universally superior: ZigZag is strongest for sharp price-distance reversals, fractals provide deterministic fixed-window extrema, and slope-change detection captures gradual turns. Tolerant consensus trades earlier confirmation for more stable pivots when detectors disagree by a few bars. Every built-in detector is causal at the requested index.
+Choose by turn shape rather than treating one detector as universally superior: ZigZag is strongest for sharp price-distance reversals, fractals provide deterministic fixed-window extrema, and slope-change detection captures gradual turns. Tolerant consensus trades earliest confirmation for more stable pivots when detectors disagree by a few bars. Every built-in detector is causal at the requested index.
 
 ### SwingFilter and MinMagnitudeSwingFilter
 

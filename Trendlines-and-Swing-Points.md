@@ -55,7 +55,7 @@ charts.display(plan);
 Use fractals when you want visually obvious turning points and don’t mind waiting a few bars for confirmation.
 
 ```java
-// 7-bar symmetric window that tolerates one equal neighbor on each side
+// 7-bar symmetric window that tolerates one additional equal bar in the plateau
 RecentFractalSwingHighIndicator majorHighs = new RecentFractalSwingHighIndicator(high, 7, 7, 1);
 int latestHighIndex = majorHighs.getLatestSwingHighIndex(series.getEndIndex());
 ```
