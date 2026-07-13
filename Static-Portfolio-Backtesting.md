@@ -4,7 +4,7 @@ Static portfolio backtesting runs one deterministic, multi-asset portfolio simul
 
 The portfolio API lives under `org.ta4j.core.portfolio`. The first slice is intentionally static target-weight accounting: it does not optimize allocations, run per-asset strategies, model shorting/leverage, or replace `BarSeriesManager` for normal single-series strategy backtests.
 
-**Release status:** These APIs are introduced by the CF-148 feature branch and should be published with ta4j 0.22.9 or newer. Until that ta4j change is merged and released, use this guide with the matching ta4j branch rather than the current release artifacts.
+**Release status:** These APIs are introduced by the CF-148 feature branch and should be published with ta4j 0.23.1 or newer. Until that ta4j change is merged and released, use this guide with the matching ta4j branch rather than the current release artifacts.
 
 ## When to use it
 
