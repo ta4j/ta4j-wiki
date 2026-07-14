@@ -50,7 +50,7 @@ RollingConformalForecastProjectionIndicator calibrated =
 Forecast result = calibrated.getValue(series.getEndIndex());
 ```
 
-Analog projection uses only candidates whose complete five-bar outcomes have matured, fits feature standardization from historical candidates only, and reports selected neighbors as empirical support. The conformal wrapper remains unavailable until 30 valid historical forecasts mature, then widens lower and upper quantiles while preserving the analog mean, median, standard deviation, and support.
+Analog projection uses only post-warm-up candidates whose complete five-bar outcomes have matured, fits feature standardization from historical candidates only, and reports selected neighbors as empirical support. The conformal wrapper remains unavailable until at least 30 valid historical forecasts mature and the finite-sample coverage rank is attainable, then widens lower and upper quantiles while preserving the analog mean, median, standard deviation, and support.
 
 ## Forecast Semantics
 

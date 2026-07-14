@@ -46,7 +46,7 @@ Use `builder(ForecastStateIndicator<S>, ReturnIndicator)` only when a custom sta
 | `standardizeFeatures(...)` | `true` | Fit per-feature scale from eligible candidates only. |
 | `quantiles(...)` | `0.05, 0.25, 0.5, 0.75, 0.95` | Request only probabilities consumed downstream. |
 
-For decision `i`, candidate `j` is eligible only when `j + horizon <= i`. Its feature vector and complete forward return must be usable. Standardization is fit without the current state, so the query never influences training scale. Euclidean distances sort by distance and then source index. Normalized `exp(-distance)` weights drive the mean, population variance, and weighted empirical quantiles.
+For decision `i`, candidate `j` is eligible only when `j + horizon <= i`. Its feature vector and complete forward return must be usable and outside both upstream indicators' unstable windows. The lookback counts matured candidate decision rows regardless of horizon. Standardization is fit without the current state, so the query never influences training scale. Euclidean distances sort by distance and then source index. Normalized `exp(-distance)` weights drive the mean, population variance, and weighted empirical quantiles; scaled moment arithmetic avoids avoidable overflow for finite extreme returns.
 
 Use analog projection when state similarity has an interpretable historical meaning and an empirical neighbor distribution is useful. Do not use it when the history has too few comparable regimes, the schema mixes representations, or standardizing the chosen raw features cannot make their distances meaningful.
 
@@ -81,15 +81,15 @@ This path validates that both the base forecast and realized stream use `ReturnR
 | --- | --- | --- |
 | `targetCoverage(...)` | `0.90` | Select the finite-sample absolute-error rank. |
 | `calibrationWindow(...)` | `252` | Inspect this many recent matured decision rows. |
-| `minimumCalibrationCount(...)` | `30` | Stay unavailable until enough valid scores mature. |
+| `minimumCalibrationCount(...)` | `30` | Set the lower bound on valid scores; the requested rank may require more. |
 
-With `n` valid scores, the calibration radius is order statistic `ceil((n + 1) * coverage)`, capped at `n`. Lower quantiles subtract that radius, upper quantiles add it, and the median remains unchanged. This is intentionally called rolling conformal calibration, not Adaptive Conformal Inference: no online coverage-rate update is claimed.
+With `n` valid scores, the calibration radius is order statistic `ceil((n + 1) * coverage)`. The wrapper stays unavailable until that rank is attainable, even when the configured minimum is smaller, and rejects a calibration window that can never attain it. Lower quantiles subtract that radius, upper quantiles add it, and the median remains unchanged. This is intentionally called rolling conformal calibration, not Adaptive Conformal Inference: no online coverage-rate update is claimed.
 
 Use the wrapper when recent, matured residuals are relevant to operational tail width and preserving the base model is important. Do not use it as a cure for a biased or semantically mismatched base model, and do not interpret target coverage as a guarantee under arbitrary distribution shift.
 
 ## Warm-Up and Failure Modes
 
-Analog output stays unavailable until the current state and enough fully matured candidates are usable. Rolling conformal output stays unavailable until its base forecast is stable and the minimum valid calibration count has matured. Both can recover at later indexes.
+Analog output stays unavailable until the current state and enough fully matured, post-warm-up candidates are usable. Rolling conformal output stays unavailable until its base forecast is stable and enough valid scores exist for both the configured minimum and requested finite-sample rank. Both can recover at later indexes.
 
 Unavailable results include:
 
@@ -99,6 +99,7 @@ Unavailable results include:
 - indicators do not share the same underlying `BarSeries`;
 - primitive feature conversion overflows or a nonzero value underflows to zero;
 - too few analog neighbors or calibration scores remain after validation;
+- the calibration window cannot attain the requested finite-sample rank;
 - weighted numeric normalization cannot be represented by the owning `NumFactory`;
 - a positive conformal radius would widen a zero-dispersion base forecast.
 
