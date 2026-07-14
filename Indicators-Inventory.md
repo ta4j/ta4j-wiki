@@ -70,7 +70,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **NumIndicator** | Wraps a Num value as an indicator. |
 | `org.ta4j.core.indicators.helpers` | **TradeCountIndicator** | Number of trades in the bar (when available). |
 | `org.ta4j.core.indicators.helpers` | **UnstableIndicator** | Returns NaN for indices within the unstable period; used for warm-up. |
-| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | CF-289 branch-only until ta4j 0.22.9: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Available since ta4j 0.23.0: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
 
 **Short usage (per-indicator expansion)**  
 - **What it is:** As in the table (e.g. close price, true range, running sum).  
@@ -529,7 +529,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 15. Forecasting
 
-Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds the primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` group state contracts, projection contracts, and conversion bridges. They produce forecast summaries at a decision index using only data available at or before that index. These entries are introduced by the matching CF-289 ta4j feature branch and should be treated as branch-only until the ta4j 0.22.9 release includes them. For tutorial guidance, see [Forecast Indicators](Forecast-Indicators.md).
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds the primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` group state contracts, projection contracts, and conversion bridges. They produce forecast summaries at a decision index using only data available at or before that index. The core forecast workflow shipped in ta4j 0.23.0; `ForecastState`, `ForecastFeatureExtractor`, `ForecastFeatureExtractors`, the typed `ReturnForecastStateIndicator<S>`, and summary-only `Forecast` construction on this branch target ta4j 0.23.1. For tutorial guidance, see [Forecast Indicators](Forecast-Indicators.md).
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
@@ -632,7 +632,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 
 ## Summary
 
-- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis. Forecasting entries above are CF-289 branch-only until the matching ta4j release includes them.
+- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, analysis, and the forecast workflow released in 0.23.0. Estimator-independent forecast-state entries above target 0.23.1.
 - The inventory also tracks supporting public types (facades, enums, records, interfaces) in indicator packages that are required for complete API coverage.
 - **ta4j-examples** adds charting-oriented indicators (labels, channel boundary).  
 - All entries above use the **fully qualified name** and **class name** and a **short description as in the ta4j codebase**.  

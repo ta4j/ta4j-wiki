@@ -2,6 +2,8 @@
 
 Forecast state separates what the market looks like at a decision index from how a model projects that state forward. This page covers the common state API introduced for estimator-independent forecast models. For the complete EWMA-to-Monte-Carlo workflow, start with [Forecast Indicators](Forecast-Indicators.md).
 
+**Release status:** The core forecast workflow shipped in ta4j 0.23.0. The generic state contract, standard feature extractors, typed return-state refinement, and summary-only factory on this page target ta4j 0.23.1.
+
 ## The common state contract
 
 Every reusable forecast state implements `ForecastState`:

@@ -10,7 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
 | Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory §11](Indicators-Inventory.md#11-statistics--numeric) |
-| Forecasting | CF-289 branch-only until ta4j 0.22.9: log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, point projection indicators. | [Forecast Indicators](Forecast-Indicators.md) |
+| Forecasting | Since 0.23.0: log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, and point projections. The foundation branch targets 0.23.1 with estimator-independent state and summary APIs. | [Forecast Indicators](Forecast-Indicators.md) |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
@@ -95,9 +95,9 @@ ta4j 0.22.7 adds composite regime and edge-scoring indicators for strategy gatin
 
 Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggeredCooldownRule` (see [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)).
 
-## Forecast workflow (0.22.9)
+## Forecast workflow (0.23.0)
 
-This workflow is documented from the CF-289 feature branch and is branch-only until the ta4j 0.22.9 release includes these APIs.
+The core workflow below shipped in ta4j 0.23.0. The generic `ForecastState`, feature extractors, typed return-state composition, and `Forecast.ofSummary(...)` additions documented in the linked guides target ta4j 0.23.1.
 
 ta4j's forecast package adds prediction-valued indicators for forward-looking research and strategy filters:
 

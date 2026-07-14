@@ -4,7 +4,7 @@ Forecast indicators estimate a future return or price distribution from data ava
 
 The forecast API lives under `org.ta4j.core.indicators.forecast`. The root package contains the primary indicators most users instantiate, while state contracts, projection contracts, the `Forecast` value model, and conversion adapters live in `forecast.state`, `forecast.projection`, and `forecast.adapters`. `LogReturnIndicator` is a normal helper indicator in `org.ta4j.core.indicators.helpers`, and `EWMAIndicator` is a reusable average in `org.ta4j.core.indicators.averages`.
 
-**Release status:** These APIs are available on current ta4j master and are planned for ta4j 0.22.9. Released 0.22.8 artifacts do not contain them.
+**Release status:** ta4j 0.23.0 includes the core log-return, EWMA, Monte Carlo, adapter, and point-projection APIs. The estimator-independent `ForecastState`, feature-extractor, typed return-state, and `Forecast.ofSummary(...)` refinements documented here are on the foundation branch and target ta4j 0.23.1.
 
 For estimator-independent state contracts, feature extraction, and summary-only forecast construction, see [Forecast State Estimation](Forecast-State-Estimation.md).
 
@@ -91,7 +91,7 @@ The raw `Forecast<Num>` summary remains useful for diagnostics and metadata. At 
 
 Reusable state records implement `ForecastState`, giving generic projections a common index, observation count, stability, mean, drift, variance, and volatility surface. Return-derived estimators implement `ReturnForecastStateIndicator<S>` so projections can discover their source return stream and representation. `Forecast.ofSummary(...)` complements sample-based factories for wrappers or models that calculate honest finite summary statistics without generating samples; its sample count describes represented distribution values, never training or calibration rows.
 
-In the CF-289/0.22.9 API, direct lookup and projection helpers handle missing quantiles differently. `priceForecast.getValue(index).quantile(0.90)` returns `null` when `0.90` was not configured, while `priceForecast.quantile(0.90).getValue(index)` returns `NaN` so the result composes safely as an `Indicator<Num>`. Invalid probabilities outside `[0, 1]` still throw.
+In the forecast API released with ta4j 0.23.0, direct lookup and projection helpers handle missing quantiles differently. `priceForecast.getValue(index).quantile(0.90)` returns `null` when `0.90` was not configured, while `priceForecast.quantile(0.90).getValue(index)` returns `NaN` so the result composes safely as an `Indicator<Num>`. Invalid probabilities outside `[0, 1]` still throw.
 
 ## Point Projection Indicators
 

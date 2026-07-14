@@ -23,7 +23,8 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
 - **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
 - **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
-- **Estimator-independent forecast state**: `ForecastState`, standard feature extractors, and summary-only forecast construction let projection models consume stable return-state data without coupling to EWMA internals.
+- **Forecast distributions in 0.23.0**: Log-return inputs, EWMA state, Monte Carlo return and price distributions, adapters, and point projections are available in the current release.
+- **Estimator-independent forecast state targeting 0.23.1**: This foundation branch adds `ForecastState`, standard feature extractors, typed return-state composition, and summary-only forecast construction without coupling projections to EWMA internals.
 
 ## Start Here
 
