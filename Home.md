@@ -23,8 +23,9 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
 - **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
 - **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
-- **Forecast distributions in 0.23.0**: Log-return inputs, EWMA state, Monte Carlo return and price distributions, adapters, and point projections are available in the current release.
-- **Estimator-independent forecast state targeting 0.23.1**: This foundation branch adds `ForecastState`, standard feature extractors, typed return-state composition, and summary-only forecast construction without coupling projections to EWMA internals.
+- **Forecast foundation targeting 0.23.1**: Num-only summaries now declare empirical or analytic support, return estimators compose canonical `ReturnMoments`, and feature vectors publish representation-bound schemas.
+- **Exact and explicit price models**: `MonteCarloPriceForecastIndicator` summarizes transformed terminal-price paths exactly; `LognormalApproximationPriceForecastIndicator` is the clearly named analytic alternative when paths are unavailable.
+- **Forecast migration required**: The 0.23.1 correction intentionally replaces the forecast API introduced in 0.23.0. See [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231).
 
 ## Start Here
 
@@ -45,7 +46,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
-- **[Forecast State Estimation](Forecast-State-Estimation.md)** - Common state contracts, primitive feature boundaries, and summary-only forecast construction
+- **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical return moments, representation-bound schemas, and provenance-aware summaries
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
