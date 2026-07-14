@@ -42,7 +42,7 @@ ReturnForecastStateIndicator<ReturnForecastState> states =
         new EwmaReturnForecastStateIndicator(returns);
 AnalogReturnProjectionIndicator<ReturnForecastState> analog =
         new AnalogReturnProjectionIndicator<>(states, 5);
-RollingConformalForecastProjectionIndicator calibrated =
+ReturnForecastProjectionIndicator calibrated =
         RollingConformalForecastProjectionIndicator
                 .cumulativeLogReturnBuilder(analog, returns)
                 .build();
@@ -50,7 +50,7 @@ RollingConformalForecastProjectionIndicator calibrated =
 Forecast result = calibrated.getValue(series.getEndIndex());
 ```
 
-Analog projection uses only post-warm-up candidates whose complete five-bar outcomes have matured, fits feature standardization from historical candidates only, and reports selected neighbors as empirical support. The conformal wrapper remains unavailable until at least 30 valid historical forecasts mature and the finite-sample coverage rank is attainable, then widens lower and upper quantiles while preserving the analog mean, median, standard deviation, and support.
+Analog projection uses only post-warm-up candidates whose complete five-bar outcomes have matured, fits feature standardization from historical candidates only, and reports selected neighbors as empirical support. The conformal wrapper remains unavailable until at least 30 valid historical forecasts mature and the finite-sample coverage rank is attainable, then widens lower and upper quantiles while preserving the analog mean, median, standard deviation, support, and semantic return-projection contract.
 
 ## Forecast Semantics
 
@@ -182,7 +182,7 @@ Common unavailable causes:
 - Any configured Monte Carlo terminal path is non-finite. The whole empirical projection is unavailable; paths are never silently dropped.
 - The central fields of a lognormal approximation require an exponent magnitude above `700`. An overflowing optional tail is omitted while usable central fields remain.
 - Analog history has too few fully matured neighbors, its schema differs from log-return state representation, or a feature cannot be represented as a finite primitive value.
-- Rolling conformal history has fewer than the configured minimum valid scores, base forecast metadata is inconsistent, or positive widening would contradict a zero-dispersion base summary.
+- Rolling conformal history has fewer than the configured minimum valid scores, base forecast metadata is inconsistent, no non-median tail quantile is configured, or positive widening would contradict a zero-dispersion base summary.
 
 Always check `isStable()` when inspecting a raw summary. Point adapters are safer for normal ta4j rule composition because unavailable values become `NaN.NaN`.
 

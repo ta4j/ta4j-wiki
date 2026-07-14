@@ -36,6 +36,18 @@ AnalogReturnProjectionIndicator<ReturnForecastState> analog =
 
 Use `builder(ForecastStateIndicator<S>, ReturnIndicator)` only when a custom state source cannot expose its return stream through `ReturnForecastStateIndicator<S>`.
 
+```java
+ForecastStateIndicator<RegimeReturnState> regimeStates = ...;
+ReturnIndicator logReturns = ...;
+AnalogReturnProjectionIndicator<RegimeReturnState> analog =
+        AnalogReturnProjectionIndicator.builder(regimeStates, logReturns)
+                .featureExtractor(ForecastFeatureExtractors
+                        .meanVolatility(ReturnRepresentation.LOG))
+                .build();
+```
+
+`RegimeReturnState` implements `ReturnMomentState`; the explicit return stream supplies the matured forward labels while the state remains free to carry model-specific fields.
+
 | Setting | Default | Operator intent |
 | --- | --- | --- |
 | `horizon(...)` | `1` | Match the forward-return label to the holding period. |
@@ -52,7 +64,7 @@ Use analog projection when state similarity has an interpretable historical mean
 
 ## Rolling Conformal Calibration
 
-`RollingConformalForecastProjectionIndicator` wraps any numeric forecast and widens its configured tails using recent absolute median errors. It preserves the base mean, median, standard deviation, horizon, decision index, and support. Calibration rows are not samples and never replace base provenance.
+`RollingConformalForecastProjectionIndicator` wraps a numeric forecast with at least one configured non-median quantile and widens its tails using recent absolute median errors. It preserves the base mean, median, standard deviation, horizon, decision index, and support. Calibration rows are not samples and never replace base provenance.
 
 ### Generic realized values
 
@@ -66,7 +78,7 @@ The realized value for a decision is `closePrice.getValue(decision + horizon)`.
 ### Cumulative log returns
 
 ```java
-RollingConformalForecastProjectionIndicator calibrated =
+ReturnForecastProjectionIndicator calibrated =
         RollingConformalForecastProjectionIndicator
                 .cumulativeLogReturnBuilder(analog, returns)
                 .targetCoverage(0.95)
@@ -75,7 +87,7 @@ RollingConformalForecastProjectionIndicator calibrated =
                 .build();
 ```
 
-This path validates that both the base forecast and realized stream use `ReturnRepresentation.LOG`, then sums returns from `decision + 1` through `decision + horizon`.
+This path validates that both the base forecast and realized stream use `ReturnRepresentation.LOG`, sums returns from `decision + 1` through `decision + horizon`, and preserves `ReturnForecastProjectionIndicator` so downstream composition remains representation-aware.
 
 | Setting | Default | Operator intent |
 | --- | --- | --- |
@@ -101,6 +113,7 @@ Unavailable results include:
 - too few analog neighbors or calibration scores remain after validation;
 - the calibration window cannot attain the requested finite-sample rank;
 - weighted numeric normalization cannot be represented by the owning `NumFactory`;
+- the current base forecast has no configured non-median quantile to widen;
 - a positive conformal radius would widen a zero-dispersion base forecast.
 
 Always branch on `forecast.isStable()` when reading a raw summary. Point adapters such as `projection.quantile(0.05)` emit `NaN.NaN` for unavailable forecasts.

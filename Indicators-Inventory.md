@@ -552,7 +552,7 @@ Forecast types live under `org.ta4j.core.indicators.forecast`. The root package 
 | `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Exact terminal-path price simulation with inferred or explicit price source and advanced builder. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
 | `org.ta4j.core.indicators.forecast` | **AnalogReturnProjectionIndicator&lt;S&gt;** | Weighted empirical cumulative log-return projection from matured, schema-compatible historical states. |
-| `org.ta4j.core.indicators.forecast` | **RollingConformalForecastProjectionIndicator** | Rolling finite-sample tail calibration over matured realized values while preserving base support and central fields. |
+| `org.ta4j.core.indicators.forecast` | **RollingConformalForecastProjectionIndicator** | Rolling finite-sample tail calibration over matured realized values; cumulative log-return calibration preserves semantic return typing and tail-less inputs remain unavailable. |
 | `org.ta4j.core.indicators.forecast.adapters` | **LognormalApproximationPriceForecastIndicator** | Explicit analytic lognormal moment-match from a cumulative log-return summary. |
 | `org.ta4j.core.indicators.forecast.projection` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
 | `org.ta4j.core.indicators.forecast.projection` | **Forecast** | Num-only immutable distribution summary with empirical samples, validated builder, affine transforms, and provenance. |
