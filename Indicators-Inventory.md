@@ -398,12 +398,14 @@ For an overview of indicator categories and composition patterns, see [Technical
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.elliott.swing` | **SwingDetector** | Interface: detects swing pivots and constructs swing sequences for a bar index. |
 | `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorResult** | Record: detected pivots and derived swings for a given index. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, and composite swing detectors. |
+| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, slope-change, composite, and tolerant multi-scale swing detectors. |
 | `org.ta4j.core.indicators.elliott.swing` | **FractalSwingDetector** | Swing detector backed by fractal swing high/low (fixed lookback/lookforward window). |
 | `org.ta4j.core.indicators.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
 | `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
 | `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
-| `org.ta4j.core.indicators.elliott.swing` | **CompositeSwingDetector** | Combines multiple swing detectors with AND/OR pivot agreement policy. |
+| `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeSwingDetector** | Detects rounded turns from sustained causal changes in rolling regression slope; supports balanced window-only construction. |
+| `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeConfig** | Record: slope window, confirmation persistence, ATR period, and magnitude filters. |
+| `org.ta4j.core.indicators.elliott.swing` | **CompositeSwingDetector** | Combines detectors with exact AND/OR agreement or tolerant clustered quorum voting. |
 | `org.ta4j.core.indicators.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |
 | `org.ta4j.core.indicators.elliott.swing` | **SwingFilter** | Interface: post-processes swing lists (e.g. remove noise, apply constraints). |
 | `org.ta4j.core.indicators.elliott.swing` | **SwingPivot** | Record: confirmed swing pivot (index, price, type high/low). |
