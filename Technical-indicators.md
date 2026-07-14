@@ -10,7 +10,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
 | Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory §11](Indicators-Inventory.md#11-statistics--numeric) |
-| Forecasting | CF-289 branch-only until ta4j 0.22.9: log returns, EWMA return state, Monte Carlo return distributions, price forecast adapters, point projection indicators. | [Forecast Indicators](Forecast-Indicators.md) |
+| Forecasting | 0.23.1 foundation: provenance-aware Num forecasts, canonical return moments, exact Monte Carlo return/price paths, schemas, point projections, and an explicit analytic lognormal approximation. | [Forecast Indicators](Forecast-Indicators.md) |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
@@ -95,20 +95,22 @@ ta4j 0.22.7 adds composite regime and edge-scoring indicators for strategy gatin
 
 Pair edge indicators with `EdgeHealthyRule` and loss hygiene with `LossTriggeredCooldownRule` (see [Trading Strategies](Trading-strategies.md) and [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)).
 
-## Forecast workflow (0.22.9)
+## Forecast workflow (0.23.1)
 
-This workflow is documented from the CF-289 feature branch and is branch-only until the ta4j 0.22.9 release includes these APIs.
+The 0.23.1 foundation deliberately corrects the forecast API first released in 0.23.0. See the migration guide before upgrading forecast code.
 
 ta4j's forecast package adds prediction-valued indicators for forward-looking research and strategy filters:
 
 - `LogReturnIndicator` creates reusable log-return inputs from close prices or any numeric source indicator.
 - `ReturnIndicator` marks indicators that semantically produce returns in a declared representation.
 - `EWMAIndicator` provides reusable explicit-decay smoothing for forecast and non-forecast workflows.
-- `EwmaReturnForecastStateIndicator` estimates rolling return mean, drift, variance, and volatility from a log-return `ReturnIndicator`.
-- `MonteCarloPriceForecastIndicator` is the standard constructor-first price forecast path when state comes from `LogReturnIndicator`.
+- `EwmaReturnForecastStateIndicator` estimates canonical `ReturnMoments` from a log-return `ReturnIndicator`.
+- `MonteCarloPriceForecastIndicator` transforms every simulated terminal return path before calculating exact empirical price summaries.
 - `MonteCarloReturnProjectionIndicator` simulates cumulative log-return distributions for return-space workflows or advanced tuning.
-- `LogReturnToPriceForecastIndicator` in `forecast.adapters` converts explicit log-return projections to price distributions when the price source must be supplied directly.
-- `ForecastProjectionIndicator` in `forecast.projection` exposes `mean()`, `median()`, `standardDeviation()`, and `quantile(...)` point projections for normal ta4j rule composition.
+- `LognormalApproximationPriceForecastIndicator` explicitly fits a coherent analytic lognormal distribution when terminal samples are unavailable.
+- `ForecastProjectionIndicator` declares `getHorizon()` and exposes point projections for normal ta4j rule composition.
+- `ForecastSupport` distinguishes unavailable, empirical-count, and named analytic output.
+- `ForecastFeatureSchema` binds primitive feature names, units, version, order, and return representation.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
 
