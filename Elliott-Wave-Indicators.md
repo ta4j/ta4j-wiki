@@ -709,6 +709,9 @@ base.breakdownFor(scenario).ifPresent(System.out::println);
 
 ### Live intraday analysis (1-minute and 5-minute bars)
 
+> **Version:** The APIs in this section are pending for ta4j 0.23.1. They are
+> not available in the published 0.23.0 or 0.22.x artifacts.
+
 Use `INTRADAY_LIVE` for low-duration live series. It selects causal,
 ATR-scaled ZigZag detection and bypasses the macro-oriented
 percentage-of-history and percentage-of-price post-filters that can remove
