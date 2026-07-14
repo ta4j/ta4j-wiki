@@ -6,6 +6,8 @@ Use them for probabilistic filters, sizing, risk limits, chart overlays, and out
 
 For reusable state contracts and feature schemas, see [Forecast State Estimation](Forecast-State-Estimation.md). Applications upgrading from 0.23.0 should read [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231).
 
+For detailed analog and rolling calibration tuning, see [Forecast Projection Models](Forecast-Projection-Models.md).
+
 ## Quick Start: Exact Monte Carlo Prices
 
 ```java
@@ -31,6 +33,24 @@ Indicator<Num> downsideSeries = prices.quantile(0.05);
 `MonteCarloPriceForecastIndicator` infers the price source when the state uses `LogReturnIndicator`. It converts every simulated cumulative return to a terminal price before calculating any moment or quantile. Mean, median, standard deviation, and quantiles therefore describe the same empirical price paths.
 
 The shortest constructor uses a 30-observation EWMA state, one or five bars as requested, 1,000 paths, a 252-return lookback, seed `42`, standardized empirical shocks, constant path volatility, and quantiles `0.05`, `0.25`, `0.5`, `0.75`, and `0.95`.
+
+## Quick Start: Analog Returns With Rolling Calibration
+
+```java
+LogReturnIndicator returns = new LogReturnIndicator(series);
+ReturnForecastStateIndicator<ReturnForecastState> states =
+        new EwmaReturnForecastStateIndicator(returns);
+AnalogReturnProjectionIndicator<ReturnForecastState> analog =
+        new AnalogReturnProjectionIndicator<>(states, 5);
+RollingConformalForecastProjectionIndicator calibrated =
+        RollingConformalForecastProjectionIndicator
+                .cumulativeLogReturnBuilder(analog, returns)
+                .build();
+
+Forecast result = calibrated.getValue(series.getEndIndex());
+```
+
+Analog projection uses only candidates whose complete five-bar outcomes have matured, fits feature standardization from historical candidates only, and reports selected neighbors as empirical support. The conformal wrapper remains unavailable until 30 valid historical forecasts mature, then widens lower and upper quantiles while preserving the analog mean, median, standard deviation, and support.
 
 ## Forecast Semantics
 
@@ -161,6 +181,8 @@ Common unavailable causes:
 - Factory coercion is non-finite, overflows primitive representation, or underflows a nonzero value to primitive zero.
 - Any configured Monte Carlo terminal path is non-finite. The whole empirical projection is unavailable; paths are never silently dropped.
 - The central fields of a lognormal approximation require an exponent magnitude above `700`. An overflowing optional tail is omitted while usable central fields remain.
+- Analog history has too few fully matured neighbors, its schema differs from log-return state representation, or a feature cannot be represented as a finite primitive value.
+- Rolling conformal history has fewer than the configured minimum valid scores, base forecast metadata is inconsistent, or positive widening would contradict a zero-dispersion base summary.
 
 Always check `isStable()` when inspecting a raw summary. Point adapters are safer for normal ta4j rule composition because unavailable values become `NaN.NaN`.
 
@@ -174,6 +196,8 @@ Always check `isStable()` when inspecting a raw summary. Point adapters are safe
 | --- | --- | --- |
 | Exact simulated price distribution | `MonteCarloPriceForecastIndicator` | Transforming summary moments after simulation. |
 | Cumulative log-return distribution | `MonteCarloReturnProjectionIndicator` | Treating returns as prices. |
+| State-conditioned empirical log returns | `AnalogReturnProjectionIndicator` | Letting current features influence training standardization. |
+| Rolling tail calibration | `RollingConformalForecastProjectionIndicator` | Counting calibration rows as forecast support. |
 | Price approximation from moments only | `LognormalApproximationPriceForecastIndicator` | Calling it empirical support. |
 | Point value in a rule | `projection.median()`, `.mean()`, or `.quantile(p)` | Reimplementing unstable checks. |
 | Empirical custom model output | `Forecast.ofSamples(...)` | Claiming analytic support. |
@@ -185,6 +209,8 @@ Always check `isStable()` when inspecting a raw summary. Point adapters are safe
 | --- | --- | --- |
 | `EwmaReturnForecastStateIndicator` | `forecast` | Default return-moment state estimator. |
 | `MonteCarloReturnProjectionIndicator` | `forecast` | Exact empirical cumulative log-return projection. |
+| `AnalogReturnProjectionIndicator` | `forecast` | State-conditioned weighted empirical log-return projection. |
+| `RollingConformalForecastProjectionIndicator` | `forecast` | Matured-error tail calibration that preserves base support. |
 | `MonteCarloPriceForecastIndicator` | `forecast` | Exact empirical terminal-price projection. |
 | `Forecast` / `ForecastSupport` | `forecast.projection` | Numeric distribution summary and provenance. |
 | `ForecastProjectionIndicator` | `forecast.projection` | Horizon-aware forecast indicator with point adapters. |
@@ -196,6 +222,7 @@ Always check `isStable()` when inspecting a raw summary. Point adapters are safe
 ## Related Guides
 
 - [Forecast State Estimation](Forecast-State-Estimation.md)
+- [Forecast Projection Models](Forecast-Projection-Models.md)
 - [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231)
 - [Indicators Inventory](Indicators-Inventory.md)
 - [Walk-Forward Research](Walk-Forward-Research.md)
