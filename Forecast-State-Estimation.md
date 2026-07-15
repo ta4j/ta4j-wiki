@@ -114,6 +114,65 @@ The state remains unstable until EWMA initialization, the roughness window, and 
 
 Use rough-volatility state when changing volatility persistence or multi-horizon risk shape is part of the model. Prefer `EwmaReturnForecastStateIndicator` when current mean and variance are sufficient, the available history is short, or the extra dimensions have not earned their place in out-of-sample testing.
 
+## Online Change-Point State
+
+`OnlineChangePointForecastStateIndicator` estimates uncertainty about the current log-return regime. It uses canonical constant-hazard Bayesian online change-point detection with Normal-Inverse-Gamma sufficient statistics, Student-t predictive densities, and log-space normalization.
+
+```java
+LogReturnIndicator returns = new LogReturnIndicator(series);
+OnlineChangePointForecastStateIndicator states =
+        new OnlineChangePointForecastStateIndicator(returns);
+
+OnlineChangePointForecastState state = states.getValue(series.getEndIndex());
+if (state.isStable()) {
+    Num recentChangeProbability = state.recentChangeProbability();
+    int regimeAge = state.mostLikelyRunLength();
+    List<RunLengthPosterior> alternatives = state.topRunLengths();
+}
+```
+
+Advanced construction keeps the same semantic return source and names every model assumption:
+
+```java
+OnlineChangePointForecastStateIndicator states =
+        OnlineChangePointForecastStateIndicator.builder(returns)
+                .expectedRunLength(150)
+                .maximumRunLength(500)
+                .topRunLengthCount(8)
+                .minimumObservationCount(30)
+                .recentChangeWindow(10)
+                .priorMean(0)
+                .priorMeanPrecision(1e-3)
+                .priorShape(3)
+                .priorScale(1e-3)
+                .build();
+```
+
+| Setting | Default | Operator intent |
+| --- | --- | --- |
+| `expectedRunLength(...)` | `100` | Controls the constant hazard `1 / expectedRunLength`; larger values favor longer regimes. |
+| `maximumRunLength(...)` | `252` | Bounds posterior cost and the oldest retained run-length hypothesis. |
+| `topRunLengthCount(...)` | `5` | Number of typed posterior summaries published without subset renormalization. |
+| `minimumObservationCount(...)` | `20` | Consecutive valid returns required after construction or reset. |
+| `recentChangeWindow(...)` | `5` | Inclusive run-length boundary used by the recent-change probability. |
+| `priorMean(...)` | `0` | Prior location for a newly reset component. |
+| `priorMeanPrecision(...)` | `1e-4` | Confidence in the prior mean; higher values shrink regimes toward it. |
+| `priorShape(...)` | `2` | Inverse-Gamma shape; must exceed one so expected observation variance exists. |
+| `priorScale(...)` | `1e-4` | Positive prior observation-variance scale. |
+
+| State field | Meaning |
+| --- | --- |
+| `moments()` | MAP component mean, drift, canonical expected observation variance, and consecutive valid observation count. Drift equals the component mean. |
+| `recentChangeProbability()` | Complete posterior mass for run lengths `0..recentChangeWindow`. |
+| `mostLikelyRunLength()` | Run length of the probability-leading component after deterministic tie-breaking. |
+| `topRunLengths()` | Immutable probability-descending summaries; equal probabilities use shorter run length first. |
+
+Each `RunLengthPosterior` contains run length, its probability in the complete posterior, posterior mean, and expected observation variance. The top list generally sums to less than one because omitted hypotheses retain their probability. In the untruncated constant-hazard filter, `P(runLength = 0)` equals the hazard. Configured tail truncation and renormalization can increase it slightly, but it still is not a responsive change signal; `recentChangeProbability()` intentionally aggregates short run lengths instead.
+
+The estimator remains unstable until 20 consecutive valid returns mature by default. A non-finite return or primitive conversion overflow/underflow resets the posterior and observation count. Removed history is not silently reused: a bounded series must warm up again from its first retained bar. Unstable state preserves its current valid-run count, uses `NaN.NaN` for recent-change probability, reports run length `-1`, and exposes an empty posterior list.
+
+Use change-point state when abrupt location/variance regimes and uncertainty about regime age are intentional model inputs. Prefer EWMA for smooth adaptation, rough-volatility state for volatility persistence and term structure, or a smaller schema when regime dimensions have not improved walk-forward results. This state is diagnostic, not a standalone entry signal.
+
 ## Feature Schemas
 
 Feature vectors are representation-bound and self-describing. Choose a schema by modeling intent:
@@ -132,6 +191,7 @@ double[] values = extractor.features(state.getValue(index));
 | `driftVolatility(rep)` | `return-moments/drift-volatility` | `[drift, volatility]` | return, return | The model intentionally uses forward drift. |
 | `meanDriftVariance(rep)` | `return-moments/mean-drift-variance` | `[mean, drift, variance]` | return, return, return squared | A model needs separate location assumptions and canonical variance. |
 | `roughVolatility()` | `rough-volatility/default` | `[mean, volatility, roughness_hurst, vol_of_vol]` | log-return, log-return, dimensionless, dimensionless | Similarity should include roughness and volatility variability. |
+| `changePoint()` | `change-point/default` | `[mean, volatility, recent_change_probability, most_likely_run_length]` | log-return, log-return, probability, observations | Similarity should include recent regime uncertainty and age. |
 
 Every schema has version `1`, its required return representation, a defensive ordered descriptor list, and `dimension()`. Unit names are `log-return`, `decimal-return`, `percentage-points`, or `multiplicative-return`; variance appends `^2`.
 
@@ -160,7 +220,7 @@ Use `Forecast.ofSamples(...)` for empirical output and `Forecast.builder(...)` f
 
 ## Warm-Up and Recovery
 
-EWMA state is unstable until its configured initialization window contains valid returns. Invalid inputs produce unstable moments rather than partially valid fields. Later indices recover once all required state and lookback inputs are valid again.
+EWMA state is unstable until its configured initialization window contains valid returns. Rough-volatility state also waits for its rolling proxy windows. Online change-point state requires a complete consecutive-valid warm-up after any reset. Invalid inputs produce unstable moments rather than partially valid fields, and later indices recover only after the relevant estimator contract is satisfied again.
 
 Model consumers should treat these as unusable:
 

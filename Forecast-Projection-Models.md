@@ -61,6 +61,19 @@ AnalogReturnProjectionIndicator<RoughVolatilityForecastState> roughAnalog =
 
 The ordered raw features are `[mean, volatility, roughness_hurst, vol_of_vol]`. Candidate-only standardization remains owned by the analog model. Prefer the default `[mean, volatility]` schema unless roughness and vol-of-vol are intentional, tested similarity dimensions.
 
+Online change-point state composes through the same return-specific builder without repeating the return source:
+
+```java
+OnlineChangePointForecastStateIndicator changePointStates =
+        new OnlineChangePointForecastStateIndicator(returns);
+AnalogReturnProjectionIndicator<OnlineChangePointForecastState> regimeAnalog =
+        AnalogReturnProjectionIndicator.builder(changePointStates)
+                .featureExtractor(ForecastFeatureExtractors.changePoint())
+                .build();
+```
+
+Its raw schema is `[mean, volatility, recent_change_probability, most_likely_run_length]`. Candidate-only standardization is especially important because probability, observations, and log returns have different units. Prefer the smaller default schema unless walk-forward evidence supports treating regime uncertainty and age as similarity dimensions. Unstable post-reset states are excluded rather than converted into artificial neighbors.
+
 | Setting | Default | Operator intent |
 | --- | --- | --- |
 | `horizon(...)` | `1` | Match the forward-return label to the holding period. |
