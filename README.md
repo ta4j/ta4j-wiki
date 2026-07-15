@@ -25,6 +25,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
 - **Forecast foundation targeting 0.23.1**: Num-only summaries now declare empirical or analytic support, return estimators compose canonical `ReturnMoments`, and feature vectors publish representation-bound schemas.
 - **Exact and explicit price models**: `MonteCarloPriceForecastIndicator` summarizes transformed terminal-price paths exactly; `LognormalApproximationPriceForecastIndicator` is the clearly named analytic alternative when paths are unavailable.
+- **State-conditioned projections and calibrated tails**: `AnalogReturnProjectionIndicator` builds deterministic empirical neighbor forecasts, and `RollingConformalForecastProjectionIndicator` widens tails from matured residuals without changing base provenance.
 - **Forecast migration required**: The 0.23.1 correction intentionally replaces the forecast API introduced in 0.23.0. See [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231).
 
 ## Start Here
@@ -47,6 +48,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
 - **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical return moments, representation-bound schemas, and provenance-aware summaries
+- **[Forecast Projection Models](Forecast-Projection-Models.md)** - Analog neighbors, rolling conformal calibration, maturity guards, tuning, and failure behavior
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 

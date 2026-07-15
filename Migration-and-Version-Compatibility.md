@@ -42,7 +42,7 @@ Migration order:
 4. Compose return state around `ReturnMoments` and bind feature extractors to the correct `ReturnRepresentation`.
 5. Assert `ForecastProjectionIndicator.getHorizon()` and forecast metadata in custom projections.
 
-Training and calibration row counts belong to model-specific state or diagnostics, not `Forecast.sampleCount()`. Conformal wrappers preserve base support; later analog projections use empirical neighbor support.
+Training and calibration row counts belong to model-specific state or diagnostics, not `Forecast.sampleCount()`. `RollingConformalForecastProjectionIndicator` preserves base support; `AnalogReturnProjectionIndicator` reports selected neighbors as empirical support.
 
 ## Migration lane
 
@@ -67,3 +67,4 @@ Training and calibration row counts belong to model-specific state or diagnostic
 - [Usage Examples](Usage-examples.md)
 - [Forecast Indicators](Forecast-Indicators.md)
 - [Forecast State Estimation](Forecast-State-Estimation.md)
+- [Forecast Projection Models](Forecast-Projection-Models.md)

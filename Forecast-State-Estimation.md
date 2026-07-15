@@ -93,6 +93,8 @@ extractor.extractInto(state.getValue(index), row, 4);
 
 Feature values remain in raw declared units. Consumers such as analog-distance models own training-window standardization; the extractor does not hide scaling assumptions.
 
+`AnalogReturnProjectionIndicator` validates the schema representation against each candidate's `ReturnMoments`, rejects inconsistent feature dimensions or non-finite primitive values, and fits optional standardization from matured historical candidates only. The current query state is never part of that fit. See [Forecast Projection Models](Forecast-Projection-Models.md) for construction and tuning.
+
 ## Forecast Construction and Provenance
 
 State observation counts are training metadata. Forecast support describes the output distribution:

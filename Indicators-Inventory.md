@@ -529,7 +529,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 15. Forecasting
 
-Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` hold composition contracts and the explicitly analytic bridge. The 0.23.1 foundation corrects the initial 0.23.0 API with Num-only summaries, support provenance, exact terminal-price simulation, minimal state, return-moment composition, and representation-bound feature schemas. For tutorial and migration guidance, see [Forecast Indicators](Forecast-Indicators.md).
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` hold composition contracts and the explicitly analytic bridge. The 0.23.1 surface includes Num-only summaries, support provenance, exact terminal-price simulation, minimal state, return-moment composition, representation-bound feature schemas, state-conditioned analog projection, and rolling conformal calibration. For tutorial and migration guidance, see [Forecast Indicators](Forecast-Indicators.md).
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
@@ -551,16 +551,18 @@ Forecast types live under `org.ta4j.core.indicators.forecast`. The root package 
 | `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Exact terminal-path price simulation with inferred or explicit price source and advanced builder. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
+| `org.ta4j.core.indicators.forecast` | **AnalogReturnProjectionIndicator&lt;S&gt;** | Weighted empirical cumulative log-return projection from matured, schema-compatible historical states. |
+| `org.ta4j.core.indicators.forecast` | **RollingConformalForecastProjectionIndicator** | Rolling finite-sample tail calibration over matured realized values; cumulative log-return calibration preserves semantic return typing and tail-less inputs remain unavailable. |
 | `org.ta4j.core.indicators.forecast.adapters` | **LognormalApproximationPriceForecastIndicator** | Explicit analytic lognormal moment-match from a cumulative log-return summary. |
 | `org.ta4j.core.indicators.forecast.projection` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
 | `org.ta4j.core.indicators.forecast.projection` | **Forecast** | Num-only immutable distribution summary with empirical samples, validated builder, affine transforms, and provenance. |
 
 **Short usage**
 - **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
-- **Theory:** The standard pipeline converts prices to log returns, estimates canonical EWMA return moments, simulates terminal paths, and summarizes transformed price samples exactly.
+- **Theory:** Pipelines convert prices to semantic returns, estimate canonical state, then choose exact simulation, state-conditioned analogs, or explicit analytic projection; rolling conformal calibration can widen an existing model's tails from matured errors.
 - **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
 - **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
-- See also: [Forecast Indicators](Forecast-Indicators.md).
+- See also: [Forecast Indicators](Forecast-Indicators.md) and [Forecast Projection Models](Forecast-Projection-Models.md).
 
 ---
 
