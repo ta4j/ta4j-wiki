@@ -670,7 +670,10 @@ The `ElliottWaveAnalysisRunner` (0.22.4+) orchestrates a full Elliott Wave analy
 ```java
 import org.ta4j.core.indicators.elliott.ElliottAnalysisResult;
 import org.ta4j.core.indicators.elliott.ElliottDegree;
+import org.ta4j.core.indicators.elliott.ElliottLogicProfile;
 import org.ta4j.core.indicators.elliott.ElliottScenario;
+import org.ta4j.core.indicators.elliott.swing.AdaptiveZigZagConfig;
+import org.ta4j.core.indicators.elliott.swing.SwingDetector;
 import org.ta4j.core.indicators.elliott.swing.SwingDetectors;
 import org.ta4j.core.indicators.elliott.ElliottWaveAnalysisResult;
 import org.ta4j.core.indicators.elliott.ElliottWaveAnalysisRunner;
@@ -704,6 +707,66 @@ ElliottChannel channel = base.channel();
 base.breakdownFor(scenario).ifPresent(System.out::println);
 ```
 
+### Live intraday analysis (1-minute and 5-minute bars)
+
+> **Version:** The APIs in this section are pending for ta4j 0.23.1. They are
+> not available in the published 0.23.0 or 0.22.x artifacts.
+
+Use `INTRADAY_LIVE` for low-duration live series. It selects causal,
+ATR-scaled ZigZag detection and bypasses the macro-oriented
+percentage-of-history and percentage-of-price post-filters that can remove
+ordinary minute-bar swings.
+
+```java
+ElliottWaveAnalysisRunner liveRunner = ElliottWaveAnalysisRunner.builder()
+        .degree(ElliottDegree.SUB_MINUETTE)
+        .logicProfile(ElliottLogicProfile.INTRADAY_LIVE)
+        .build();
+
+ElliottAnalysisResult live = liveRunner.analyze(series)
+        .analysisFor(ElliottDegree.SUB_MINUETTE)
+        .orElseThrow()
+        .analysis();
+
+int confirmedWaves = live.waveCount().confirmed();
+int wavesIncludingForming = live.waveCount().includingProvisional();
+boolean baseCaseUsesFormingWave = live.scenarios()
+        .base()
+        .map(live::usesProvisionalTerminal)
+        .orElse(false);
+```
+
+The compatible default includes one forming terminal swing when current price
+extends beyond the last confirmed detector pivot. This is useful for live
+charting and provisional counts. For trading rules that must evaluate confirmed
+pivots only, disable that projection before building the runner:
+
+```java
+ElliottWaveAnalysisRunner tradingRunner = ElliottWaveAnalysisRunner.builder()
+        .degree(ElliottDegree.SUB_MINUETTE)
+        .logicProfile(ElliottLogicProfile.INTRADAY_LIVE)
+        .includeProvisionalTerminalSwing(false)
+        .build();
+```
+
+Custom ATR sensitivity remains composable with the live profile. The built-in
+profile uses ATR period 14, multiplier 1.0, no absolute clamps, and smoothing
+period 3. Override the detector when the instrument needs different sensitivity:
+
+```java
+AdaptiveZigZagConfig config = new AdaptiveZigZagConfig(10, 1.25, 0.0, 0.0, 2);
+ElliottWaveAnalysisRunner tuned = ElliottWaveAnalysisRunner.builder()
+        .degree(ElliottDegree.SUB_MINUETTE)
+        .logicProfile(ElliottLogicProfile.INTRADAY_LIVE)
+        .swingDetector(SwingDetectors.adaptiveZigZag(config))
+        .includeProvisionalTerminalSwing(false)
+        .build();
+```
+
+`includeProvisionalTerminalSwing(...)` applies to the built-in analysis
+pipeline. A custom `analysisRunner(...)` owns its complete terminal-wave
+semantics.
+
 ### ElliottWaveAnalysisResult and ElliottAnalysisResult
 
 `ElliottWaveAnalysisResult` is the top-level one-shot output. It includes the base degree, one `DegreeAnalysis` per analyzed degree, ranked base-scenario assessments, and diagnostic notes. Use `recommendedScenario()` for the highest composite-score scenario and `analysisFor(ElliottDegree)` to retrieve the per-degree snapshot.
@@ -715,17 +778,21 @@ Each per-degree `ElliottAnalysisResult` includes:
 | `degree` | Elliott degree used for analysis |
 | `index` | Bar index evaluated |
 | `rawSwings` | Swings from the detector (before filter/compressor) |
-| `processedSwings` | Swings after optional filter and compressor |
+| `processedSwings` | Windowed swings used for scenario generation, including the optional terminal projection |
 | `scenarios` | Ranked scenario set (base case + alternatives) |
 | `confidenceBreakdowns` | Per-scenario confidence breakdown (keyed by scenario id) |
 | `channel` | Projected Elliott channel at this index |
 | `trendBias` | Aggregate directional bias across scenarios |
+| `waveCount` | Confirmed and provisional counts before scenario-window clipping |
 
-Use `breakdownFor(ElliottScenario)` to get the confidence breakdown for a specific scenario.
+Use `breakdownFor(ElliottScenario)` to get the confidence breakdown for a
+specific scenario, `provisionalTerminalSwing()` to inspect the forming tail, and
+`usesProvisionalTerminal(ElliottScenario)` before acting on a scenario that may
+depend on that tail.
 
 ### ElliottLogicProfile presets (0.22.7)
 
-`ElliottLogicProfile` packages reusable runner defaults (hierarchical swing sensitivity, enabled scenario families, and confidence-model style). Apply a preset with `ElliottWaveAnalysisRunner.Builder#logicProfile(...)` and override individual builder settings afterward when needed. Presets include `ORTHODOX_CLASSICAL`, `HIERARCHICAL_SWING`, `BTC_RELAXED_IMPULSE`, `BTC_RELAXED_CORRECTIVE`, and `ANCHOR_FIRST_HYBRID`.
+`ElliottLogicProfile` packages reusable runner defaults (hierarchical swing sensitivity, enabled scenario families, and confidence-model style). Apply a preset with `ElliottWaveAnalysisRunner.Builder#logicProfile(...)` and override individual builder settings afterward when needed. Presets include `ORTHODOX_CLASSICAL`, `HIERARCHICAL_SWING`, `BTC_RELAXED_IMPULSE`, `BTC_RELAXED_CORRECTIVE`, `ANCHOR_FIRST_HYBRID`, and the volatility-scaled `INTRADAY_LIVE` profile.
 
 ### Walk-forward adapters
 
