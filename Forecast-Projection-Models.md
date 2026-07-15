@@ -48,6 +48,19 @@ AnalogReturnProjectionIndicator<RegimeReturnState> analog =
 
 `RegimeReturnState` implements `ReturnMomentState`; the explicit return stream supplies the matured forward labels while the state remains free to carry model-specific fields.
 
+Built-in rich return estimators keep the shorter return-specific builder path. For example, rough-volatility similarity is an explicit schema choice rather than a hidden change to analog defaults:
+
+```java
+RoughVolatilityForecastStateIndicator roughStates =
+        new RoughVolatilityForecastStateIndicator(returns);
+AnalogReturnProjectionIndicator<RoughVolatilityForecastState> roughAnalog =
+        AnalogReturnProjectionIndicator.builder(roughStates)
+                .featureExtractor(ForecastFeatureExtractors.roughVolatility())
+                .build();
+```
+
+The ordered raw features are `[mean, volatility, roughness_hurst, vol_of_vol]`. Candidate-only standardization remains owned by the analog model. Prefer the default `[mean, volatility]` schema unless roughness and vol-of-vol are intentional, tested similarity dimensions.
+
 | Setting | Default | Operator intent |
 | --- | --- | --- |
 | `horizon(...)` | `1` | Match the forward-return label to the holding period. |

@@ -529,7 +529,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 15. Forecasting
 
-Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` hold composition contracts and the explicitly analytic bridge. The 0.23.1 surface includes Num-only summaries, support provenance, exact terminal-price simulation, minimal state, return-moment composition, representation-bound feature schemas, state-conditioned analog projection, and rolling conformal calibration. For tutorial and migration guidance, see [Forecast Indicators](Forecast-Indicators.md).
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` hold composition contracts and the explicitly analytic bridge. The 0.23.1 surface includes Num-only summaries, support provenance, exact terminal-price simulation, minimal state, return-moment composition, representation-bound feature schemas, rough-volatility diagnostics, state-conditioned analog projection, and rolling conformal calibration. For tutorial and migration guidance, see [Forecast Indicators](Forecast-Indicators.md).
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
@@ -548,6 +548,8 @@ Forecast types live under `org.ta4j.core.indicators.forecast`. The root package 
 | `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator&lt;S&gt;** | Typed indicator interface for hidden state derived from a `ReturnIndicator`, including source and return representation. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
 | `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Default state record composing one validated `ReturnMoments` value. |
+| `org.ta4j.core.indicators.forecast` | **RoughVolatilityForecastStateIndicator** | Enriches shared EWMA log-return moments with bounded roughness, log-volatility vol-of-vol, and cumulative fractional horizon variances. |
+| `org.ta4j.core.indicators.forecast.state` | **RoughVolatilityForecastState** | Immutable rich return state containing canonical moments and typed rough-volatility diagnostics. |
 | `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Exact terminal-path price simulation with inferred or explicit price source and advanced builder. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
@@ -559,7 +561,7 @@ Forecast types live under `org.ta4j.core.indicators.forecast`. The root package 
 
 **Short usage**
 - **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
-- **Theory:** Pipelines convert prices to semantic returns, estimate canonical state, then choose exact simulation, state-conditioned analogs, or explicit analytic projection; rolling conformal calibration can widen an existing model's tails from matured errors.
+- **Theory:** Pipelines convert prices to semantic returns, estimate canonical or rough-volatility state, then choose exact simulation, state-conditioned analogs, or explicit analytic projection; rolling conformal calibration can widen an existing model's tails from matured errors.
 - **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
 - **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
 - See also: [Forecast Indicators](Forecast-Indicators.md) and [Forecast Projection Models](Forecast-Projection-Models.md).

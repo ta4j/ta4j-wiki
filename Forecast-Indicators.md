@@ -168,6 +168,18 @@ EwmaReturnForecastStateIndicator state =
 
 Prefer zero drift unless a rolling drift assumption has earned its place in out-of-sample testing.
 
+## Rough-Volatility State
+
+`RoughVolatilityForecastStateIndicator` is the constructor-first rich-state path:
+
+```java
+RoughVolatilityForecastStateIndicator rough =
+        new RoughVolatilityForecastStateIndicator(returns);
+RoughVolatilityForecastState state = rough.getValue(index);
+```
+
+It reuses canonical EWMA moments and adds bounded log-variogram Hurst, population dispersion of the logarithmic volatility proxy, and five cumulative horizon variances by default. The representation-bound `ForecastFeatureExtractors.roughVolatility()` schema exposes `[mean, volatility, roughness_hurst, vol_of_vol]` for models that intentionally use those diagnostics. See [Forecast State Estimation](Forecast-State-Estimation.md#rough-volatility-state) for advanced tuning, exact field semantics, warm-up, recovery, and when to prefer the smaller EWMA state.
+
 ## Warm-Up, Recovery, and Numeric Failures
 
 A built-in projection returns `ForecastSupport.Unavailable` with `NaN.NaN` summary values until all prerequisites are valid. It can recover at a later index after invalid inputs leave the required window.
@@ -175,6 +187,7 @@ A built-in projection returns `ForecastSupport.Unavailable` with `NaN.NaN` summa
 Common unavailable causes:
 
 - EWMA initialization or historical shock lookback is incomplete.
+- Rough-volatility EWMA, roughness, or vol-of-vol windows are incomplete or contain a non-finite return.
 - State index, return representation, stability, or `ReturnMoments` metadata does not match the query.
 - The price and return indicators do not share the same `BarSeries`.
 - A required return, state value, or decision price is non-finite; price is non-positive.
