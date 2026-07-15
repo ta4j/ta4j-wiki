@@ -114,7 +114,7 @@ ta4j's forecast package adds prediction-valued indicators for forward-looking re
 - `ForecastSupport` distinguishes unavailable, empirical-count, and named analytic output.
 - `ForecastFeatureSchema` binds primitive feature names, units, version, order, and return representation.
 - `ForecastFeatureExtractors.roughVolatility()` publishes the fixed `[mean, volatility, roughness_hurst, vol_of_vol]` shape for intentional rich-state model composition.
-- `ForecastFeatureExtractors.changePoint()` publishes `[mean, volatility, recent_change_probability, most_likely_run_length]` for intentional regime-aware composition.
+- `ForecastFeatureExtractors.changePoint()` publishes the default five-bar `[mean, volatility, recent_change_probability, most_likely_run_length]` shape; `changePoint(window)` binds custom aggregation windows into the schema identity.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
 

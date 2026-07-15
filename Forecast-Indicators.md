@@ -190,9 +190,9 @@ OnlineChangePointForecastStateIndicator changePoints =
 OnlineChangePointForecastState state = changePoints.getValue(index);
 ```
 
-The default filter expects a 100-observation regime, retains run lengths through 252, reports five typed posterior summaries, and becomes stable after 20 consecutive valid returns. `recentChangeProbability()` aggregates complete-posterior mass over run lengths zero through five. It is intentionally different from `P(runLength = 0)`, which equals the constant hazard before tail truncation and can increase slightly after truncation and renormalization, but cannot respond usefully to a shift.
+The default filter expects a 100-observation regime, retains run lengths through 252, reports five typed posterior summaries, and becomes stable after 20 consecutive valid returns. `recentChangeProbability()` aggregates complete-posterior mass over run lengths zero through five, and `recentChangeWindow()` carries that boundary with the state. It is intentionally different from `P(runLength = 0)`, which equals the constant hazard before tail truncation and can increase slightly after truncation and renormalization, but cannot respond usefully to a shift. Under canonical indexing, run length zero retains prior sufficient statistics and the current observation updates growth components.
 
-Use `ForecastFeatureExtractors.changePoint()` to publish `[mean, volatility, recent_change_probability, most_likely_run_length]` only when regime uncertainty and age are intentional analog dimensions. See [Forecast State Estimation](Forecast-State-Estimation.md#online-change-point-state) for prior tuning, posterior semantics, reset behavior, and failure guidance.
+Use `ForecastFeatureExtractors.changePoint()` for the default five-bar window or `changePoint(window)` for a window-qualified schema. Both publish `[mean, volatility, recent_change_probability, most_likely_run_length]` only when regime uncertainty and age are intentional analog dimensions. See [Forecast State Estimation](Forecast-State-Estimation.md#online-change-point-state) for prior tuning, posterior semantics, reset behavior, and failure guidance.
 
 ## Warm-Up, Recovery, and Numeric Failures
 

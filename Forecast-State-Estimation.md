@@ -163,13 +163,16 @@ OnlineChangePointForecastStateIndicator states =
 | State field | Meaning |
 | --- | --- |
 | `moments()` | MAP component mean, drift, canonical expected observation variance, and consecutive valid observation count. Drift equals the component mean. |
+| `recentChangeWindow()` | Inclusive run-length boundary carried with the state so the probability remains interpretable when detached. |
 | `recentChangeProbability()` | Complete posterior mass for run lengths `0..recentChangeWindow`. |
 | `mostLikelyRunLength()` | Run length of the probability-leading component after deterministic tie-breaking. |
 | `topRunLengths()` | Immutable probability-descending summaries; equal probabilities use shorter run length first. |
 
-Each `RunLengthPosterior` contains run length, its probability in the complete posterior, posterior mean, and expected observation variance. The top list generally sums to less than one because omitted hypotheses retain their probability. In the untruncated constant-hazard filter, `P(runLength = 0)` equals the hazard. Configured tail truncation and renormalization can increase it slightly, but it still is not a responsive change signal; `recentChangeProbability()` intentionally aggregates short run lengths instead.
+Each `RunLengthPosterior` contains run length, its probability in the complete posterior, posterior mean, and expected observation variance. The top list generally sums to less than one because omitted hypotheses retain their probability. Mass validation uses the owning numeric factory's decimal quantization, so coherent low-precision summaries remain usable while differences larger than the representation can explain are rejected. In the untruncated constant-hazard filter, `P(runLength = 0)` equals the hazard. Configured tail truncation and renormalization can increase it slightly, but it still is not a responsive change signal; `recentChangeProbability()` intentionally aggregates short run lengths instead.
 
-The estimator remains unstable until 20 consecutive valid returns mature by default. A non-finite return or primitive conversion overflow/underflow resets the posterior and observation count. Removed history is not silently reused: a bounded series must warm up again from its first retained bar. Unstable state preserves its current valid-run count, uses `NaN.NaN` for recent-change probability, reports run length `-1`, and exposes an empty posterior list.
+The implementation follows Adams-MacKay run-length indexing: run length zero has prior sufficient statistics and an empty associated run. The current observation updates growth components only. This keeps each component's public moments aligned with the predictive probability used by the recurrence.
+
+The estimator remains unstable until 20 consecutive valid returns mature by default. A non-finite return or primitive conversion overflow/underflow resets the posterior and observation count. Prior settings that cannot produce a representable variance or predictive density fail at construction. Removed history is not silently reused: a bounded series must warm up again from its first retained bar. Unstable state preserves its current valid-run count and recent-change window, uses `NaN.NaN` for recent-change probability, reports run length `-1`, and exposes an empty posterior list.
 
 Use change-point state when abrupt location/variance regimes and uncertainty about regime age are intentional model inputs. Prefer EWMA for smooth adaptation, rough-volatility state for volatility persistence and term structure, or a smaller schema when regime dimensions have not improved walk-forward results. This state is diagnostic, not a standalone entry signal.
 
@@ -191,9 +194,10 @@ double[] values = extractor.features(state.getValue(index));
 | `driftVolatility(rep)` | `return-moments/drift-volatility` | `[drift, volatility]` | return, return | The model intentionally uses forward drift. |
 | `meanDriftVariance(rep)` | `return-moments/mean-drift-variance` | `[mean, drift, variance]` | return, return, return squared | A model needs separate location assumptions and canonical variance. |
 | `roughVolatility()` | `rough-volatility/default` | `[mean, volatility, roughness_hurst, vol_of_vol]` | log-return, log-return, dimensionless, dimensionless | Similarity should include roughness and volatility variability. |
-| `changePoint()` | `change-point/default` | `[mean, volatility, recent_change_probability, most_likely_run_length]` | log-return, log-return, probability, observations | Similarity should include recent regime uncertainty and age. |
+| `changePoint()` | `change-point/default` | `[mean, volatility, recent_change_probability, most_likely_run_length]` | log-return, log-return, probability, observations | Similarity should include default five-bar regime uncertainty and age. |
+| `changePoint(window)` | `change-point/recent-change/<window>` | `[mean, volatility, recent_change_probability, most_likely_run_length]` | log-return, log-return, probability, observations | A custom recent-change window is an intentional, persisted model input. |
 
-Every schema has version `1`, its required return representation, a defensive ordered descriptor list, and `dimension()`. Unit names are `log-return`, `decimal-return`, `percentage-points`, or `multiplicative-return`; variance appends `^2`.
+Every schema has version `1`, its required return representation, a defensive ordered descriptor list, and `dimension()`. Unit names are `log-return`, `decimal-return`, `percentage-points`, or `multiplicative-return`; variance appends `^2`. A window-bound change-point extractor rejects states carrying another window rather than mixing incompatible probability meanings.
 
 For allocation-sensitive model loops, reuse a target array:
 

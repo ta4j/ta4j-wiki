@@ -27,7 +27,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Exact and explicit price models**: `MonteCarloPriceForecastIndicator` summarizes transformed terminal-price paths exactly; `LognormalApproximationPriceForecastIndicator` is the clearly named analytic alternative when paths are unavailable.
 - **State-conditioned projections and calibrated tails**: `AnalogReturnProjectionIndicator` builds deterministic empirical neighbor forecasts, and `RollingConformalForecastProjectionIndicator` widens tails from matured residuals without changing base provenance.
 - **Composable rough-volatility state**: `RoughVolatilityForecastStateIndicator` keeps canonical return moments while adding bounded roughness, vol-of-vol, cumulative horizon variance, and an explicit analog feature schema.
-- **Bayesian regime state**: `OnlineChangePointForecastStateIndicator` adds canonical constant-hazard run-length inference, recent-change posterior mass, typed component summaries, and direct analog composition.
+- **Bayesian regime state**: `OnlineChangePointForecastStateIndicator` adds canonical constant-hazard run-length inference, window-qualified recent-change posterior mass, typed component summaries, and direct analog composition.
 - **Forecast migration required**: The 0.23.1 correction intentionally replaces the forecast API introduced in 0.23.0. See [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231).
 
 ## Start Here

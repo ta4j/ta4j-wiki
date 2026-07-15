@@ -551,7 +551,7 @@ Forecast types live under `org.ta4j.core.indicators.forecast`. The root package 
 | `org.ta4j.core.indicators.forecast` | **RoughVolatilityForecastStateIndicator** | Enriches shared EWMA log-return moments with bounded roughness, log-volatility vol-of-vol, and cumulative fractional horizon variances. |
 | `org.ta4j.core.indicators.forecast.state` | **RoughVolatilityForecastState** | Immutable rich return state containing canonical moments and typed rough-volatility diagnostics. |
 | `org.ta4j.core.indicators.forecast` | **OnlineChangePointForecastStateIndicator** | Constant-hazard Bayesian online run-length estimator with reset-aware warm-up and recent-change posterior mass. |
-| `org.ta4j.core.indicators.forecast.state` | **OnlineChangePointForecastState** | Immutable return state containing MAP moments, recent-change probability, and ordered posterior summaries. |
+| `org.ta4j.core.indicators.forecast.state` | **OnlineChangePointForecastState** | Immutable return state containing MAP moments, the probability's recent-change window, and ordered posterior summaries. |
 | `org.ta4j.core.indicators.forecast.state` | **RunLengthPosterior** | Typed run-length probability and posterior expected observation moments from the complete distribution. |
 | `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Exact terminal-path price simulation with inferred or explicit price source and advanced builder. |

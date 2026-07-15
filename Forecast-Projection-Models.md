@@ -68,11 +68,12 @@ OnlineChangePointForecastStateIndicator changePointStates =
         new OnlineChangePointForecastStateIndicator(returns);
 AnalogReturnProjectionIndicator<OnlineChangePointForecastState> regimeAnalog =
         AnalogReturnProjectionIndicator.builder(changePointStates)
-                .featureExtractor(ForecastFeatureExtractors.changePoint())
+                .featureExtractor(ForecastFeatureExtractors.changePoint(
+                        changePointStates.getRecentChangeWindow()))
                 .build();
 ```
 
-Its raw schema is `[mean, volatility, recent_change_probability, most_likely_run_length]`. Candidate-only standardization is especially important because probability, observations, and log returns have different units. Prefer the smaller default schema unless walk-forward evidence supports treating regime uncertainty and age as similarity dimensions. Unstable post-reset states are excluded rather than converted into artificial neighbors.
+Its raw schema is `[mean, volatility, recent_change_probability, most_likely_run_length]`. The default five-bar window uses `change-point/default`; custom windows use `change-point/recent-change/<window>`, and extraction rejects a state/window mismatch. Candidate-only standardization is especially important because probability, observations, and log returns have different units. Prefer the smaller default schema unless walk-forward evidence supports treating regime uncertainty and age as similarity dimensions. Unstable post-reset states are excluded rather than converted into artificial neighbors.
 
 | Setting | Default | Operator intent |
 | --- | --- | --- |
