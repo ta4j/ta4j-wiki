@@ -62,6 +62,58 @@ final class RegimeStateIndicator
 
 This preserves typed specialized fields while allowing existing return projections to consume the shared moments. A stable custom state must report the queried index, the indicator's return representation, at least one observation, finite moments, and non-negative variance.
 
+## Rough-Volatility State
+
+`RoughVolatilityForecastStateIndicator` is the built-in rich-state example for operators who need more than current return location and scale. It composes the same `ReturnMoments` used by EWMA with a bounded roughness estimate, log-volatility variability, and a cumulative variance term structure.
+
+```java
+LogReturnIndicator returns = new LogReturnIndicator(series);
+RoughVolatilityForecastStateIndicator states =
+        new RoughVolatilityForecastStateIndicator(returns);
+
+RoughVolatilityForecastState state = states.getValue(series.getEndIndex());
+if (state.isStable()) {
+    Num oneBarVariance = state.horizonVarianceForecasts().get(0);
+    Num fiveBarVariance = state.horizonVarianceForecasts().get(4);
+}
+```
+
+Advanced construction keeps the same semantic return source and changes only explicit model assumptions:
+
+```java
+RoughVolatilityForecastStateIndicator states =
+        RoughVolatilityForecastStateIndicator.builder(returns)
+                .initializationBarCount(90)
+                .decayFactor(0.97)
+                .driftMode(EwmaReturnForecastStateIndicator.DriftMode.ZERO)
+                .roughnessWindow(180)
+                .volOfVolWindow(90)
+                .horizon(10)
+                .build();
+```
+
+| Setting | Default | Operator intent |
+| --- | --- | --- |
+| `initializationBarCount(...)` | `60` | Valid returns required by the shared EWMA moments. |
+| `decayFactor(...)` | `0.94` | Persistence of current mean and canonical variance. |
+| `driftMode(...)` | `ZERO` | Forward drift assumption carried by the common moments. |
+| `roughnessWindow(...)` | `120` | History used by the log-variogram regression. |
+| `volOfVolWindow(...)` | `60` | Population dispersion window for the log-volatility proxy. |
+| `horizon(...)` | `5` | Number of cumulative variance horizons emitted. |
+
+| State field | Meaning |
+| --- | --- |
+| `moments()` | Stable log-return mean, drift, canonical variance, and observation provenance. |
+| `roughnessHurst()` | OLS log-variogram slope divided by two and clamped to `[0.01, 0.49]`. |
+| `volOfVol()` | Population standard deviation of `log(abs(return) + 1e-8)` over its configured window. |
+| `horizonVarianceForecasts()` | Immutable cumulative variances; entry `h - 1` is `currentVariance * h^(2H)`. |
+
+The first horizon variance is factory-coherent with the current canonical variance. The estimator uses lags one through ten, or all available lags for shorter configured windows, and floors each variogram at `1e-12` before taking its logarithm. These are deterministic state diagnostics, not a claim that returns follow a complete rough-volatility pricing model.
+
+The state remains unstable until EWMA initialization, the roughness window, and the vol-of-vol window are all complete and finite. A non-finite return resets availability for every affected rolling window; later indices recover automatically. Unstable state preserves the known observation count, uses `NaN.NaN` for specialized scalars, and exposes an empty variance list.
+
+Use rough-volatility state when changing volatility persistence or multi-horizon risk shape is part of the model. Prefer `EwmaReturnForecastStateIndicator` when current mean and variance are sufficient, the available history is short, or the extra dimensions have not earned their place in out-of-sample testing.
+
 ## Feature Schemas
 
 Feature vectors are representation-bound and self-describing. Choose a schema by modeling intent:
@@ -79,6 +131,7 @@ double[] values = extractor.features(state.getValue(index));
 | `meanVolatility(rep)` | `return-moments/mean-volatility` | `[mean, volatility]` | return, return | Similarity needs level and scale. |
 | `driftVolatility(rep)` | `return-moments/drift-volatility` | `[drift, volatility]` | return, return | The model intentionally uses forward drift. |
 | `meanDriftVariance(rep)` | `return-moments/mean-drift-variance` | `[mean, drift, variance]` | return, return, return squared | A model needs separate location assumptions and canonical variance. |
+| `roughVolatility()` | `rough-volatility/default` | `[mean, volatility, roughness_hurst, vol_of_vol]` | log-return, log-return, dimensionless, dimensionless | Similarity should include roughness and volatility variability. |
 
 Every schema has version `1`, its required return representation, a defensive ordered descriptor list, and `dimension()`. Unit names are `log-return`, `decimal-return`, `percentage-points`, or `multiplicative-return`; variance appends `^2`.
 

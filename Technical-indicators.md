@@ -105,12 +105,14 @@ ta4j's forecast package adds prediction-valued indicators for forward-looking re
 - `ReturnIndicator` marks indicators that semantically produce returns in a declared representation.
 - `EWMAIndicator` provides reusable explicit-decay smoothing for forecast and non-forecast workflows.
 - `EwmaReturnForecastStateIndicator` estimates canonical `ReturnMoments` from a log-return `ReturnIndicator`.
+- `RoughVolatilityForecastStateIndicator` composes those moments with bounded log-variogram roughness, log-volatility vol-of-vol, and cumulative horizon variance diagnostics.
 - `MonteCarloPriceForecastIndicator` transforms every simulated terminal return path before calculating exact empirical price summaries.
 - `MonteCarloReturnProjectionIndicator` simulates cumulative log-return distributions for return-space workflows or advanced tuning.
 - `LognormalApproximationPriceForecastIndicator` explicitly fits a coherent analytic lognormal distribution when terminal samples are unavailable.
 - `ForecastProjectionIndicator` declares `getHorizon()` and exposes point projections for normal ta4j rule composition.
 - `ForecastSupport` distinguishes unavailable, empirical-count, and named analytic output.
 - `ForecastFeatureSchema` binds primitive feature names, units, version, order, and return representation.
+- `ForecastFeatureExtractors.roughVolatility()` publishes the fixed `[mean, volatility, roughness_hurst, vol_of_vol]` shape for intentional rich-state model composition.
 
 Forecast indicators do not read future bars while producing `getValue(i)`. Use the configured horizon only when evaluating the forecast against later realized outcomes. See [Forecast Indicators](Forecast-Indicators.md) for setup, tuning, warm-up behavior, and strategy examples.
 
