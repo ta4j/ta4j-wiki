@@ -72,7 +72,7 @@ The same fields can be expressed as objects when that is easier for generated JS
   "exitRule": {
     "type": "OrRule",
     "rules": [
-      { "type": "SmaCrossDown", "args": [12, 26] },
+      { "type": "CrossedDownIndicatorRule", "args": ["SMA(12)", "SMA(26)"] },
       { "type": "StopLossRule", "args": ["2.5%"] }
     ]
   }
