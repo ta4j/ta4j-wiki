@@ -35,6 +35,9 @@ String json = """
 Strategy strategy = Strategy.fromJson(series, json);
 String canonicalJson = strategy.toJson();
 String compactJson = strategy.toCompactJson();
+
+Strategy macroStrategy = Strategy.fromExpression(series, "SMA(7,21)");
+String expression = macroStrategy.toExpression(); // "SMA(7,21)"
 ```
 
 `SMA(7,21)` builds a `BaseStrategy` whose entry rule is `CrossedUpIndicatorRule(SMA(7), SMA(21))` and whose exit rule is `CrossedDownIndicatorRule(SMA(7), SMA(21))`. The strategy's unstable bar count is set to the slow SMA period.
@@ -87,6 +90,10 @@ Strategy v2 accepts these metadata fields:
 | `unstableBars` | Optional non-negative integer override. |
 | `startingType` | Optional `BUY` or `SELL`. |
 | `entryRule`, `exitRule` | Required when `strategy` is absent. Values may be expression strings or rule objects. |
+
+Use `Strategy.fromExpression(series, "SMA(7,21)")` when the whole strategy is a
+single registered macro. Use `Strategy.fromJson(series, json)` when you need
+metadata overrides, explicit entry/exit rules, or a stored v2 envelope.
 
 ## Indicators
 
@@ -224,6 +231,12 @@ Factories receive typed `NamedAssetRegistry.Arguments` helpers:
 
 Add a formatter when you also want `toExpression(...)` or `toCompactJson(...)` to emit your alias. Without a formatter, the alias is still valid for input.
 
+If an indicator alias may be used inside numeric comparison rules such as
+`Over(...)`, `Under(...)`, `CrossedUp(...)`, or `CrossedDown(...)`, it must
+rebuild an indicator whose runtime values are `Num`. Boolean indicators belong
+behind boolean-aware rules such as `BooleanIndicatorRule`; v2 strategy parsing
+rejects non-numeric indicator aliases at the rule argument that used them.
+
 To make application defaults automatic, implement `NamedAssetProvider` and register it with Java `ServiceLoader`:
 
 ```text
@@ -243,6 +256,11 @@ The expression grammar is intentionally strict:
 - Built-in bar-count arguments require positive integers.
 - Strategy `unstableBars` must be non-negative.
 - Strategy `startingType` must be `BUY` or `SELL`.
+- Malformed JSON-looking descriptor payloads fail as syntax errors. Plain labels
+  remain accepted only for non-JSON text.
+- Canonical descriptor numeric constructor arguments follow the same finite
+  JSON-number rule as shorthand; integer constructor parameters must be exact
+  integers and cannot silently truncate decimals.
 
 When processing lists of expressions from a CLI or configuration file, do not split on commas manually. Use `NamedAssetRegistry#splitTopLevel(...)` so nested expressions and quoted strings stay intact:
 
@@ -256,6 +274,9 @@ List<String> entries = NamedAssetRegistry.defaultRegistry()
 - Use canonical JSON for audit trails and long-lived storage.
 - Use v2 strategy JSON for human-authored strategy configs.
 - Use expressions for compact UI, CLI, and config values.
+- Use `Strategy.fromExpression(...)` / `Strategy#toExpression()` for whole
+  strategy macros and `Strategy#fromJson(...)` / `Strategy#toCompactJson()` for
+  v2 envelopes.
 - Keep `toJson()` output canonical; use `toCompactJson()` only when compact v2 output is desired.
 - Expect `toExpression(...)` to fail when no registered formatter can represent the descriptor.
 - Preserve all constructor inputs in serializable fields when adding new indicator, rule, strategy, or criterion support.
