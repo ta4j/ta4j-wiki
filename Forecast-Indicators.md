@@ -180,6 +180,20 @@ RoughVolatilityForecastState state = rough.getValue(index);
 
 It reuses canonical EWMA moments and adds bounded log-variogram Hurst, population dispersion of the logarithmic volatility proxy, and five cumulative horizon variances by default. The representation-bound `ForecastFeatureExtractors.roughVolatility()` schema exposes `[mean, volatility, roughness_hurst, vol_of_vol]` for models that intentionally use those diagnostics. See [Forecast State Estimation](Forecast-State-Estimation.md#rough-volatility-state) for advanced tuning, exact field semantics, warm-up, recovery, and when to prefer the smaller EWMA state.
 
+## Online Change-Point State
+
+`OnlineChangePointForecastStateIndicator` is the constructor-first regime-uncertainty path:
+
+```java
+OnlineChangePointForecastStateIndicator changePoints =
+        new OnlineChangePointForecastStateIndicator(returns);
+OnlineChangePointForecastState state = changePoints.getValue(index);
+```
+
+The default filter expects a 100-observation regime, retains run lengths through 252, reports five typed posterior summaries, and becomes stable after 20 consecutive valid returns. `recentChangeProbability()` aggregates complete-posterior mass over run lengths zero through five, and `recentChangeWindow()` carries that boundary with the state. It is intentionally different from `P(runLength = 0)`, which equals the constant hazard before tail truncation and can increase slightly after truncation and renormalization, but cannot respond usefully to a shift. Under canonical indexing, run length zero retains prior sufficient statistics and the current observation updates growth components.
+
+Use `ForecastFeatureExtractors.changePoint()` for the default five-bar window or `changePoint(window)` for a window-qualified schema. Both publish `[mean, volatility, recent_change_probability, most_likely_run_length]` only when regime uncertainty and age are intentional analog dimensions. See [Forecast State Estimation](Forecast-State-Estimation.md#online-change-point-state) for prior tuning, posterior semantics, reset behavior, and failure guidance.
+
 ## Warm-Up, Recovery, and Numeric Failures
 
 A built-in projection returns `ForecastSupport.Unavailable` with `NaN.NaN` summary values until all prerequisites are valid. It can recover at a later index after invalid inputs leave the required window.
@@ -188,6 +202,7 @@ Common unavailable causes:
 
 - EWMA initialization or historical shock lookback is incomplete.
 - Rough-volatility EWMA, roughness, or vol-of-vol windows are incomplete or contain a non-finite return.
+- Online change-point valid-run warm-up is incomplete after construction, invalid input, or retained-history removal.
 - State index, return representation, stability, or `ReturnMoments` metadata does not match the query.
 - The price and return indicators do not share the same `BarSeries`.
 - A required return, state value, or decision price is non-finite; price is non-positive.
@@ -210,6 +225,7 @@ Always check `isStable()` when inspecting a raw summary. Point adapters are safe
 | Exact simulated price distribution | `MonteCarloPriceForecastIndicator` | Transforming summary moments after simulation. |
 | Cumulative log-return distribution | `MonteCarloReturnProjectionIndicator` | Treating returns as prices. |
 | State-conditioned empirical log returns | `AnalogReturnProjectionIndicator` | Letting current features influence training standardization. |
+| Abrupt regime and run-length diagnostics | `OnlineChangePointForecastStateIndicator` | Treating recent-change probability as a standalone trade signal. |
 | Rolling tail calibration | `RollingConformalForecastProjectionIndicator` | Counting calibration rows as forecast support. |
 | Price approximation from moments only | `LognormalApproximationPriceForecastIndicator` | Calling it empirical support. |
 | Point value in a rule | `projection.median()`, `.mean()`, or `.quantile(p)` | Reimplementing unstable checks. |
@@ -221,6 +237,8 @@ Always check `isStable()` when inspecting a raw summary. Point adapters are safe
 | Type | Package | Purpose |
 | --- | --- | --- |
 | `EwmaReturnForecastStateIndicator` | `forecast` | Default return-moment state estimator. |
+| `RoughVolatilityForecastStateIndicator` | `forecast` | EWMA moments enriched with roughness, vol-of-vol, and cumulative horizon variance. |
+| `OnlineChangePointForecastStateIndicator` | `forecast` | Bayesian run-length state with recent-change posterior mass. |
 | `MonteCarloReturnProjectionIndicator` | `forecast` | Exact empirical cumulative log-return projection. |
 | `AnalogReturnProjectionIndicator` | `forecast` | State-conditioned weighted empirical log-return projection. |
 | `RollingConformalForecastProjectionIndicator` | `forecast` | Matured-error tail calibration that preserves base support. |
@@ -230,6 +248,7 @@ Always check `isStable()` when inspecting a raw summary. Point adapters are safe
 | `ReturnForecastProjectionIndicator` | `forecast.projection` | Forecast projection with return semantics. |
 | `LognormalApproximationPriceForecastIndicator` | `forecast.adapters` | Explicit analytic lognormal price approximation. |
 | `ForecastState` / `ReturnMomentState` / `ReturnMoments` | `forecast.state` | Lifecycle and validated return-state composition. |
+| `OnlineChangePointForecastState` / `RunLengthPosterior` | `forecast.state` | Immutable regime state and typed complete-posterior component summaries. |
 | `ForecastFeatureSchema` / `ForecastFeatureExtractor` | `forecast.state` | Representation-bound model feature contract. |
 
 ## Related Guides
