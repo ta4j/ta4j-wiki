@@ -81,12 +81,12 @@ Strategy v2 accepts these metadata fields:
 | Field | Meaning |
 | --- | --- |
 | `version` | Required for v2, must be `2`. |
-| `strategy` | Optional top-level strategy macro such as `SMA(7,21)`. If present, entry and exit rules come from the macro unless overridden by metadata. |
+| `strategy` | Optional top-level strategy macro such as `SMA(7,21)`. If present, entry and exit rules come from the macro; do not also provide `entryRule` or `exitRule`. |
 | `name` | Optional strategy name. Use `null` to intentionally preserve an unnamed strategy when compacting a macro-shaped strategy. |
-| `type` | Optional strategy type. Omit it for `BaseStrategy`. |
+| `type` | Optional, but only `BaseStrategy` or `org.ta4j.core.BaseStrategy` is accepted by v2. Use canonical JSON or a registered macro for other strategy implementations. |
 | `unstableBars` | Optional non-negative integer override. |
 | `startingType` | Optional `BUY` or `SELL`. |
-| `entryRule`, `exitRule` | Required unless `strategy` supplies both rules. Values may be expression strings or rule objects. |
+| `entryRule`, `exitRule` | Required when `strategy` is absent. Values may be expression strings or rule objects. |
 
 ## Indicators
 
