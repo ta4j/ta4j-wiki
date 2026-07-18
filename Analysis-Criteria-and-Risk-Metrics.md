@@ -33,6 +33,16 @@ AnalysisCriterion sharpe = new SharpeRatioCriterion(
 Num score = sharpe.calculate(series, tradingRecord);
 ```
 
+Criteria can be serialized with canonical JSON and, since 0.23.1, default criteria can be referenced by compact aliases:
+
+```java
+AnalysisCriterion criterion = AnalysisCriterion.fromExpression("SharpeRatio");
+String json = criterion.toJson();
+AnalysisCriterion restored = AnalysisCriterion.fromJson(json);
+```
+
+See [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md) for the supported aliases and custom registry extension points.
+
 ## Windowed Criterion Evaluation
 
 Since the window-aware criterion API, any `AnalysisCriterion` can be evaluated over a bounded slice without hand-copying a `TradingRecord`.

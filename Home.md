@@ -28,6 +28,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **State-conditioned projections and calibrated tails**: `AnalogReturnProjectionIndicator` builds deterministic empirical neighbor forecasts, and `RollingConformalForecastProjectionIndicator` widens tails from matured residuals without changing base provenance.
 - **Composable rough-volatility state**: `RoughVolatilityForecastStateIndicator` keeps canonical return moments while adding bounded roughness, vol-of-vol, cumulative horizon variance, and an explicit analog feature schema.
 - **Bayesian regime state**: `OnlineChangePointForecastStateIndicator` adds canonical constant-hazard run-length inference, window-qualified recent-change posterior mass, typed component summaries, and direct analog composition.
+- **Serialization named shorthand**: Strategy JSON v2 and `NamedAssetRegistry` add compact expressions such as `SMA(7,21)`, `SmaCrossUp(7,21)`, `RSI(14)`, and `SharpeRatio` while keeping canonical descriptor JSON as the durable storage format.
 - **Forecast migration required**: The 0.23.1 correction intentionally replaces the forecast API introduced in 0.23.0. See [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231).
 
 ## Start Here
@@ -38,6 +39,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Backtesting](Backtesting.md)** - `BarSeriesManager`, `BacktestExecutor`, supplied records, and manual simulation loops
 - **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
 - **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops
+- **[Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)** - Persist and reload indicators, rules, strategies, and analysis criteria
 - **[Execution Decision Matrix](Execution-Decision-Matrix.md)** - Choose execution and simulation path by workload
 - **[Migration and Version Compatibility](Migration-and-Version-Compatibility.md)** - Preferred APIs and incremental migration guidance
 - **[Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)** - Version-by-version changelog and migration notes
@@ -52,6 +54,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical, rough-volatility, and Bayesian regime moments, representation-bound schemas, and provenance-aware summaries
 - **[Forecast Projection Models](Forecast-Projection-Models.md)** - Analog neighbors, rolling conformal calibration, maturity guards, tuning, and failure behavior
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
+- **[Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)** - Canonical JSON, compact strategy JSON v2, and named asset expressions
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
 ## Pick The Right Execution Path
