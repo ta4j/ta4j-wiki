@@ -47,6 +47,27 @@ BarSeriesManager manager = new BarSeriesManager(
         new TradeOnNextOpenModel());
 ```
 
+`LinearBorrowingCostModel` defaults to short-only borrowing costs, the same behavior as `Applicability.SHORT_ONLY`. When your venue charges funding or borrow-like costs on long exposure too, make that side selection explicit:
+
+```java
+CostModel shortBorrow = new LinearBorrowingCostModel(0.0001);
+CostModel explicitShortBorrow = new LinearBorrowingCostModel(
+        0.0001,
+        LinearBorrowingCostModel.Applicability.SHORT_ONLY);
+CostModel longBorrow = new LinearBorrowingCostModel(
+        0.0001,
+        LinearBorrowingCostModel.Applicability.LONG_ONLY);
+CostModel bothSidesBorrow = new LinearBorrowingCostModel(
+        0.0001,
+        LinearBorrowingCostModel.Applicability.BOTH);
+
+BarSeriesManager manager = new BarSeriesManager(
+        series,
+        new LinearTransactionCostModel(0.001),
+        bothSidesBorrow,
+        new TradeOnNextOpenModel());
+```
+
 Current execution-model choices are:
 
 - `TradeOnNextOpenModel` - default; signal at bar `t`, fill at the next bar open when one exists.

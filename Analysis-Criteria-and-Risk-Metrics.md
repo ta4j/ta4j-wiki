@@ -6,7 +6,7 @@ Use analysis criteria after a strategy run to compare returns, risk, duration, f
 
 | Need | Primary classes | Notes |
 | --- | --- | --- |
-| Risk-adjusted return | `SharpeRatioCriterion`, `SortinoRatioCriterion` | Support `SamplingFrequency`, `Annualization`, risk-free rates, grouping zones, cash-return policy, equity-curve mode, and open-position handling. |
+| Risk-adjusted return | `SharpeRatioCriterion`, `SortinoRatioCriterion` | Support `SamplingFrequency`, including trade-level sampling, `Annualization`, risk-free rates, grouping zones, cash-return policy, equity-curve mode, and open-position handling. |
 | Drawdown-adjusted return | `CalmarRatioCriterion`, `ReturnOverMaxDrawdownCriterion` | `CalmarRatioCriterion` annualizes return and divides by maximum drawdown. |
 | Distribution-aware return | `OmegaRatioCriterion` | Compares upside excess returns against downside shortfalls around a configurable threshold. |
 | Trade duration | `PositionDurationCriterion` | Summarizes closed-position durations with `Statistics` such as mean/min/max. |
@@ -18,10 +18,11 @@ Use analysis criteria after a strategy run to compare returns, risk, duration, f
 
 `SharpeRatioCriterion` and `SortinoRatioCriterion` build a return sample from the equity curve. Choose these settings deliberately:
 
-- `SamplingFrequency.BAR`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, or `MONTH` controls the return intervals.
+- `SamplingFrequency.BAR`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, or `MONTH` controls time-based return intervals.
+- `SamplingFrequency.TRADE` creates one return per included position interval. Use it when each trade, not each bar or calendar bucket, should contribute one observation.
 - `Annualization.PERIOD` returns the per-sample ratio; `Annualization.ANNUALIZED` scales by observed periods per year.
 - `EquityCurveMode.MARK_TO_MARKET` includes unrealized movement on each bar; `EquityCurveMode.REALIZED` updates the curve only when positions close.
-- `OpenPositionHandling.MARK_TO_MARKET` includes the current open position; `IGNORE` evaluates only closed positions.
+- `OpenPositionHandling.MARK_TO_MARKET` includes the current open position; `IGNORE` evaluates only closed positions. Realized Sharpe calculations always ignore open positions.
 
 ```java
 AnalysisCriterion sharpe = new SharpeRatioCriterion(
@@ -32,6 +33,26 @@ AnalysisCriterion sharpe = new SharpeRatioCriterion(
 
 Num score = sharpe.calculate(series, tradingRecord);
 ```
+
+For a trade-level distribution, switch only the sampling frequency:
+
+```java
+AnalysisCriterion tradeSharpe = new SharpeRatioCriterion(
+        0.05,
+        SamplingFrequency.TRADE,
+        Annualization.PERIOD,
+        ZoneOffset.UTC);
+AnalysisCriterion tradeSortino = new SortinoRatioCriterion(
+        0.05,
+        SamplingFrequency.TRADE,
+        Annualization.PERIOD,
+        ZoneOffset.UTC);
+
+Num perTradeSharpe = tradeSharpe.calculate(series, tradingRecord);
+Num perTradeSortino = tradeSortino.calculate(series, tradingRecord);
+```
+
+`TRADE` is for criteria that receive a `TradingRecord`, such as Sharpe and Sortino. It is intentionally not supported by `SamplingFrequencyIndexes`, because that helper can only group bar indices and cannot inspect positions.
 
 ## Windowed Criterion Evaluation
 
