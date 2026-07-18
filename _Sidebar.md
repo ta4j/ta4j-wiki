@@ -10,7 +10,7 @@
 - [Canonical User Journey](Canonical-User-Journey.md)
 - [Execution Decision Matrix](Execution-Decision-Matrix.md)
 - [Migration and Version Compatibility](Migration-and-Version-Compatibility.md)
-- [Serialization & Named Shorthand](Serialization-and-Named-Shorthand.md)
+- [Serialization Shorthand Preview](Serialization-and-Named-Shorthand.md)
 - [Examples Expected Outputs](Examples-Expected-Outputs.md)
 - [Performance Characterization](Performance-Characterization.md)
 - [FAQ](FAQ.md)
@@ -34,7 +34,7 @@
 
 ## Build Strategies
 - [Trading Strategies](Trading-strategies.md)
-- [Serialization & Named Shorthand](Serialization-and-Named-Shorthand.md)
+- [Serialization Shorthand Preview](Serialization-and-Named-Shorthand.md)
 - [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md)
 - [Analysis Criteria & Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)

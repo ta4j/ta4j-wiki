@@ -1,6 +1,10 @@
 # Serialization and Named Shorthand
 
-ta4j can persist and rebuild indicators, rules, strategies, and analysis criteria. The default JSON form is a canonical descriptor tree: it is explicit, stable, and intended for durable storage. Since 0.23.1, ta4j also supports compact named shorthand for authoring configuration, presenting strategy choices in UIs, and round-tripping common graphs without hand-writing full descriptor JSON.
+ta4j can persist and rebuild indicators, rules, strategies, and analysis criteria. The default JSON form is a canonical descriptor tree: it is explicit, stable, and intended for durable storage.
+
+> **Preview status:** This page documents the companion serialization shorthand feature in [ta4j PR #1507](https://github.com/ta4j/ta4j/pull/1507), targeting ta4j 0.23.1. The named shorthand APIs are not available from the latest released ta4j artifacts or from ta4j `master` until that implementation PR is merged and released.
+
+The PR #1507 implementation adds compact named shorthand for authoring configuration, presenting strategy choices in UIs, and round-tripping common graphs without hand-writing full descriptor JSON.
 
 Use this guide when you want to store a strategy, pass a rule or indicator through a service boundary, load strategy presets from configuration, or let users choose named assets such as `SMA(7,21)` or `SharpeRatio`.
 
