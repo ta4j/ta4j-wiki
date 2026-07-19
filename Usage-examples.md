@@ -8,6 +8,7 @@ If you are deciding where to start, use this map:
 
 - First successful run: [Start quickly](#start-quickly)
 - Build and compare strategy logic: [Strategy patterns](#strategy-patterns)
+- Preview compact serialization configuration: [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)
 - Validate execution assumptions and metrics: [Backtesting & analytics](#backtesting--analytics)
 - Integrate bot loops and fill-driven recording: [Bots & live trading](#bots--live-trading)
 - Debug indicators and visual behavior: [Indicators & visualization](#indicators--visualization)

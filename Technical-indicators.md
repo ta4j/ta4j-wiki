@@ -47,6 +47,24 @@ Indicator<Num> blendedMomentum = BinaryOperationIndicator.add(macdv.getMacd(), n
 - `BinaryOperationIndicator` / `UnaryOperationIndicator` are the preferred numeric composition APIs for new code; `CombineIndicator` remains available in `org.ta4j.core.indicators.helpers`.
 - Output indicators can feed directly into rules (`new OverIndicatorRule(trendBias, numOf(1.0))`) or become inputs to other indicators.
 
+## Serialization and shorthand
+
+Indicators can be persisted with canonical JSON:
+
+```java
+String json = rsi.toJson();
+Indicator<?> restored = Indicator.fromJson(series, json);
+```
+
+The companion ta4j PR #1507, targeting 0.23.1, also lets common indicators be authored through named expressions:
+
+```java
+Indicator<?> sma = Indicator.fromExpression(series, "SMA(21)");
+Indicator<?> rsiOfSma = Indicator.fromExpression(series, "RSI(SMA(14),9)");
+```
+
+See [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md) for the full preview guide to strategy, rule, indicator, and analysis-criterion serialization in that PR.
+
 ## Market structure workflow (VWAP + S/R + Wyckoff)
 
 ta4j now includes a complete workflow for value, location, and phase analysis:
