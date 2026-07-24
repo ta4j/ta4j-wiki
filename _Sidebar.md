@@ -28,6 +28,7 @@
 - [Forecast 0.23.1 Migration](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231)
 - [Moving Average Indicators](Moving-Average-Indicators.md)
 - [Bill Williams Indicators](Bill-Williams-Indicators.md)
+- [Highs and Lows](Highs-and-Lows.md)
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
 - [Elliott Wave Quickstart](Elliott-Wave-Quickstart.md)
 - [VWAP, S/R & Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)

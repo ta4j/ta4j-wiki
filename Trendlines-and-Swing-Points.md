@@ -2,6 +2,10 @@
 
 Trendlines and swing points are the core building blocks behind support/resistance analysis, breakout systems, and Elliott-style structure detection. Ta4j ships a full toolkit for detecting swings, turning them into markers, and projecting data-driven support and resistance lines that behave the way traders draw them by hand.
 
+For the complete detector comparison, canonical default, confirmation timing,
+forming-point API, and ETH/USD reference behavior, see
+[Highs and Lows](Highs-and-Lows.md).
+
 ## What you get
 - **Fractal swing detectors**: window-based swing highs/lows with configurable symmetry and tolerance for flat tops/bottoms.
 - **ZigZag swing detectors**: OHLC-aware ATR/price-threshold reversals for adaptive swing confirmation without fixed lookahead windows.
@@ -55,7 +59,7 @@ Use fractals when you want visually obvious turning points and don’t mind wait
 ```java
 // 7-bar symmetric window that tolerates one additional equal bar in the plateau
 RecentFractalSwingHighIndicator majorHighs = new RecentFractalSwingHighIndicator(high, 7, 7, 1);
-int latestHighIndex = majorHighs.getLatestSwingHighIndex(series.getEndIndex());
+int latestHighIndex = majorHighs.getLatestSwingIndex(series.getEndIndex());
 ```
 
 ### ZigZag swings (reversal-threshold based)
@@ -95,7 +99,12 @@ No single formula is best for every turn shape:
 | Fractal | Distinct local extrema and fixed timing requirements | Waits for the configured right-side window. |
 | ZigZag | Sharp reversals whose importance is defined by price distance or volatility | Confirms after the reversal threshold is crossed. |
 
-These two sources implement `RecentSwingIndicator` and plug directly into trendline and marker indicators. Elliott analysis also supports slope-change and tolerant consensus backends through its separate `SwingDetector` contract; see [Pluggable Swing Detection](Elliott-Wave-Indicators.md#pluggable-swing-detection) for those runner-specific APIs.
+All detector families can now be exposed as paired `RecentSwingIndicator`
+instances through `RecentSwingIndicators`, including slope-change, prominence,
+adaptive ZigZag, and tolerant consensus. See
+[Highs and Lows](Highs-and-Lows.md#method-guide) for selection guidance and
+[Pluggable Swing Detection](Elliott-Wave-Indicators.md#pluggable-swing-detection)
+for Elliott-specific composition.
 
 Both trendline swing sources are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
 
@@ -193,7 +202,11 @@ TrendLineResistanceIndicator tightResistance = new TrendLineResistanceIndicator(
 - **Descriptor/JSON**: `support.toJson()` serializes parameters and the swing subtree for persistence.
 
 ### Runnable analysis harness
-`ta4jexamples.analysis.TrendLineAndSwingPointAnalysis` is the companion example for this page. It performs regression-style headroom checks across bundled datasets for fractal and ZigZag swing sources, then renders a chart with support/resistance lines and swing markers.
+`ta4jexamples.analysis.TrendLineAndSwingPointAnalysis` is the companion example
+for this page. It performs regression-style headroom checks, compares all recent
+swing methods across ossified ETH/USD `PT5M` through `PT1D` fixtures, verifies
+the July 22 hourly reference high, then renders a chart with support/resistance
+lines and swing markers.
 
 Run it from the ta4j source checkout:
 
