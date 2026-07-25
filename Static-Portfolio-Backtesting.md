@@ -1,10 +1,12 @@
 # Portfolio Backtesting and Correlation Analytics
 
-Ta4j 0.23.1 introduces a constructor-first multi-asset workflow for strict time alignment, static target-weight execution, correlation and hierarchy analysis, and long-only minimum-variance allocation. The same `PortfolioSeries` drives accounting, optimizers, charts, and reports, so one prepared data window has one asset order and one numeric domain.
+The ta4j 0.23.1 development line introduces a constructor-first multi-asset workflow for strict time alignment, static target-weight execution, correlation and hierarchy analysis, and long-only minimum-variance allocation. The same `PortfolioSeries` drives accounting, optimizers, charts, and reports, so one prepared data window has one asset order and one numeric domain.
 
 Use this feature for deterministic research across two or more assets. Continue to use `BarSeriesManager` or `BacktestExecutor` for a strategy over one `BarSeries`.
 
-**Release status:** These APIs are available in ta4j 0.23.1 or newer.
+**Release status:** This is a preview of APIs on the companion
+[`feature/portfolio-correlation-analytics-20260723`](https://github.com/ta4j/ta4j/tree/feature/portfolio-correlation-analytics-20260723)
+branch. They are not yet available in a published ta4j release.
 
 ## Quick Start
 
@@ -346,7 +348,7 @@ It writes:
 Run it from the ta4j repository root:
 
 ```bash
-./mvnw -pl ta4j-examples -am compile
+./mvnw -pl ta4j-examples -am install
 ./mvnw -pl ta4j-examples exec:java \
   -Dexec.mainClass=ta4jexamples.portfolio.DiversifiedPortfolioAnalysis
 ```
@@ -396,8 +398,8 @@ Do not estimate one full-history allocation and present it as a historical strat
 
 ## Runnable Examples
 
-- [`StaticPortfolioBacktest`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/portfolio/StaticPortfolioBacktest.java)
-- [`PortfolioCorrelationAnalysis`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/portfolio/PortfolioCorrelationAnalysis.java)
-- [`DiversifiedPortfolioAnalysis`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/portfolio/DiversifiedPortfolioAnalysis.java)
+- [`StaticPortfolioBacktest`](https://github.com/ta4j/ta4j/blob/feature/portfolio-correlation-analytics-20260723/ta4j-examples/src/main/java/ta4jexamples/portfolio/StaticPortfolioBacktest.java)
+- [`PortfolioCorrelationAnalysis`](https://github.com/ta4j/ta4j/blob/feature/portfolio-correlation-analytics-20260723/ta4j-examples/src/main/java/ta4jexamples/portfolio/PortfolioCorrelationAnalysis.java)
+- [`DiversifiedPortfolioAnalysis`](https://github.com/ta4j/ta4j/blob/feature/portfolio-correlation-analytics-20260723/ta4j-examples/src/main/java/ta4jexamples/portfolio/DiversifiedPortfolioAnalysis.java)
 
 For general strategy mechanics, see [Backtesting](Backtesting.md). For promotion gates and realism checks, see [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md).
