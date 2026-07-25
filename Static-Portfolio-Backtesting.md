@@ -279,11 +279,11 @@ PortfolioAllocation pure =
 PortfolioAllocation capped =
         new MinimumVarianceOptimizer(
                 portfolio,
-                portfolio.numFactory().numOf("0.25"))
+                portfolio.numFactory().numOf("0.50"))
                 .optimize();
 ```
 
-The uncapped result is the mathematical long-only optimum for the estimated covariance matrix. A maximum weight can make the result more practical and diversified; it must be feasible for the number of assets.
+The uncapped result is the mathematical long-only optimum for the estimated covariance matrix. A maximum weight can make the result more practical and diversified; it must be feasible for the number of assets. For example, a 25% cap requires at least four assets.
 
 Historical windows are explicit and do not read future bars:
 
