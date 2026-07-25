@@ -70,7 +70,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **NumIndicator** | Wraps a Num value as an indicator. |
 | `org.ta4j.core.indicators.helpers` | **TradeCountIndicator** | Number of trades in the bar (when available). |
 | `org.ta4j.core.indicators.helpers` | **UnstableIndicator** | Returns NaN for indices within the unstable period; used for warm-up. |
-| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | CF-289 branch-only until ta4j 0.22.9: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Available since ta4j 0.23.0: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
 
 **Short usage (per-indicator expansion)**  
 - **What it is:** As in the table (e.g. close price, true range, running sum).  
@@ -529,31 +529,45 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 15. Forecasting
 
-Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds the primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` group state contracts, projection contracts, and conversion bridges. They produce forecast summaries at a decision index using only data available at or before that index. These entries are introduced by the matching CF-289 ta4j feature branch and should be treated as branch-only until the ta4j 0.22.9 release includes them. For tutorial guidance, see [Forecast Indicators](Forecast-Indicators.md).
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` hold composition contracts and the explicitly analytic bridge. The 0.23.1 surface includes Num-only summaries, support provenance, exact terminal-price simulation, minimal state, return-moment composition, representation-bound feature schemas, rough-volatility diagnostics, Bayesian run-length state, state-conditioned analog projection, and rolling conformal calibration. For tutorial and migration guidance, see [Forecast Indicators](Forecast-Indicators.md).
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Numeric helper indicator for `log(x[i] / x[i - barCount])`, often used as the input to return forecasts. |
 | `org.ta4j.core.indicators` | **ReturnIndicator** | Semantic contract for indicators that declare their return representation. |
 | `org.ta4j.core.indicators.averages` | **EWMAIndicator** | Reusable exponentially weighted moving average indicator with explicit decay and SMA initialization. |
-| `org.ta4j.core.indicators.forecast.projection` | **ForecastProjectionIndicator** | `Indicator<Forecast<Num>>` interface with mean/median/std-dev/quantile projection methods returning `Indicator<Num>`. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForecastProjectionIndicator** | Horizon-aware `Indicator<Forecast>` with mean/median/std-dev/quantile point adapters. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForecastSupport** | Sealed unavailable, empirical-count, or named-analytic distribution provenance. |
 | `org.ta4j.core.indicators.forecast.state` | **ForecastStateIndicator** | Indicator interface for hidden state used by forecast projections. |
-| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator** | Indicator interface for hidden state derived from a `ReturnIndicator`. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastState** | Minimal estimator lifecycle contract: index and stability. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnMoments** | Validated representation-aware mean, drift, canonical variance, observations, and derived volatility. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnMomentState** | State composition contract exposing one `ReturnMoments` component. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureSchema** | Durable schema ID/version/representation and ordered names/units. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureExtractor** | Schema-aware primitive feature boundary with allocation-free `extractInto`. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureExtractors** | Standard representation-bound return-moment feature vectors. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator&lt;S&gt;** | Typed indicator interface for hidden state derived from a `ReturnIndicator`, including source and return representation. |
 | `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
-| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Record containing return-state index, observation count, stable flag, mean, drift, variance, and volatility. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Default state record composing one validated `ReturnMoments` value. |
+| `org.ta4j.core.indicators.forecast` | **RoughVolatilityForecastStateIndicator** | Enriches shared EWMA log-return moments with bounded roughness, log-volatility vol-of-vol, and cumulative fractional horizon variances. |
+| `org.ta4j.core.indicators.forecast.state` | **RoughVolatilityForecastState** | Immutable rich return state containing canonical moments and typed rough-volatility diagnostics. |
+| `org.ta4j.core.indicators.forecast` | **OnlineChangePointForecastStateIndicator** | Constant-hazard Bayesian online run-length estimator with reset-aware warm-up and recent-change posterior mass. |
+| `org.ta4j.core.indicators.forecast.state` | **OnlineChangePointForecastState** | Immutable return state containing MAP moments, the probability's recent-change window, and ordered posterior summaries. |
+| `org.ta4j.core.indicators.forecast.state` | **RunLengthPosterior** | Typed run-length probability and posterior expected observation moments from the complete distribution. |
 | `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
-| `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Constructor-first Monte Carlo price forecast indicator that infers the price source from `LogReturnIndicator`. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Exact terminal-path price simulation with inferred or explicit price source and advanced builder. |
 | `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
-| `org.ta4j.core.indicators.forecast.adapters` | **LogReturnToPriceForecastIndicator** | Adapter that converts an explicit cumulative log-return projection to price forecasts. |
+| `org.ta4j.core.indicators.forecast` | **AnalogReturnProjectionIndicator&lt;S&gt;** | Weighted empirical cumulative log-return projection from matured, schema-compatible historical states. |
+| `org.ta4j.core.indicators.forecast` | **RollingConformalForecastProjectionIndicator** | Rolling finite-sample tail calibration over matured realized values; cumulative log-return calibration preserves semantic return typing and tail-less inputs remain unavailable. |
+| `org.ta4j.core.indicators.forecast.adapters` | **LognormalApproximationPriceForecastIndicator** | Explicit analytic lognormal moment-match from a cumulative log-return summary. |
 | `org.ta4j.core.indicators.forecast.projection` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
-| `org.ta4j.core.indicators.forecast.projection` | **Forecast** | Forecast summary value model used by projection indicators, with mean, median, standard deviation, quantiles, sample count, horizon, and stable state. |
+| `org.ta4j.core.indicators.forecast.projection` | **Forecast** | Num-only immutable distribution summary with empirical samples, validated builder, affine transforms, and provenance. |
 
 **Short usage**
 - **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
-- **Theory:** The standard pipeline converts prices to log returns, estimates EWMA return state, and projects horizon prices with Monte Carlo shocks; explicit return projections remain available for advanced tuning.
+- **Theory:** Pipelines convert prices to semantic returns, estimate canonical, rough-volatility, or Bayesian run-length state, then choose exact simulation, state-conditioned analogs, or explicit analytic projection; rolling conformal calibration can widen an existing model's tails from matured errors.
 - **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
 - **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
-- See also: [Forecast Indicators](Forecast-Indicators.md).
+- See also: [Forecast Indicators](Forecast-Indicators.md) and [Forecast Projection Models](Forecast-Projection-Models.md).
 
 ---
 
@@ -629,7 +643,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 
 ## Summary
 
-- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis. Forecasting entries above are CF-289 branch-only until the matching ta4j release includes them.
+- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, analysis, and forecasting. The representation-aware forecast foundation above targets 0.23.1 and intentionally corrects the initial 0.23.0 forecast API.
 - The inventory also tracks supporting public types (facades, enums, records, interfaces) in indicator packages that are required for complete API coverage.
 - **ta4j-examples** adds charting-oriented indicators (labels, channel boundary).  
 - All entries above use the **fully qualified name** and **class name** and a **short description as in the ta4j codebase**.  

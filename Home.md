@@ -23,6 +23,13 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
 - **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
 - **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
+- **Forecast foundation targeting 0.23.1**: Num-only summaries now declare empirical or analytic support, return estimators compose canonical `ReturnMoments`, and feature vectors publish representation-bound schemas.
+- **Exact and explicit price models**: `MonteCarloPriceForecastIndicator` summarizes transformed terminal-price paths exactly; `LognormalApproximationPriceForecastIndicator` is the clearly named analytic alternative when paths are unavailable.
+- **State-conditioned projections and calibrated tails**: `AnalogReturnProjectionIndicator` builds deterministic empirical neighbor forecasts, and `RollingConformalForecastProjectionIndicator` widens tails from matured residuals without changing base provenance.
+- **Composable rough-volatility state**: `RoughVolatilityForecastStateIndicator` keeps canonical return moments while adding bounded roughness, vol-of-vol, cumulative horizon variance, and an explicit analog feature schema.
+- **Bayesian regime state**: `OnlineChangePointForecastStateIndicator` adds canonical constant-hazard run-length inference, window-qualified recent-change posterior mass, typed component summaries, and direct analog composition.
+- **Serialization named shorthand preview**: The companion ta4j PR #1507 targets 0.23.1 with compact expressions such as `SMA(7,21)`, `SmaCrossUp(7,21)`, `RSI(14)`, and `SharpeRatio` while keeping canonical descriptor JSON as the durable storage format.
+- **Forecast migration required**: The 0.23.1 correction intentionally replaces the forecast API introduced in 0.23.0. See [Migration and Version Compatibility](Migration-and-Version-Compatibility.md#forecast-api-correction-in-0231).
 
 ## Start Here
 
@@ -32,6 +39,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Backtesting](Backtesting.md)** - `BarSeriesManager`, `BacktestExecutor`, supplied records, and manual simulation loops
 - **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
 - **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops
+- **[Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)** - Preview guide for ta4j PR #1507 strategy, rule, indicator, and criterion serialization
 - **[Execution Decision Matrix](Execution-Decision-Matrix.md)** - Choose execution and simulation path by workload
 - **[Migration and Version Compatibility](Migration-and-Version-Compatibility.md)** - Preferred APIs and incremental migration guidance
 - **[Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)** - Version-by-version changelog and migration notes
@@ -43,8 +51,11 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
+- **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical, rough-volatility, and Bayesian regime moments, representation-bound schemas, and provenance-aware summaries
+- **[Forecast Projection Models](Forecast-Projection-Models.md)** - Analog neighbors, rolling conformal calibration, maturity guards, tuning, and failure behavior
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
 - **[Static Portfolio Backtesting](Static-Portfolio-Backtesting.md)** - Multi-asset target-weight portfolio accounting, rebalances, costs, snapshots, and value-series export
+- **[Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)** - Preview guide for canonical JSON, compact strategy JSON v2, and named asset expressions
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
 ## Pick The Right Execution Path
@@ -71,6 +82,6 @@ Use the canonical matrix for execution choices:
 
 ## Maintainer design docs
 
-- **[Architecture proposals](architecture/proposed/index.md)** - Active design drafts and TODO PRDs
+- **[Architecture proposals](architecture/proposed/index.md)** - Active design drafts and in-progress PRDs
 - **[Architecture archive](architecture/archive/index.md)** - Historical decisions and implementation records
 - **[Completed feature dossiers](completed-features/README.md)** - Delivered PRD/checklist records
