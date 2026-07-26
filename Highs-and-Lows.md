@@ -112,7 +112,8 @@ These differences are interpretation, not errors: ZigZag reacts to reversal magn
 Run the comparison from a ta4j source checkout:
 
 ```bash
-./mvnw -pl ta4j-examples -am \
+./mvnw -pl ta4j-examples -am install
+./mvnw -pl ta4j-examples \
   -Dexec.mainClass=ta4jexamples.analysis.TrendLineAndSwingPointAnalysis \
   -Dexec.args="--no-display --no-save" \
   exec:java
