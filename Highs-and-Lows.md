@@ -77,7 +77,7 @@ RecentSwingIndicators.Pair swings =
         RecentSwingIndicators.fromDetector(series, detector);
 ```
 
-`SwingDetector.detectPivots(series, index)` provides the confirmed pivot view without requiring Elliott degree metadata. `RecentSwingIndicators.Pair.method()` records the factory provenance; arbitrary detector adapters report `CUSTOM`.
+`SwingDetector.detectPivots(series, index)` provides the confirmed pivot view without requiring Elliott degree metadata. Detector-backed recent indicators preserve `SwingPivot.price()` for pivots detected through the current series end, so a custom detector can report a pivot level that differs from the bar's high or low source. The custom high/low price-source overload still defines the shared bar series and acts as the fallback for bars that are not known detector pivots. `RecentSwingIndicators.Pair.method()` records the factory provenance; arbitrary detector adapters report `CUSTOM`.
 
 ## ETH/USD reference behavior
 
@@ -110,7 +110,7 @@ These differences are interpretation, not errors: ZigZag reacts to reversal magn
 Run the comparison from a ta4j source checkout:
 
 ```bash
-mvn -pl ta4j-examples \
+./mvnw -pl ta4j-examples -am \
   -Dexec.mainClass=ta4jexamples.analysis.TrendLineAndSwingPointAnalysis \
   -Dexec.args="--no-display --no-save" \
   exec:java
