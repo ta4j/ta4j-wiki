@@ -351,6 +351,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 9. Swing & zigzag
 
+### 9.1. First-class swing indicators
+
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators` | **RecentSwingIndicator** | Generic recent swing (e.g. value at last swing). |
@@ -358,22 +360,32 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
+| `org.ta4j.core.indicators` | **RecentProminenceSwingHighIndicator** | Most recent ATR-qualified bounded-prominence swing high. |
+| `org.ta4j.core.indicators` | **RecentProminenceSwingLowIndicator** | Most recent ATR-qualified bounded-prominence swing low. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotLowIndicator** | True at ZigZag pivot low bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagStateIndicator** | ZigZag state (e.g. current segment direction and levels). |
 | `org.ta4j.core.indicators.zigzag` | **RecentZigZagSwingHighIndicator** | Most recent ZigZag swing high price. |
 | `org.ta4j.core.indicators.zigzag` | **RecentZigZagSwingLowIndicator** | Most recent ZigZag swing low price. |
 
+### 9.2. Swing indicator factory
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators` | **RecentSwingIndicators** | Canonical factory and paired confirmed/provisional view for all swing methodologies; not itself an indicator. |
+
 **Short usage**  
 - **What it is:** Swing high/low and ZigZag pivots; “recent” variants expose the last confirmed swing level.  
 - **Theory:** Swing points define structure; ZigZag filters small moves and highlights significant reversals.  
 - **When to use:** Trend lines, invalidation levels, and structure for Elliott or other pattern logic.  
 - **When not to use:** When look-back or threshold is too small (noisy pivots).  
-- *Future: use cases, example code.*
+- See also: [Highs and Lows](Highs-and-Lows.md).
 
 ---
 
 ## 10. Elliott Wave
+
+### 10.1. First-class Elliott indicators
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
@@ -388,31 +400,54 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioIndicator** | Set of possible Elliott scenarios at index. |
 | `org.ta4j.core.indicators.elliott` | **ElliottConfluenceIndicator** | Confluence score (e.g. agreement across scenarios). |
 | `org.ta4j.core.indicators.elliott` | **ElliottTrendBiasIndicator** | Aggregate directional bias across Elliott wave scenarios (bullish/bearish/neutral). |
+
+### 10.2. Elliott support types
+
+These types support Elliott analysis but are not first-class indicators. Some
+remain in `org.ta4j.core.indicators.elliott` for existing API continuity.
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.elliott` | **ElliottWaveAnalysisRunner** | One-shot Elliott analysis entry point; can analyze supporting degrees and returns `ElliottWaveAnalysisResult`. |
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioSet** | Immutable container of ranked alternative Elliott scenarios (base case + alternatives). |
 | `org.ta4j.core.indicators.elliott` | **PatternSet** | Configures which Elliott scenario pattern types are enabled (impulse, corrective zigzag, etc.). |
 
-### 10.1. Elliott swing detection (org.ta4j.core.indicators.elliott.swing)
+### 10.3. Elliott swing detection (org.ta4j.core.analysis.elliott.swing)
+
+These are analysis support types for detector, configuration, pivot, and filter workflows. They are not first-class `Indicator` implementations; first-class indicators use the `*Indicator` naming convention and are listed in the indicator tables above.
+
+#### Detector API and factories
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetector** | Interface: detects swing pivots and constructs swing sequences for a bar index. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorResult** | Record: detected pivots and derived swings for a given index. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, slope-change, composite, and tolerant multi-scale swing detectors. |
-| `org.ta4j.core.indicators.elliott.swing` | **FractalSwingDetector** | Swing detector backed by fractal swing high/low (fixed lookback/lookforward window). |
-| `org.ta4j.core.indicators.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
-| `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
-| `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
-| `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeSwingDetector** | Detects rounded turns from sustained causal changes in rolling regression slope; supports balanced window-only construction. |
-| `org.ta4j.core.indicators.elliott.swing` | **SlopeChangeConfig** | Record: slope window, confirmation persistence, ATR period, and magnitude filters. |
-| `org.ta4j.core.indicators.elliott.swing` | **CompositeSwingDetector** | Combines detectors with exact AND/OR agreement or tolerant clustered quorum voting. |
-| `org.ta4j.core.indicators.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingFilter** | Interface: post-processes swing lists (e.g. remove noise, apply constraints). |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingPivot** | Record: confirmed swing pivot (index, price, type high/low). |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingPivotType** | Enum: pivot classification (high/low). |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorSupport** | Helper for building ElliottSwing lists from detector results. |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingDetector** | Interface: detects swing pivots and constructs swing sequences for a bar index. |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, slope-change, prominence, composite, and tolerant multi-scale swing detectors. |
+| `org.ta4j.core.analysis.elliott.swing` | **FractalSwingDetector** | Swing detector backed by fractal swing high/low (fixed lookback/lookforward window). |
+| `org.ta4j.core.analysis.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
+| `org.ta4j.core.analysis.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
+| `org.ta4j.core.analysis.elliott.swing` | **SlopeChangeSwingDetector** | Detects rounded turns from sustained causal changes in rolling regression slope; supports balanced window-only construction. |
+| `org.ta4j.core.analysis.elliott.swing` | **ProminenceSwingDetector** | Detects bounded topographic price prominence with ATR-scaled qualification. |
+| `org.ta4j.core.analysis.elliott.swing` | **CompositeSwingDetector** | Combines detectors with exact AND/OR agreement or tolerant clustered quorum voting. |
 
-### 10.2. Elliott confidence (org.ta4j.core.indicators.elliott.confidence)
+#### Configuration records
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.analysis.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
+| `org.ta4j.core.analysis.elliott.swing` | **SlopeChangeConfig** | Record: slope window, confirmation persistence, ATR period, and magnitude filters. |
+| `org.ta4j.core.analysis.elliott.swing` | **ProminenceSwingConfig** | Record: bounded baseline, confirmation, plateau, and ATR prominence configuration. |
+
+#### Pivot/filter support
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.analysis.elliott.swing` | **SwingDetectorResult** | Record: detected pivots and derived swings for a given index. |
+| `org.ta4j.core.analysis.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingFilter** | Interface: post-processes swing lists (e.g. remove noise, apply constraints). |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingPivot** | Record: confirmed swing pivot (index, price, type high/low). |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingPivotType** | Enum: pivot classification (high/low). |
+
+### 10.4. Elliott confidence (org.ta4j.core.indicators.elliott.confidence)
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|

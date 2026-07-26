@@ -50,6 +50,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Data Sources](Data-Sources.md)** - Loading bars or trades from files and HTTP providers
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
+- **[Highs and Lows](Highs-and-Lows.md)** - Recent swing methods, canonical defaults, confirmation timing, and forming extremes
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
 - **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical, rough-volatility, and Bayesian regime moments, representation-bound schemas, and provenance-aware summaries
 - **[Forecast Projection Models](Forecast-Projection-Models.md)** - Analog neighbors, rolling conformal calibration, maturity guards, tuning, and failure behavior
