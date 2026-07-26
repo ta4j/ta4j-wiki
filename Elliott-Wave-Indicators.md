@@ -373,7 +373,7 @@ Next steps:
 - Use `ElliottScenarioIndicator` for multiple interpretations per bar.
 - Use `ElliottProjectionIndicator` for targets and `ElliottInvalidationLevelIndicator` for invalidation prices.
 - Customize confidence scoring with `ConfidenceProfiles` and `ScenarioTypeConfidenceModel`.
-- Explore detectors under `org.ta4j.core.indicators.elliott.swing` for fractal, ZigZag, or adaptive ZigZag swing detection.
+- Explore detectors under `org.ta4j.core.analysis.elliott.swing` for fractal, ZigZag, or adaptive ZigZag swing detection.
 
 ### Example Classes
 
@@ -672,9 +672,9 @@ import org.ta4j.core.indicators.elliott.ElliottAnalysisResult;
 import org.ta4j.core.indicators.elliott.ElliottDegree;
 import org.ta4j.core.indicators.elliott.ElliottLogicProfile;
 import org.ta4j.core.indicators.elliott.ElliottScenario;
-import org.ta4j.core.indicators.elliott.swing.AdaptiveZigZagConfig;
-import org.ta4j.core.indicators.elliott.swing.SwingDetector;
-import org.ta4j.core.indicators.elliott.swing.SwingDetectors;
+import org.ta4j.core.analysis.elliott.swing.AdaptiveZigZagConfig;
+import org.ta4j.core.analysis.elliott.swing.SwingDetector;
+import org.ta4j.core.analysis.elliott.swing.SwingDetectors;
 import org.ta4j.core.indicators.elliott.ElliottWaveAnalysisResult;
 import org.ta4j.core.indicators.elliott.ElliottWaveAnalysisRunner;
 
@@ -840,7 +840,7 @@ Use trend bias for entry filters (e.g. only enter long when bias is bullish and 
 
 ## Pluggable Swing Detection
 
-Elliott Wave analysis can use different swing detection backends via the **SwingDetector** interface (package `org.ta4j.core.indicators.elliott.swing`). The runner accepts any `SwingDetector` and optional `SwingFilter` and `ElliottSwingCompressor`.
+Elliott Wave analysis can use different swing detection backends via the **SwingDetector** interface (package `org.ta4j.core.analysis.elliott.swing`). The runner accepts any `SwingDetector` and optional `SwingFilter` and `ElliottSwingCompressor`.
 
 ### Built-in detectors
 
@@ -899,7 +899,7 @@ ElliottWaveAnalysisRunner runner = ElliottWaveAnalysisRunner.builder()
 - **AdaptiveZigZagConfig**: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag.
 - **SlopeChangeConfig**: regression window, persistence count, ATR period, minimum slope change, and minimum ATR reversal. `defaults(window)` returns the balanced profile used by `SwingDetectors.slopeChange(window)`.
 
-See [Indicators Inventory](Indicators-Inventory.md#102-elliott-confidence-orgta4jcoreindicatorselliottconfidence) for the full list of swing and confidence types.
+See [Indicators Inventory](Indicators-Inventory.md#103-elliott-swing-detection-orgta4jcoreanalysiselliottswing) for the full list of swing detector support types.
 
 ---
 

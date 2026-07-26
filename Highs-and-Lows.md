@@ -2,7 +2,7 @@
 
 Ta4j provides paired recent-swing indicators for local fractals, reversal-distance ZigZag, adaptive ZigZag, rounded slope changes, bounded price prominence, and multi-detector consensus. All confirmed indicators are causal: a query at index `i` only uses bars through `i`, even when the reported pivot belongs to an earlier bar.
 
-First-class ta4j indicators are named `*Indicator`. Swing configuration records such as `AdaptiveZigZagConfig`, `SlopeChangeConfig`, and `ProminenceSwingConfig`, plus detector helpers such as `SwingDetector` and `SwingDetectors`, live with the Elliott swing detector API and are not indicators themselves.
+First-class ta4j indicators are named `*Indicator`. Swing configuration records such as `AdaptiveZigZagConfig`, `SlopeChangeConfig`, and `ProminenceSwingConfig`, plus detector helpers such as `SwingDetector` and `SwingDetectors`, live under `org.ta4j.core.analysis.elliott.swing` and are not indicators themselves.
 
 ## Start with the default
 
