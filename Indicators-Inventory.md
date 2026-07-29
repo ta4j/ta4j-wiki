@@ -138,7 +138,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.donchian` | **DonchianChannelFacade** | Fluent builder that exposes cached numeric Donchian lower/upper/middle channels from one constructor call. |
 | `org.ta4j.core.indicators` | **ChandelierExitLongIndicator** | Chandelier Exit (long): highest high minus ATR-based offset. |
 | `org.ta4j.core.indicators` | **ChandelierExitShortIndicator** | Chandelier Exit (short): lowest low plus ATR-based offset. |
-| `org.ta4j.core.indicators` | **ChopIndicator** | Choppiness Index (0–100); measures trend vs range. |
+| `org.ta4j.core.indicators` | **ChopIndicator** | Choppiness Index; defaults to percentage output (0–100), supports decimal output (0–1), and retains deprecated arbitrary integer scaling. |
 | `org.ta4j.core.indicators` | **UlcerIndexIndicator** | Ulcer Index; depth and duration of drawdowns. |
 | `org.ta4j.core.indicators` | **SqueezeProIndicator** | Squeeze Pro; momentum in low volatility (e.g. Bollinger vs Keltner). |
 | `org.ta4j.core.indicators` | **CompressionIndicator** | Composite contraction score (0–100) from inverted ATR, Bollinger width, and Donchian width percentile ranks. |
@@ -479,6 +479,7 @@ These are analysis support types for detector, configuration, pivot, and filter 
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.statistics` | **StandardDeviationIndicator** | Standard deviation of source over period; supports sample/population modes. |
 | `org.ta4j.core.indicators.statistics` | **VarianceIndicator** | Variance of source over period; defaults to sample variance and supports explicit sample/population modes. |
+| `org.ta4j.core.indicators.statistics` | **HurstExponentIndicator** | Rolling bounded `[0, 1]` Hurst estimate from a configurable log-variogram regression over close prices or any numeric indicator. |
 | `org.ta4j.core.indicators.statistics` | **MeanDeviationIndicator** | Mean absolute deviation. |
 | `org.ta4j.core.indicators.statistics` | **CovarianceIndicator** | Covariance between two indicators. |
 | `org.ta4j.core.indicators.statistics` | **CorrelationCoefficientIndicator** | Correlation between two series; supports sample/population variance normalization; unstable bars follow variance/covariance warm-up. |
