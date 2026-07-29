@@ -178,7 +178,7 @@ RoughVolatilityForecastStateIndicator rough =
 RoughVolatilityForecastState state = rough.getValue(index);
 ```
 
-It reuses canonical EWMA moments and adds bounded log-variogram Hurst, population dispersion of the logarithmic volatility proxy, and five cumulative horizon variances by default. The representation-bound `ForecastFeatureExtractors.roughVolatility()` schema exposes `[mean, volatility, roughness_hurst, vol_of_vol]` for models that intentionally use those diagnostics. See [Forecast State Estimation](Forecast-State-Estimation.md#rough-volatility-state) for advanced tuning, exact field semantics, warm-up, recovery, and when to prefer the smaller EWMA state.
+It reuses canonical EWMA moments and composes `HurstExponentIndicator` over the logarithmic volatility proxy, then applies the rough model's `[0.01, 0.49]` bound. Population dispersion of that proxy and five cumulative horizon variances complete the default state. The representation-bound `ForecastFeatureExtractors.roughVolatility()` schema exposes `[mean, volatility, roughness_hurst, vol_of_vol]` for models that intentionally use those diagnostics. See [Forecast State Estimation](Forecast-State-Estimation.md#rough-volatility-state) for advanced tuning, exact field semantics, warm-up, recovery, and when to prefer the smaller EWMA state.
 
 ## Online Change-Point State
 

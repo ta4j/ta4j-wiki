@@ -110,6 +110,18 @@ RoughVolatilityForecastStateIndicator states =
 
 The first horizon variance is factory-coherent with the current canonical variance. The estimator uses lags one through ten, or all available lags for shorter configured windows, and floors each variogram at `1e-12` before taking its logarithm. These are deterministic state diagnostics, not a claim that returns follow a complete rough-volatility pricing model.
 
+The same rolling statistic is independently reusable:
+
+```java
+HurstExponentIndicator hurst =
+        new HurstExponentIndicator(new ClosePriceIndicator(series), 120);
+Num currentHurst = hurst.getValue(index);
+```
+
+`HurstExponentIndicator` accepts close prices or any `Indicator<Num>` and returns
+the general estimate bounded to `[0, 1]`. Rough-volatility state composes it over
+`log(abs(return) + 1e-8)` and owns the narrower `[0.01, 0.49]` policy.
+
 The state remains unstable until EWMA initialization, the roughness window, and the vol-of-vol window are all complete and finite. A non-finite return resets availability for every affected rolling window; later indices recover automatically. Unstable state preserves the known observation count, uses `NaN.NaN` for specialized scalars, and exposes an empty variance list.
 
 Use rough-volatility state when changing volatility persistence or multi-horizon risk shape is part of the model. Prefer `EwmaReturnForecastStateIndicator` when current mean and variance are sufficient, the available history is short, or the extra dimensions have not earned their place in out-of-sample testing.
