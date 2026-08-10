@@ -40,6 +40,8 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Live Trading](Live-trading.md)** - Event-driven live or paper flows with `BaseTradingRecord`
 - **[Usage Examples](Usage-examples.md)** - Runnable examples, including parity and bot loops
 - **[Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)** - Preview guide for ta4j PR #1507 strategy, rule, indicator, and criterion serialization
+- **[ta4j-cli Operator Guide](ta4j-cli-operator-guide.md)** - Backtest, forecast, and performance commands from the terminal, plus automation contracts
+- **[Transparent Indicator Acceleration](Indicator-Acceleration.md)** - Optional GPU acceleration for Monte Carlo forecast backtests with automatic scalar fallback
 - **[Execution Decision Matrix](Execution-Decision-Matrix.md)** - Choose execution and simulation path by workload
 - **[Migration and Version Compatibility](Migration-and-Version-Compatibility.md)** - Preferred APIs and incremental migration guidance
 - **[Release Notes](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md)** - Version-by-version changelog and migration notes
