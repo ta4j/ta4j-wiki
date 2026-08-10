@@ -41,6 +41,8 @@
 - [Analysis Criteria & Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)
 - [Walk-Forward Research](Walk-Forward-Research.md)
 - [Charting Quickstart](Charting-Quickstart.md)
+- [ta4j-cli & GPU Acceleration Operator Guide](ta4j-cli-operator-guide.md)
+- [Transparent Indicator Acceleration](Indicator-Acceleration.md)
 
 ## Project & Community
 - [How to Contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md)
