@@ -487,6 +487,9 @@ These are analysis support types for detector, configuration, pivot, and filter 
 | `org.ta4j.core.indicators.statistics` | **KendallTauIndicator** | Rolling Kendall tau-b rank correlation (ordinal association with tie corrections). |
 | `org.ta4j.core.indicators.statistics` | **SpearmanRankCorrelationIndicator** | Rolling Spearman rank correlation (Pearson on ranks with average-rank ties). |
 | `org.ta4j.core.indicators.statistics` | **LaggedCorrelationIndicator** | Rolling Pearson correlation with configurable lag between the two series. |
+| `org.ta4j.core.indicators.statistics` | **LeadLagCorrelationIndicator** | Rolling lead/lag correlation profile over a bounded lag range; deterministic best-lag selection (signed or absolute correlation policy). |
+| `org.ta4j.core.indicators.statistics` | **DynamicTimeWarpingDistanceIndicator** | Minimum-cost monotonic alignment between two rolling windows; z-score normalization, Sakoe–Chiba band, path-length normalization. |
+| `org.ta4j.core.indicators.statistics` | **EventSynchronizationIndicator** | Rolling F1 scorer for two sparse Boolean event streams; deterministic one-to-one matching with signed-offset diagnostics. |
 | `org.ta4j.core.indicators.statistics` | **DistanceCorrelationIndicator** | Rolling distance correlation (detects linear and non-linear dependence; O(n²) per index). |
 | `org.ta4j.core.indicators.statistics` | **MutualInformationIndicator** | Rolling mutual information from equal-width binned windows (natural log, nats). |
 | `org.ta4j.core.indicators.statistics` | **RegimeSegmentedCorrelationIndicator** | Rolling Pearson correlation using only bars where a Boolean regime indicator is true. |
@@ -502,8 +505,23 @@ These are analysis support types for detector, configuration, pivot, and filter 
 **Short usage**  
 - **What it is:** Variance, std dev, correlation (Pearson, Kendall, Spearman, lagged, distance, regime-segmented), mutual information, regression, z-score, growth rate; numeric combinators (binary/unary); sample/population mode selection via `SampleType`.
 - **Theory:** Statistics describe distribution and relationship between series; operations allow custom formulas.  
-- **When to use:** Volatility (std dev), normalization (z-score), lead/lag analysis (`LaggedCorrelationIndicator`), non-linear dependence checks (`DistanceCorrelationIndicator`), and regime-conditioned correlation (`RegimeSegmentedCorrelationIndicator`).
+- **When to use:** Volatility (std dev), normalization (z-score), lead/lag analysis (`LaggedCorrelationIndicator`, `LeadLagCorrelationIndicator`), shape comparison (`DynamicTimeWarpingDistanceIndicator`), sparse-event scoring (`EventSynchronizationIndicator`), non-linear dependence checks (`DistanceCorrelationIndicator`), and regime-conditioned correlation (`RegimeSegmentedCorrelationIndicator`).
 - **When not to use:** When period is too short for stable statistics.  
+- *Future: use cases, example code.*
+
+### 11.1. Event analysis (org.ta4j.core.analysis.event)
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.analysis.event` | **EventMutualInformationEvaluator** | One-shot evaluation of how much a continuous predictor reduces uncertainty about a target event in an explicit future bar window; reports raw/normalized MI (nats), entropy, prevalence, and bin diagnostics. |
+| `org.ta4j.core.analysis.event` | **EventMutualInformationConfig** | Immutable config: inclusive target window offsets, requested predictor bin count, binning strategy, missing-history policy (CLAMP default). |
+| `org.ta4j.core.analysis.event` | **EventMutualInformationResult** | Immutable, self-validating result: raw MI, target entropy, normalized MI, sample/positive counts and rate, requested/effective bin counts, strategy, window offsets. |
+| `org.ta4j.core.analysis.event` | **BinningStrategy** | Predictor discretization: `EQUAL_WIDTH` (matches `MutualInformationIndicator`) or `EQUAL_FREQUENCY` (never splits tied values; effective bin count reported). |
+
+**Short usage**  
+- **What it is:** Partition-safe event-aware mutual information (see the [Correlation, Lead-Lag & Event Dependence guide](Correlation-Lead-Lag-Event-Analysis.md)).  
+- **When to use:** Ranking a continuous predictor by how well it predicts sparse current-or-future events without look-ahead into validation data.  
+- **When not to use:** When you need a rolling scalar (use `MutualInformationIndicator`).  
 - *Future: use cases, example code.*
 
 ---

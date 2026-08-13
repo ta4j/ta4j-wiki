@@ -29,6 +29,7 @@
 - [Moving Average Indicators](Moving-Average-Indicators.md)
 - [Bill Williams Indicators](Bill-Williams-Indicators.md)
 - [Highs and Lows](Highs-and-Lows.md)
+- [Correlation, Lead-Lag & Event Dependence](Correlation-Lead-Lag-Event-Analysis.md)
 - [Trendlines & Swing Points](Trendlines-and-Swing-Points.md)
 - [Elliott Wave Quickstart](Elliott-Wave-Quickstart.md)
 - [VWAP, S/R & Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md)
