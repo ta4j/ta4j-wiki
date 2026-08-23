@@ -49,12 +49,31 @@ Packaged libraries carry SHA-256 sidecars and are extracted atomically below `~/
 
 | Platform | Backend | Status |
 | --- | --- | --- |
-| macOS arm64 | Metal | Correctness- and performance-qualified (Apple M5 Max: 2.23x on the checked workload) |
-| Windows x86_64 | CUDA | Correctness-qualified (RTX 5090, CUDA 13.3, compute capability 12.0); `auto` conservatively retains scalar execution pending a stronger crossover model |
+| macOS arm64 | Metal | Correctness- and performance-qualified (Apple M5 Max: 2.23x on the checked workload); auto-selection accepts any `Apple` GPU at the 16,777,216 path-step floor |
+| Windows x86_64 | CUDA | Correctness- and performance-qualified (RTX 5090, CUDA 13.3, compute capability 12.0); auto-selection requires compute capability 12.0 and >= 16,777,216 path-steps |
 | Linux x86_64 | CUDA | Classifier packaging present; hardware qualification open (see [Linux CUDA qualification](#linux-cuda-qualification)) |
 | Linux x86_64 / aarch64 | OpenCL | Correctness-qualified through the PoCL Docker validation matrix; auto-selection gated to GPU devices with >= 16,777,216 path-steps and >= 2 GiB device memory |
 
 On Linux, the automatic order prefers CUDA when its crossover qualifies and otherwise falls through to OpenCL. OpenCL is the vendor-neutral path: NVIDIA, AMD, Intel, and CPU ICDs (for validation) all execute the same versioned kernels. GPU OpenCL devices are auto-selected once the workload floor and minimum device memory are reached; CPU ICD devices (for example PoCL) execute only through the internal qualification path used by the validation tests. Current macOS releases do not support NVIDIA CUDA or external NVIDIA eGPUs, so Metal and CUDA are not competing production choices on one supported host.
+
+### When the GPU Wins
+
+Every provider predicts a speedup before engaging; automatic selection requires a predicted gain of at least 10% and all three providers use the same total-work floor of **16,777,216 path-steps** (`decisions x paths x horizon`). CUDA additionally requires compute capability 12.0, Metal any Apple device, and OpenCL a GPU with >= 2 GiB free device memory. Measured on an RTX 5090:
+
+| Workload shape (decisions x paths x horizon) | Path-steps | Measured speedup |
+| --- | --- | --- |
+| 1 x 1,024 x 8 | ~8K | 1.00x (parity) |
+| 32 x 8,192 x 8 | ~2.1M | 0.94x (scalar wins) |
+| 256 x 2,048 x 32 | ~16.7M | 1.27x |
+| 256 x 8,192 x 32 | ~67M | 1.33x |
+| 256 x 32,768 x 64 | ~537M | 2.28x |
+
+- **Stay scalar** below roughly 16M path-steps or with only a handful of forecast decisions: per-decision transfer, launch, and reduction overhead exceeds the parallel sampling gain.
+- **Expect gains** from batch backtests with hundreds of decisions on fat Monte Carlo shapes: about 1.1x end-to-end at moderate shapes, up to about 2.3x at large ones. Decision count matters even at fixed work — fewer, fatter decisions amortize better than many thin ones.
+- Bar count matters only through decision density: the canonical case is 4,096 bars yielding 256 decisions.
+- The current bottleneck is the per-decision sort/reduction phase (~80% of native time), so gains scale with per-decision Monte Carlo size rather than decision count alone.
+
+Reproduce with `scripts/acceleration/benchmark-cuda-provider.ps1 -RepoRoot .` in the ta4j source tree after building the `-Pcuda-windows-x86_64` classifier.
 
 ## What Gets Accelerated
 
@@ -92,8 +111,7 @@ Use `-Dta4j.acceleration=off`, omit `ta4j-cli`, or use the JVM-only artifact for
 
 ## Qualification Status
 
-- Apple M5 Max Metal is correctness- and performance-qualified for the checked forecast workload: a 4,096-bar transparent backtest with 256 decisions, 2,048 paths, horizon 32, and lookback 256 measured a 280.196 ms scalar median versus 125.716 ms with Metal (**2.23x**) over five warm trials, with all six positions, operation indexes, 147 bars in market, and ending equity matching.
-- Windows RTX 5090 CUDA is correctness-qualified for Windows x86_64, CUDA 13.3, and compute capability 12.0. Existing measurements were not a stable crossover, so `auto` conservatively retains scalar execution there pending a stronger qualified model.
+- Windows RTX 5090 CUDA is correctness- and performance-qualified for Windows x86_64, CUDA 13.3, and compute capability 12.0: the canonical transparent backtest (4,096 bars, 256 decisions, 2,048 paths, horizon 32) ran 359.6 ms scalar versus 305.9 ms with CUDA (**1.18x**, exact trade parity), the provider matrix peaked at **2.28x** (256 decisions x 32,768 paths x horizon 64), and `auto` now selects CUDA on compute capability 12.0 GPUs above the shared 16,777,216 path-step floor.
 - Linux OpenCL is correctness-qualified through the PoCL Docker validation matrix on both x86_64 and aarch64: the probe self-tests, the full shock-model/volatility parity matrix, and the transparent end-to-end backtest all pass inside a PoCL container.
 - Qualification work exposed two pre-release defects, both now covered by regression tests: manager snapshots were initially rejected as non-identical indicator series, and Metal's standardized-empirical EWMA kernel normalized shocks against evolving rather than captured moments.
 
