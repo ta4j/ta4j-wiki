@@ -50,7 +50,7 @@ Packaged libraries carry SHA-256 sidecars and are extracted atomically below `~/
 | Platform | Backend | Status |
 | --- | --- | --- |
 | macOS arm64 | Metal | Correctness- and performance-qualified (Apple M5 Max: 2.23x on the checked workload); auto-selection accepts any `Apple` GPU at the 16,777,216 path-step floor |
-| Windows x86_64 | CUDA | Correctness- and performance-qualified (RTX 5090, CUDA 13.3, compute capability 12.0); auto-selection requires compute capability 12.0 and >= 16,777,216 path-steps |
+| Windows x86_64 | CUDA | Correctness- and performance-qualified (RTX 5090, CUDA 13.3, compute capability 12.0); auto-selection requires compute capability 12.0 and >= 262,144 path-steps |
 | Linux x86_64 | CUDA | Classifier packaging present; hardware qualification open (see [Linux CUDA qualification](#linux-cuda-qualification)) |
 | Linux x86_64 / aarch64 | OpenCL | Correctness-qualified through the PoCL Docker validation matrix; auto-selection gated to GPU devices with >= 16,777,216 path-steps and >= 2 GiB device memory |
 
@@ -58,20 +58,23 @@ On Linux, the automatic order prefers CUDA when its crossover qualifies and othe
 
 ### When the GPU Wins
 
-Every provider predicts a speedup before engaging; automatic selection requires a predicted gain of at least 10% and all three providers use the same total-work floor of **16,777,216 path-steps** (`decisions x paths x horizon`). CUDA additionally requires compute capability 12.0, Metal any Apple device, and OpenCL a GPU with >= 2 GiB free device memory. Measured on an RTX 5090:
+Every provider predicts a speedup before engaging; automatic selection requires a predicted gain of at least 10%. CUDA's total-work floor (`decisions x paths x horizon`) is **262,144 path-steps**; Metal and OpenCL keep a more conservative **16,777,216 path-step** floor pending equivalent per-platform sweeps. CUDA additionally requires compute capability 12.0, Metal any Apple device, and OpenCL a GPU with >= 2 GiB free device memory. Measured on an RTX 5090 after the batched-pipeline kernel rewrite:
 
-| Workload shape (decisions x paths x horizon) | Path-steps | Measured speedup |
+| Workload shape (decisions x paths x horizon) | Path-steps | Provider-level speedup |
 | --- | --- | --- |
 | 1 x 1,024 x 8 | ~8K | 1.00x (parity) |
-| 32 x 8,192 x 8 | ~2.1M | 0.94x (scalar wins) |
-| 256 x 2,048 x 32 | ~16.7M | 1.27x |
-| 256 x 8,192 x 32 | ~67M | 1.33x |
-| 256 x 32,768 x 64 | ~537M | 2.28x |
+| 8 x 4,096 x 8 | ~262K | 3.39x |
+| 32 x 8,192 x 8 | ~2.1M | 9.72x |
+| 64 x 4,096 x 16 | ~4.2M | 5.83x |
+| 256 x 2,048 x 32 | ~16.7M | 7.82x (native 257 ms -> 34 ms) |
+| 256 x 8,192 x 32 | ~67M | 17.24x |
+| 1,024 x 2,048 x 32 | ~67M | 9.90x |
+| 256 x 32,768 x 64 | ~537M | 68.94x |
 
-- **Stay scalar** below roughly 16M path-steps or with only a handful of forecast decisions: per-decision transfer, launch, and reduction overhead exceeds the parallel sampling gain.
-- **Expect gains** from batch backtests with hundreds of decisions on fat Monte Carlo shapes: about 1.1x end-to-end at moderate shapes, up to about 2.3x at large ones. Decision count matters even at fixed work — fewer, fatter decisions amortize better than many thin ones.
-- Bar count matters only through decision density: the canonical case is 4,096 bars yielding 256 decisions.
-- The current bottleneck is the per-decision sort/reduction phase (~80% of native time), so gains scale with per-decision Monte Carlo size rather than decision count alone.
+- **Stay scalar** below roughly 262K path-steps: the measured point below that floor is parity, so there is nothing to gain.
+- **Expect large gains** from any batch backtest above the floor: about 3-10x for moderate shapes and up to about 69x for the fattest shapes. The end-to-end transparent backtest on the canonical workload (4,096 bars, 256 decisions) runs **3.9x** faster with exact trade parity.
+- Decision count matters less than before: batching all decisions into one enqueued pipeline removed the per-decision serialization, so even 8-decision workloads now win clearly once they clear the floor.
+- Remaining native time splits roughly one-third path sampling and two-thirds per-decision sort/quantile/reduction at the canonical shape (34 ms native: 8 ms kernel, 22 ms reduction); end-to-end gains from trimming that further are capped by JVM-side backtest overhead.
 
 Reproduce with `scripts/acceleration/benchmark-cuda-provider.ps1 -RepoRoot .` in the ta4j source tree after building the `-Pcuda-windows-x86_64` classifier.
 
@@ -111,7 +114,7 @@ Use `-Dta4j.acceleration=off`, omit `ta4j-cli`, or use the JVM-only artifact for
 
 ## Qualification Status
 
-- Windows RTX 5090 CUDA is correctness- and performance-qualified for Windows x86_64, CUDA 13.3, and compute capability 12.0: the canonical transparent backtest (4,096 bars, 256 decisions, 2,048 paths, horizon 32) ran 359.6 ms scalar versus 305.9 ms with CUDA (**1.18x**, exact trade parity), the provider matrix peaked at **2.28x** (256 decisions x 32,768 paths x horizon 64), and `auto` now selects CUDA on compute capability 12.0 GPUs above the shared 16,777,216 path-step floor.
+- Windows RTX 5090 CUDA is correctness- and performance-qualified for Windows x86_64, CUDA 13.3, and compute capability 12.0: the canonical transparent backtest (4,096 bars, 256 decisions, 2,048 paths, horizon 32) runs **3.9x** end-to-end (359.6 ms scalar versus ~93 ms with CUDA) with exact trade and equity parity, the provider matrix peaks at **68.9x** (256 decisions x 32,768 paths x horizon 64), and `auto` selects CUDA on compute capability 12.0 GPUs above the 262,144 path-step floor after the batched-pipeline rewrite collapsed per-decision serialization into one enqueued stream.
 - Linux OpenCL is correctness-qualified through the PoCL Docker validation matrix on both x86_64 and aarch64: the probe self-tests, the full shock-model/volatility parity matrix, and the transparent end-to-end backtest all pass inside a PoCL container.
 - Qualification work exposed two pre-release defects, both now covered by regression tests: manager snapshots were initially rejected as non-identical indicator series, and Metal's standardized-empirical EWMA kernel normalized shocks against evolving rather than captured moments.
 
