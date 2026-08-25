@@ -116,7 +116,10 @@ raw-cost semantics.
 
 - `WarpingWindow.sakoeChiba(radius)` — path cells must stay within
   `radius` of the diagonal. **Radius 0 forces diagonal alignment**, so the
-  warped distance reduces to the sum of pointwise local costs.
+  warped distance is the pointwise-cost reduction of the configured
+  normalization: the sum of local costs under `PathCostNormalization.NONE`,
+  or their mean under `PathCostNormalization.BY_PATH_LENGTH` (the
+  `Config.shapeComparison` default).
 - `WarpingWindow.unconstrained()` — explicit opt-in for full warping at
   `O(W²)` time; prefer a band unless you need it.
 

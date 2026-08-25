@@ -489,7 +489,7 @@ These are analysis support types for detector, configuration, pivot, and filter 
 | `org.ta4j.core.indicators.statistics` | **LaggedCorrelationIndicator** | Rolling Pearson correlation with configurable lag between the two series. |
 | `org.ta4j.core.indicators.statistics` | **LeadLagCorrelationIndicator** | Rolling lead/lag correlation profile over a bounded lag range; deterministic best-lag selection (signed or absolute correlation policy). |
 | `org.ta4j.core.indicators.statistics` | **DynamicTimeWarpingDistanceIndicator** | Minimum-cost monotonic alignment between two rolling windows; z-score normalization, Sakoe–Chiba band, path-length normalization. |
-| `org.ta4j.core.indicators.statistics` | **EventSynchronizationIndicator** | Rolling F1 scorer for two sparse Boolean event streams; deterministic one-to-one matching with signed-offset diagnostics. |
+| `org.ta4j.core.indicators.statistics.event` | **EventSynchronizationIndicator** | Rolling F1 scorer for two sparse Boolean event streams; deterministic one-to-one matching with signed-offset diagnostics. |
 | `org.ta4j.core.indicators.statistics` | **DistanceCorrelationIndicator** | Rolling distance correlation (detects linear and non-linear dependence; O(n²) per index). |
 | `org.ta4j.core.indicators.statistics` | **MutualInformationIndicator** | Rolling mutual information from equal-width binned windows (natural log, nats). |
 | `org.ta4j.core.indicators.statistics` | **RegimeSegmentedCorrelationIndicator** | Rolling Pearson correlation using only bars where a Boolean regime indicator is true. |
