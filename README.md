@@ -23,6 +23,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **Weighted strategy ranking**: `BacktestExecutionResult#getTopStrategiesWeighted(...)` and `WeightedCriterion` let you rank strategies by a normalized composite score instead of a single raw metric.
 - **One trade-record story for partial fills**: New code can stream `TradeFill` values directly with `TradingRecord.operate(fill)` or group an order with `Trade.fromFills(...)`, then inspect `getCurrentPosition()` and `getOpenPositions()` on the same record.
 - **Broader analysis surface**: Recent current-master additions include `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and volume pressure indicators such as `ForceIndexIndicator`, `EaseOfMovementIndicator`, and `KlingerVolumeOscillatorIndicator`.
+- **Correlation, lead-lag & event dependence**: New relationship-analysis APIs — `LeadLagCorrelationIndicator`, `DynamicTimeWarpingDistanceIndicator`, `EventSynchronizationIndicator`, and `EventMutualInformationEvaluator` — score lead/lag structure, shape similarity, sparse-event F1, and event-aware mutual information. See [Correlation, Lead-Lag & Event Dependence](Correlation-Lead-Lag-Event-Analysis.md).
 - **Forecast foundation targeting 0.23.1**: Num-only summaries now declare empirical or analytic support, return estimators compose canonical `ReturnMoments`, and feature vectors publish representation-bound schemas.
 - **Exact and explicit price models**: `MonteCarloPriceForecastIndicator` summarizes transformed terminal-price paths exactly; `LognormalApproximationPriceForecastIndicator` is the clearly named analytic alternative when paths are unavailable.
 - **State-conditioned projections and calibrated tails**: `AnalogReturnProjectionIndicator` builds deterministic empirical neighbor forecasts, and `RollingConformalForecastProjectionIndicator` widens tails from matured residuals without changing base provenance.
@@ -51,6 +52,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
 - **[Highs and Lows](Highs-and-Lows.md)** - Recent swing methods, canonical defaults, confirmation timing, and forming extremes
+- **[Correlation, Lead-Lag & Event Dependence](Correlation-Lead-Lag-Event-Analysis.md)** - Lead/lag profiles, DTW shape distance, event-synchronization F1, and event-aware mutual information
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters
 - **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical, rough-volatility, and Bayesian regime moments, representation-bound schemas, and provenance-aware summaries
 - **[Forecast Projection Models](Forecast-Projection-Models.md)** - Analog neighbors, rolling conformal calibration, maturity guards, tuning, and failure behavior
