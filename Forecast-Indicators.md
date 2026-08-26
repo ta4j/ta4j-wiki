@@ -140,7 +140,7 @@ Stock techniques and composition decorators live in `org.ta4j.core.analysis.mont
 | `ShockPathMonteCarloMethod` | Shock/volatility engine behind the builder defaults (shock model, update mode, decay factor). |
 | `NormalInverseGammaForecastMethod` | Samples horizon paths from the conjugate Normal-Inverse-Gamma posterior predictive of the lookback window; data-driven weakly-informative priors by default. |
 | `PosteriorSmoothedResidualMonteCarloMethod` | Draws `(mu, sigma^2)` from the NIG posterior and re-composes kernel-smoothed residual paths over an inner technique's shocks. |
-| `RecentVolatilityWideningMonteCarloMethod` | Scales an inner technique's centered samples outward by the bounded ratio of recent realized to state volatility; calm regimes stay untouched. |
+| `RecentVolatilityWideningMonteCarloMethod` | Scales an inner technique's samples around its empirical center by the bounded ratio of recent realized to state volatility, so widening shifts dispersion without moving the forecast location; calm regimes stay untouched. |
 | `StudentTScaleMixingMonteCarloMethod` | Fattens tails with a mean-normalized Student-t scale-mixing factor so the quantile spread grows in high-volatility regimes. |
 | `EnsembleMonteCarloMethod` | Pools two techniques 50/50 through derived sub-generators. |
 
@@ -159,7 +159,7 @@ MonteCarloPriceForecastIndicator prices =
                 .build();
 ```
 
-`WalkForwardCalibrationBakeoffExample` is a paired bake-off of these techniques (12 arms) scored by central-interval coverage, pinball loss, and sample-based CRPS, sliced by forward-volatility terciles. With zero drift (below), the composition decorators close roughly half of the high-volatility under-coverage of the baseline: the winning arm `NIG-NORMAL+RECENTVOL+TTAIL` reaches 78% (S&P 500) and 79% (ETH-USD) coverage on the highest-volatility tercile against 69% and 72% for the un-widened NIG composition, at essentially unchanged CRPS.
+`WalkForwardCalibrationBakeoffExample` is a paired bake-off of these techniques (11 arms) scored by central-interval coverage, pinball loss, and sample-based CRPS, sliced by forward-volatility terciles. With zero drift (below), the composition decorators close roughly half of the high-volatility under-coverage of the baseline: the winning arm `NIG-NORMAL+RECENTVOL+TTAIL` reaches 78% (S&P 500) and 79% (ETH-USD) coverage on the highest-volatility tercile against 69% and 72% for the un-widened NIG composition, at essentially unchanged CRPS.
 
 ## Explicit Analytic Approximation
 
