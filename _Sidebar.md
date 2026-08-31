@@ -22,6 +22,7 @@
 - [Num](Num.md)
 - [Technical Indicators](Technical-indicators.md)
 - [Indicators Inventory](Indicators-Inventory.md)
+- [Candlestick Geometry & Patterns](Candlestick-Patterns.md)
 - [Forecast Indicators](Forecast-Indicators.md)
 - [Forecast State & Regime Estimation](Forecast-State-Estimation.md)
 - [Forecast Projection Models](Forecast-Projection-Models.md)
