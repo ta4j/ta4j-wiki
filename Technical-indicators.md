@@ -15,7 +15,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
 | Bill Williams Toolkit | Alligator (jaw/teeth/lips), FractalHigh/Low, Gator Oscillator, Market Facilitation Index. | [Bill Williams Indicators](Bill-Williams-Indicators.md) |
-| Candle/Pattern | Hammer, Shooting Star, Three White Soldiers, DownTrend/UpTrend. | `indicators.candles` |
+| Candle/Pattern | CandleBody/CandleRange geometry, upper/lower shadows, Hammer, Shooting Star, Three White Soldiers. | This page |
 | Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator` transforms. | `indicators.renko` |
 | Oscillators | TrueStrengthIndex, SchaffTrendCycle, ConnorsRSI (0.21.0), RSI family, MACD/MACDV, KST, Stochastics, CMO, ROC. | This page |
 
@@ -64,6 +64,45 @@ Indicator<?> rsiOfSma = Indicator.fromExpression(series, "RSI(SMA(14),9)");
 ```
 
 See [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md) for the full preview guide to strategy, rule, indicator, and analysis-criterion serialization in that PR.
+
+## Candlestick foundation (0.24.2 development)
+
+Candlestick patterns are easier to reason about when **geometry** and **direction** are separate concepts. This distinction matters in current development code: the latest stable release is **0.24.1**, while the geometry foundation below targets **0.24.2** and should not be copied into code that must compile against 0.24.1.
+
+For a well-formed OHLC bar, the core candle measurements are:
+
+| Quantity | ta4j type | Definition |
+| --- | --- | --- |
+| Body magnitude | `CandleBodyIndicator` | `abs(close - open)` |
+| Upper shadow | `UpperShadowIndicator` | `high - max(open, close)` |
+| Lower shadow | `LowerShadowIndicator` | `min(open, close) - low` |
+| Full candle range | `CandleRangeIndicator` | `high - low` |
+
+`CandleRangeIndicator` is not true range: true range also considers the previous close, while candle range uses only the current bar. These geometry indicators have no lookback warm-up themselves and produce non-negative measurements for valid OHLC data.
+
+### Migrate body size away from `RealBodyIndicator`
+
+`RealBodyIndicator` is deprecated on the 0.24.2 development branch. It returns the legacy **signed** quantity `close - open`: positive for a bullish candle and negative for a bearish candle. That is useful only when signed close-to-open change is intentionally what you want; it is not a body-size measurement.
+
+Use `CandleBodyIndicator` for body magnitude and `Bar#isBullish()` / `Bar#isBearish()` for direction. Keeping magnitude and direction separate avoids sign-dependent bugs when comparing body sizes, ratios, or thresholds.
+
+### Pattern thresholds need history
+
+Recent 0.24.2 candlestick work also moves pattern classification toward shared, causal recent-history thresholds. The shared support used by pattern indicators computes baselines from **preceding candles only**, so the candle being classified does not influence its own baseline. The current recommended shared profile uses a five-candle prior window and compares body/shadow geometry with recent average body or range.
+
+The support object itself is package-private implementation detail; use the public pattern indicators. Exact constructor semantics and unstable-bar counts remain indicator-specific, so respect `getCountOfUnstableBars()` rather than assuming that every pattern becomes meaningful at index zero. During warm-up, a `false` result can mean “not yet confirmable,” not evidence for the opposite pattern.
+
+### Pattern name is not a strategy
+
+A hammer, engulfing candle, star, or similar pattern describes geometry plus local context; it is not evidence of profitability by itself. Treat candlestick indicators as features or conditions to compose with trend/regime, volatility, volume, support/resistance, or other strategy logic, then evaluate the resulting strategy with realistic backtesting assumptions.
+
+Also avoid assuming that the same pattern name implies identical thresholds across libraries or textbooks. When exact semantics matter, check the current constructor, Javadocs, and unstable-bar behavior.
+
+### OHLC data must be internally consistent
+
+The 0.24.2 development branch tightens `BaseBar` validation so contradictory high/low values relative to open and close are rejected. That protects body, shadow, and range algebra from nonsensical negative geometry. If an upgrade exposes invalid bars, fix the source feed rather than weakening candlestick calculations.
+
+For a live candle that is still changing, the same geometry may legitimately change until the bar closes. See [Live Candle vs Closed Candle](Live-Candle-vs-Closed-Candle-Evaluation.md) when deciding whether a strategy should act on the mutable current bar or only on closed candles.
 
 ## Market structure workflow (VWAP + S/R + Wyckoff)
 

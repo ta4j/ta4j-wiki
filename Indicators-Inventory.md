@@ -285,7 +285,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.candles` | **DojiIndicator** | True when bar is doji (open ≈ close). |
-| `org.ta4j.core.indicators.candles` | **RealBodyIndicator** | Size of real body (|close − open|). |
+| `org.ta4j.core.indicators.candles` | **CandleBodyIndicator** | Non-negative candle body magnitude: `abs(close - open)`; available in 0.24.2 development. |
+| `org.ta4j.core.indicators.candles` | **CandleRangeIndicator** | Full current-candle range: `high - low`; distinct from true range; available in 0.24.2 development. |
+| `org.ta4j.core.indicators.candles` | **RealBodyIndicator** | Deprecated legacy signed close-to-open change (`close - open`); use `CandleBodyIndicator` for magnitude and `Bar#isBullish()` / `Bar#isBearish()` for direction. |
 | `org.ta4j.core.indicators.candles` | **UpperShadowIndicator** | Upper shadow (high − max(open, close)). |
 | `org.ta4j.core.indicators.candles` | **LowerShadowIndicator** | Lower shadow (min(open, close) − low). |
 | `org.ta4j.core.indicators.candles` | **HammerIndicator** | Hammer pattern (long lower shadow, small body). |
@@ -312,11 +314,11 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.candles` | **ThreeInsideDownIndicator** | Three inside down. |
 
 **Short usage**  
-- **What it is:** Single- or multi-candle pattern detectors returning boolean (or equivalent) at each bar.  
+- **What it is:** Candle geometry primitives plus single- or multi-candle pattern detectors. For current development code, keep body magnitude (`CandleBodyIndicator`) separate from direction (`Bar#isBullish()` / `Bar#isBearish()`).  
 - **Theory:** Price action patterns (engulfing, harami, stars, etc.) are used for reversal or continuation signals.  
-- **When to use:** As entry/exit conditions or filters combined with trend/volume.  
-- **When not to use:** Alone in low-liquidity or highly noisy data; combine with other confirmation.  
-- *Future: use cases, example code.*
+- **When to use:** Geometry primitives as composable measurements; pattern indicators as entry/exit conditions or filters combined with trend/volume.  
+- **When not to use:** Do not treat a pattern as a complete strategy or use deprecated `RealBodyIndicator` as an unsigned body-size measurement.  
+- See also: [Technical Indicators — Candlestick foundation](Technical-indicators.md#candlestick-foundation-0242-development).
 
 ---
 
