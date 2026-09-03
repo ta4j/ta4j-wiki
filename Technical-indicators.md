@@ -9,6 +9,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Trend / Moving Averages | SMA, EMA, HMA, VIDYA, Jurik, Displaced variants, SuperTrend, Renko helpers. | [Moving Average Indicators](Moving-Average-Indicators.md) |
 | Momentum & Oscillators | RSI family, NetMomentum, MACD/MACDV, MACD-V momentum states, KST, Stochastics, CMO, ROC. | This page |
 | Regime & signal quality | TrendScore, TrendConclusion, Compression, EntryEdge, EdgeDecaySlope, StretchZScore. | This page |
+| State estimation & robust smoothing | Kalman filtering, correntropy outlier rejection, measurement-weight and residual diagnostics. | This page |
 | Advanced correlation | Kendall tau, Spearman, lagged/distance/regime-segmented correlation, mutual information. | [Indicators Inventory §11](Indicators-Inventory.md#11-statistics--numeric) |
 | Forecasting | Provenance-aware Num forecasts, canonical return moments, exact Monte Carlo paths, state-conditioned analogs, rolling conformal calibration, schemas, point projections, and an explicit analytic lognormal approximation. | [Forecast Indicators](Forecast-Indicators.md), [Forecast Projection Models](Forecast-Projection-Models.md) |
 | Volatility & Bands | ATR, Donchian, Bollinger, Keltner, Average True Range trailing stops. | [Bar Series & Bars](Bar-series-and-bars.md) (for ATR-based stops) |
@@ -103,6 +104,69 @@ Also avoid assuming that the same pattern name implies identical thresholds acro
 The 0.24.2 development branch tightens `BaseBar` validation so contradictory high/low values relative to open and close are rejected. That protects body, shadow, and range algebra from nonsensical negative geometry. If an upgrade exposes invalid bars, fix the source feed rather than weakening candlestick calculations.
 
 For a live candle that is still changing, the same geometry may legitimately change until the bar closes. See [Live Candle vs Closed Candle](Live-Candle-vs-Closed-Candle-Evaluation.md) when deciding whether a strategy should act on the mutable current bar or only on closed candles.
+
+## Robust Kalman smoothing (0.24.2 development)
+
+Kalman filters estimate a latent current state from noisy observations. They are **same-index smoothers**, not forward forecasts: `getValue(i)` uses information available through index `i`. The latest stable release is **0.24.1**; the correntropy API below is on the **0.24.2 development branch**.
+
+Choose the estimator by the noise problem you actually have:
+
+| Need | Prefer | Why |
+| --- | --- | --- |
+| Ordinary recursive smoothing where large residuals should still influence the estimate | `KalmanFilterIndicator` | Standard linear Kalman update; simple and inexpensive. |
+| Outlier-prone measurements where isolated spikes should lose influence | `CorrentropyKalmanFilterIndicator` | Maximum-correntropy update applies a redescending measurement weight and can reject extreme observations. |
+| Inspect why the robust estimate ignored or accepted a measurement | `measurementWeight()` and `residual()` | Weight reports measurement acceptance in `[0, 1]`; residual reports `source - robustEstimate`. |
+
+### The 60-second path
+
+The complete runnable owner is [`CorrentropyKalmanExample`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/forecast/CorrentropyKalmanExample.java). Its core composition is:
+
+```java
+ClosePriceIndicator close = new ClosePriceIndicator(series);
+ATRIndicator atr = new ATRIndicator(series, 14);
+
+NumericIndicator atrVariance = NumericIndicator.of(atr).squared();
+KalmanNoiseIndicator processNoise = new KalmanNoiseIndicator(
+        atrVariance.multipliedBy(0.0625).max(1e-8));
+KalmanNoiseIndicator measurementNoise = new KalmanNoiseIndicator(
+        atrVariance.multipliedBy(0.25).max(1e-8));
+
+CorrentropyKalmanFilterIndicator robust =
+        new CorrentropyKalmanFilterIndicator(
+                close,
+                processNoise,
+                measurementNoise,
+                series.numFactory().numOf(2.0));
+
+CorrentropyKalmanWeightIndicator weight = robust.measurementWeight();
+Indicator<Num> residual = robust.residual();
+```
+
+Those ATR coefficients are an **illustrative recipe from the compiled example, not calibrated defaults**. Real deployments should derive process variance `Q` and measurement variance `R` from the source's own scale and validate them against a benchmark.
+
+### Read the parameters in the right units
+
+`Q` and `R` are **variances**, so for a price source they are in price-squared units. `KalmanNoiseIndicator` enforces finite, strictly positive values; it does not make an arbitrary positive indicator a meaningful variance estimate.
+
+The correntropy kernel bandwidth `sigma` is different: it is **dimensionless**. The filter whitens the state and measurement errors by their covariance scales before applying the Gaussian kernel. A bandwidth such as `2.0` therefore means “two standardized error units,” not two dollars or two percent. Smaller bandwidths reject departures more aggressively; larger bandwidths behave more like the ordinary Kalman update. Treat bandwidth as a robustness parameter to validate, not a universal magic number.
+
+### Weight is evidence, not probability
+
+`robust.measurementWeight()` exposes the measurement-side kernel weight at the accepted fixed-point solution. A value near `1` means the observation was broadly consistent with the accepted state; `0` means the measurement was rejected by the redescending kernel. It is not a calibrated probability that the observation is correct.
+
+`robust.residual()` returns `measurement - robustEstimate`. Composing residual magnitude with the weight can help distinguish ordinary tracking error from observations the robust filter actively discounted. The example demonstrates this as diagnostic evidence only, not as a trading strategy.
+
+### Warm-up, failures, and recovery
+
+The robust filter's unstable-bar count is the maximum of its source, `Q`, and `R` inputs. Respect `getCountOfUnstableBars()` before consuming the estimate or its diagnostics.
+
+A non-finite source value, non-finite or non-positive `Q`/`R`, a non-converging fixed-point update, or an invalid numerical state makes the estimate, weight, and residual unavailable (`NaN`) **for that index**. The filter preserves its last initialized valid state internally, so a later valid index can recover instead of permanently poisoning the recursion.
+
+There is one important redescending-kernel caveat: during a sustained extreme move, repeated near-zero measurement weights can keep the estimate pinned near its last trusted level. That zero-gain persistence is expected behavior, not proof that the market price is “wrong.” If the source has genuinely changed regimes, an overly aggressive bandwidth or noise model can reject the new level for too long.
+
+### How to evaluate it
+
+Compare the classic and correntropy filters on the same source and the same economically meaningful `Q`/`R` model. Inspect estimate error, residuals, measurement weights, and recovery after isolated outliers **and** sustained shifts. A robust smoother has earned its complexity only if those diagnostics and downstream out-of-sample results improve for the actual data regime.
 
 ## Market structure workflow (VWAP + S/R + Wyckoff)
 
