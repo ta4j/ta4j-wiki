@@ -36,6 +36,7 @@
 
 ## Build Strategies
 - [Trading Strategies](Trading-strategies.md)
+- [Static Portfolio Backtesting](Static-Portfolio-Backtesting.md)
 - [Serialization Shorthand Preview](Serialization-and-Named-Shorthand.md)
 - [Stop Loss & Stop Gain Rules](Stop-Loss-and-Stop-Gain-Rules.md)
 - [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md)
