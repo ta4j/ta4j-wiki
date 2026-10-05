@@ -137,14 +137,13 @@ The manager precomputes admitted pair requests and evaluates bounded batches, wi
 
 `ta4j-examples` includes `ta4jexamples.analysis.IndicatorFamilyAnalysisDemo`. It loads committed weekly S&P 500 data, builds a mixed 20-30 indicator set, and compares thresholds `0.80`, `0.90`, and `0.97`.
 
-Run it from the ta4j repository root:
+Run it from the ta4j repository root. Install the reactor dependencies first; this is required on a clean checkout and after changing `ta4j-core`:
 
 ```bash
-./mvnw -pl ta4j-examples exec:java \
+./mvnw -pl ta4j-examples -am install \
+  && ./mvnw -pl ta4j-examples exec:java \
   -Dexec.mainClass=ta4jexamples.analysis.IndicatorFamilyAnalysisDemo
 ```
-
-If you are running from a source checkout after changing `ta4j-core`, build or install `ta4j-core` first so `ta4j-examples` sees the current local classes.
 
 The output lists each threshold pass, the resulting families, representative indicators, cohesion metrics, and most similar indicator pairs. It also includes an examples-level broad baseline catalog that explicitly instantiates additional numeric indicators and reports skipped categories such as boolean signal indicators, state indicators, and context-heavy or high-cost indicators.
 
