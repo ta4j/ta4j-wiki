@@ -22,7 +22,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 12. [Renko](#12-renko)
 13. [Analysis (PnL, returns, cash flow)](#13-analysis-pnl-returns-cash-flow)
 14. [Charting (ta4j-examples)](#14-charting-ta4j-examples)
-15. [Supporting public types (facades, enums, records)](#15-supporting-public-types-facades-enums-records)
+15. [Forecasting](#15-forecasting)
+16. [Supporting public types (facades, enums, records)](#16-supporting-public-types-facades-enums-records)
 
 ---
 
@@ -69,6 +70,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.helpers` | **NumIndicator** | Wraps a Num value as an indicator. |
 | `org.ta4j.core.indicators.helpers` | **TradeCountIndicator** | Number of trades in the bar (when available). |
 | `org.ta4j.core.indicators.helpers` | **UnstableIndicator** | Returns NaN for indices within the unstable period; used for warm-up. |
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Available since ta4j 0.23.0: log return of a numeric source, `log(x[i] / x[i - barCount])`; returns NaN for warm-up, invalid, or non-positive inputs. |
 
 **Short usage (per-indicator expansion)**  
 - **What it is:** As in the table (e.g. close price, true range, running sum).  
@@ -136,7 +138,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.donchian` | **DonchianChannelFacade** | Fluent builder that exposes cached numeric Donchian lower/upper/middle channels from one constructor call. |
 | `org.ta4j.core.indicators` | **ChandelierExitLongIndicator** | Chandelier Exit (long): highest high minus ATR-based offset. |
 | `org.ta4j.core.indicators` | **ChandelierExitShortIndicator** | Chandelier Exit (short): lowest low plus ATR-based offset. |
-| `org.ta4j.core.indicators` | **ChopIndicator** | Choppiness Index (0–100); measures trend vs range. |
+| `org.ta4j.core.indicators` | **ChopIndicator** | Choppiness Index; defaults to percentage output (0–100), supports decimal output (0–1), and retains deprecated arbitrary integer scaling. |
 | `org.ta4j.core.indicators` | **UlcerIndexIndicator** | Ulcer Index; depth and duration of drawdowns. |
 | `org.ta4j.core.indicators` | **SqueezeProIndicator** | Squeeze Pro; momentum in low volatility (e.g. Bollinger vs Keltner). |
 | `org.ta4j.core.indicators` | **CompressionIndicator** | Composite contraction score (0–100) from inverted ATR, Bollinger width, and Donchian width percentile ranks. |
@@ -283,7 +285,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.candles` | **DojiIndicator** | True when bar is doji (open ≈ close). |
-| `org.ta4j.core.indicators.candles` | **RealBodyIndicator** | Size of real body (|close − open|). |
+| `org.ta4j.core.indicators.candles` | **CandleBodyIndicator** | Non-negative candle body magnitude: `abs(close - open)`; available in 0.24.2 development. |
+| `org.ta4j.core.indicators.candles` | **CandleRangeIndicator** | Full current-candle range: `high - low`; distinct from true range; available in 0.24.2 development. |
+| `org.ta4j.core.indicators.candles` | **RealBodyIndicator** | Deprecated legacy signed close-to-open change (`close - open`); use `CandleBodyIndicator` for magnitude and `Bar#isBullish()` / `Bar#isBearish()` for direction. |
 | `org.ta4j.core.indicators.candles` | **UpperShadowIndicator** | Upper shadow (high − max(open, close)). |
 | `org.ta4j.core.indicators.candles` | **LowerShadowIndicator** | Lower shadow (min(open, close) − low). |
 | `org.ta4j.core.indicators.candles` | **HammerIndicator** | Hammer pattern (long lower shadow, small body). |
@@ -310,11 +314,11 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.candles` | **ThreeInsideDownIndicator** | Three inside down. |
 
 **Short usage**  
-- **What it is:** Single- or multi-candle pattern detectors returning boolean (or equivalent) at each bar.  
+- **What it is:** Candle geometry primitives plus single- or multi-candle pattern detectors. For current development code, keep body magnitude (`CandleBodyIndicator`) separate from direction (`Bar#isBullish()` / `Bar#isBearish()`).  
 - **Theory:** Price action patterns (engulfing, harami, stars, etc.) are used for reversal or continuation signals.  
-- **When to use:** As entry/exit conditions or filters combined with trend/volume.  
-- **When not to use:** Alone in low-liquidity or highly noisy data; combine with other confirmation.  
-- *Future: use cases, example code.*
+- **When to use:** Geometry primitives as composable measurements; pattern indicators as entry/exit conditions or filters combined with trend/volume.  
+- **When not to use:** Do not treat a pattern as a complete strategy or use deprecated `RealBodyIndicator` as an unsigned body-size measurement.  
+- See also: [Technical Indicators — Candlestick foundation](Technical-indicators.md#candlestick-foundation-0242-development).
 
 ---
 
@@ -349,6 +353,8 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ## 9. Swing & zigzag
 
+### 9.1. First-class swing indicators
+
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators` | **RecentSwingIndicator** | Generic recent swing (e.g. value at last swing). |
@@ -356,22 +362,32 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **FractalLowIndicator** | Bill Williams fractal low confirmation indicator (no look-ahead). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingHighIndicator** | Most recent fractal swing high (Bill Williams style). |
 | `org.ta4j.core.indicators` | **RecentFractalSwingLowIndicator** | Most recent fractal swing low. |
+| `org.ta4j.core.indicators` | **RecentProminenceSwingHighIndicator** | Most recent ATR-qualified bounded-prominence swing high. |
+| `org.ta4j.core.indicators` | **RecentProminenceSwingLowIndicator** | Most recent ATR-qualified bounded-prominence swing low. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotHighIndicator** | True at ZigZag pivot high bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagPivotLowIndicator** | True at ZigZag pivot low bars. |
 | `org.ta4j.core.indicators.zigzag` | **ZigZagStateIndicator** | ZigZag state (e.g. current segment direction and levels). |
 | `org.ta4j.core.indicators.zigzag` | **RecentZigZagSwingHighIndicator** | Most recent ZigZag swing high price. |
 | `org.ta4j.core.indicators.zigzag` | **RecentZigZagSwingLowIndicator** | Most recent ZigZag swing low price. |
 
+### 9.2. Swing indicator factory
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators` | **RecentSwingIndicators** | Canonical factory and paired confirmed/provisional view for all swing methodologies; not itself an indicator. |
+
 **Short usage**  
 - **What it is:** Swing high/low and ZigZag pivots; “recent” variants expose the last confirmed swing level.  
 - **Theory:** Swing points define structure; ZigZag filters small moves and highlights significant reversals.  
 - **When to use:** Trend lines, invalidation levels, and structure for Elliott or other pattern logic.  
 - **When not to use:** When look-back or threshold is too small (noisy pivots).  
-- *Future: use cases, example code.*
+- See also: [Highs and Lows](Highs-and-Lows.md).
 
 ---
 
 ## 10. Elliott Wave
+
+### 10.1. First-class Elliott indicators
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
@@ -386,29 +402,54 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioIndicator** | Set of possible Elliott scenarios at index. |
 | `org.ta4j.core.indicators.elliott` | **ElliottConfluenceIndicator** | Confluence score (e.g. agreement across scenarios). |
 | `org.ta4j.core.indicators.elliott` | **ElliottTrendBiasIndicator** | Aggregate directional bias across Elliott wave scenarios (bullish/bearish/neutral). |
+
+### 10.2. Elliott support types
+
+These types support Elliott analysis but are not first-class indicators. Some
+remain in `org.ta4j.core.indicators.elliott` for existing API continuity.
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.elliott` | **ElliottWaveAnalysisRunner** | One-shot Elliott analysis entry point; can analyze supporting degrees and returns `ElliottWaveAnalysisResult`. |
 | `org.ta4j.core.indicators.elliott` | **ElliottScenarioSet** | Immutable container of ranked alternative Elliott scenarios (base case + alternatives). |
 | `org.ta4j.core.indicators.elliott` | **PatternSet** | Configures which Elliott scenario pattern types are enabled (impulse, corrective zigzag, etc.). |
 
-### 10.1. Elliott swing detection (org.ta4j.core.indicators.elliott.swing)
+### 10.3. Elliott swing detection (org.ta4j.core.analysis.elliott.swing)
+
+These are analysis support types for detector, configuration, pivot, and filter workflows. They are not first-class `Indicator` implementations; first-class indicators use the `*Indicator` naming convention and are listed in the indicator tables above.
+
+#### Detector API and factories
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetector** | Interface: detects swing pivots and constructs swing sequences for a bar index. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorResult** | Record: detected pivots and derived swings for a given index. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, and composite swing detectors. |
-| `org.ta4j.core.indicators.elliott.swing` | **FractalSwingDetector** | Swing detector backed by fractal swing high/low (fixed lookback/lookforward window). |
-| `org.ta4j.core.indicators.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
-| `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
-| `org.ta4j.core.indicators.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
-| `org.ta4j.core.indicators.elliott.swing` | **CompositeSwingDetector** | Combines multiple swing detectors with AND/OR pivot agreement policy. |
-| `org.ta4j.core.indicators.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingFilter** | Interface: post-processes swing lists (e.g. remove noise, apply constraints). |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingPivot** | Record: confirmed swing pivot (index, price, type high/low). |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingPivotType** | Enum: pivot classification (high/low). |
-| `org.ta4j.core.indicators.elliott.swing` | **SwingDetectorSupport** | Helper for building ElliottSwing lists from detector results. |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingDetector** | Interface: detects swing pivots and constructs swing sequences for a bar index. |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingDetectors** | Factory helpers for fractal, adaptive ZigZag, slope-change, prominence, composite, and tolerant multi-scale swing detectors. |
+| `org.ta4j.core.analysis.elliott.swing` | **FractalSwingDetector** | Swing detector backed by fractal swing high/low (fixed lookback/lookforward window). |
+| `org.ta4j.core.analysis.elliott.swing` | **ZigZagSwingDetector** | Swing detector backed by ZigZag state (reversal threshold or ATR-based). |
+| `org.ta4j.core.analysis.elliott.swing` | **AdaptiveZigZagSwingDetector** | ZigZag swing detector that adapts reversal threshold to volatility (ATR-based). |
+| `org.ta4j.core.analysis.elliott.swing` | **SlopeChangeSwingDetector** | Detects rounded turns from sustained causal changes in rolling regression slope; supports balanced window-only construction. |
+| `org.ta4j.core.analysis.elliott.swing` | **ProminenceSwingDetector** | Detects bounded topographic price prominence with ATR-scaled qualification. |
+| `org.ta4j.core.analysis.elliott.swing` | **CompositeSwingDetector** | Combines detectors with exact AND/OR agreement or tolerant clustered quorum voting. |
 
-### 10.2. Elliott confidence (org.ta4j.core.indicators.elliott.confidence)
+#### Configuration records
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.analysis.elliott.swing` | **AdaptiveZigZagConfig** | Record: ATR period, multiplier, min/max threshold, smoothing for adaptive ZigZag. |
+| `org.ta4j.core.analysis.elliott.swing` | **SlopeChangeConfig** | Record: slope window, confirmation persistence, ATR period, and magnitude filters. |
+| `org.ta4j.core.analysis.elliott.swing` | **ProminenceSwingConfig** | Record: bounded baseline, confirmation, plateau, and ATR prominence configuration. |
+
+#### Pivot/filter support
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.analysis.elliott.swing` | **SwingDetectorResult** | Record: detected pivots and derived swings for a given index. |
+| `org.ta4j.core.analysis.elliott.swing` | **MinMagnitudeSwingFilter** | SwingFilter that drops swings below a relative magnitude of the largest swing. |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingFilter** | Interface: post-processes swing lists (e.g. remove noise, apply constraints). |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingPivot** | Record: confirmed swing pivot (index, price, type high/low). |
+| `org.ta4j.core.analysis.elliott.swing` | **SwingPivotType** | Enum: pivot classification (high/low). |
+
+### 10.4. Elliott confidence (org.ta4j.core.indicators.elliott.confidence)
 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
@@ -440,6 +481,7 @@ For an overview of indicator categories and composition patterns, see [Technical
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators.statistics` | **StandardDeviationIndicator** | Standard deviation of source over period; supports sample/population modes. |
 | `org.ta4j.core.indicators.statistics` | **VarianceIndicator** | Variance of source over period; defaults to sample variance and supports explicit sample/population modes. |
+| `org.ta4j.core.indicators.statistics` | **HurstExponentIndicator** | Rolling bounded `[0, 1]` Hurst estimate from a configurable log-variogram regression over close prices or any numeric indicator. |
 | `org.ta4j.core.indicators.statistics` | **MeanDeviationIndicator** | Mean absolute deviation. |
 | `org.ta4j.core.indicators.statistics` | **CovarianceIndicator** | Covariance between two indicators. |
 | `org.ta4j.core.indicators.statistics` | **CorrelationCoefficientIndicator** | Correlation between two series; supports sample/population variance normalization; unstable bars follow variance/covariance warm-up. |
@@ -447,6 +489,9 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators.statistics` | **KendallTauIndicator** | Rolling Kendall tau-b rank correlation (ordinal association with tie corrections). |
 | `org.ta4j.core.indicators.statistics` | **SpearmanRankCorrelationIndicator** | Rolling Spearman rank correlation (Pearson on ranks with average-rank ties). |
 | `org.ta4j.core.indicators.statistics` | **LaggedCorrelationIndicator** | Rolling Pearson correlation with configurable lag between the two series. |
+| `org.ta4j.core.indicators.statistics` | **LeadLagCorrelationIndicator** | Rolling lead/lag correlation profile over a bounded lag range; deterministic best-lag selection (signed or absolute correlation policy). |
+| `org.ta4j.core.indicators.statistics` | **DynamicTimeWarpingDistanceIndicator** | Minimum-cost monotonic alignment between two rolling windows; z-score normalization, Sakoe–Chiba band, path-length normalization. |
+| `org.ta4j.core.indicators.statistics.event` | **EventSynchronizationIndicator** | Rolling F1 scorer for two sparse Boolean event streams; deterministic one-to-one matching with signed-offset diagnostics. |
 | `org.ta4j.core.indicators.statistics` | **DistanceCorrelationIndicator** | Rolling distance correlation (detects linear and non-linear dependence; O(n²) per index). |
 | `org.ta4j.core.indicators.statistics` | **MutualInformationIndicator** | Rolling mutual information from equal-width binned windows (natural log, nats). |
 | `org.ta4j.core.indicators.statistics` | **RegimeSegmentedCorrelationIndicator** | Rolling Pearson correlation using only bars where a Boolean regime indicator is true. |
@@ -462,8 +507,23 @@ For an overview of indicator categories and composition patterns, see [Technical
 **Short usage**  
 - **What it is:** Variance, std dev, correlation (Pearson, Kendall, Spearman, lagged, distance, regime-segmented), mutual information, regression, z-score, growth rate; numeric combinators (binary/unary); sample/population mode selection via `SampleType`.
 - **Theory:** Statistics describe distribution and relationship between series; operations allow custom formulas.  
-- **When to use:** Volatility (std dev), normalization (z-score), lead/lag analysis (`LaggedCorrelationIndicator`), non-linear dependence checks (`DistanceCorrelationIndicator`), and regime-conditioned correlation (`RegimeSegmentedCorrelationIndicator`).
+- **When to use:** Volatility (std dev), normalization (z-score), lead/lag analysis (`LaggedCorrelationIndicator`, `LeadLagCorrelationIndicator`), shape comparison (`DynamicTimeWarpingDistanceIndicator`), sparse-event scoring (`EventSynchronizationIndicator`), non-linear dependence checks (`DistanceCorrelationIndicator`), and regime-conditioned correlation (`RegimeSegmentedCorrelationIndicator`).
 - **When not to use:** When period is too short for stable statistics.  
+- *Future: use cases, example code.*
+
+### 11.1. Event analysis (org.ta4j.core.analysis.event)
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.analysis.event` | **EventMutualInformationEvaluator** | One-shot evaluation of how much a continuous predictor reduces uncertainty about a target event in an explicit future bar window; reports raw/normalized MI (nats), entropy, prevalence, and bin diagnostics. |
+| `org.ta4j.core.analysis.event` | **EventMutualInformationConfig** | Immutable config: inclusive target window offsets, requested predictor bin count, binning strategy, missing-history policy (CLAMP default). |
+| `org.ta4j.core.analysis.event` | **EventMutualInformationResult** | Immutable, self-validating result: raw MI, target entropy, normalized MI, sample/positive counts and rate, requested/effective bin counts, strategy, window offsets. |
+| `org.ta4j.core.analysis.event` | **BinningStrategy** | Predictor discretization: `EQUAL_WIDTH` (matches `MutualInformationIndicator`) or `EQUAL_FREQUENCY` (never splits tied values; effective bin count reported). |
+
+**Short usage**  
+- **What it is:** Partition-safe event-aware mutual information (see the [Correlation, Lead-Lag & Event Dependence guide](Correlation-Lead-Lag-Event-Analysis.md)).  
+- **When to use:** Ranking a continuous predictor by how well it predicts sparse current-or-future events without look-ahead into validation data.  
+- **When not to use:** When you need a rolling scalar (use `MutualInformationIndicator`).  
 - *Future: use cases, example code.*
 
 ---
@@ -523,7 +583,51 @@ For an overview of indicator categories and composition patterns, see [Technical
 
 ---
 
-## 15. Supporting public types (facades, enums, records)
+## 15. Forecasting
+
+Forecast types live under `org.ta4j.core.indicators.forecast`. The root package holds primary indicators, while `forecast.state`, `forecast.projection`, and `forecast.adapters` hold composition contracts and the explicitly analytic bridge. The 0.23.1 surface includes Num-only summaries, support provenance, exact terminal-price simulation, minimal state, return-moment composition, representation-bound feature schemas, rough-volatility diagnostics, Bayesian run-length state, state-conditioned analog projection, and rolling conformal calibration. For tutorial and migration guidance, see [Forecast Indicators](Forecast-Indicators.md).
+
+| FQN | Class | Description (from codebase) |
+|-----|-------|-----------------------------|
+| `org.ta4j.core.indicators.helpers` | **LogReturnIndicator** | Numeric helper indicator for `log(x[i] / x[i - barCount])`, often used as the input to return forecasts. |
+| `org.ta4j.core.indicators` | **ReturnIndicator** | Semantic contract for indicators that declare their return representation. |
+| `org.ta4j.core.indicators.averages` | **EWMAIndicator** | Reusable exponentially weighted moving average indicator with explicit decay and SMA initialization. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForecastProjectionIndicator** | Horizon-aware `Indicator<Forecast>` with mean/median/std-dev/quantile point adapters. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForecastSupport** | Sealed unavailable, empirical-count, or named-analytic distribution provenance. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastStateIndicator** | Indicator interface for hidden state used by forecast projections. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastState** | Minimal estimator lifecycle contract: index and stability. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnMoments** | Validated representation-aware mean, drift, canonical variance, observations, and derived volatility. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnMomentState** | State composition contract exposing one `ReturnMoments` component. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureSchema** | Durable schema ID/version/representation and ordered names/units. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureExtractor** | Schema-aware primitive feature boundary with allocation-free `extractInto`. |
+| `org.ta4j.core.indicators.forecast.state` | **ForecastFeatureExtractors** | Standard representation-bound return-moment feature vectors. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastStateIndicator&lt;S&gt;** | Typed indicator interface for hidden state derived from a `ReturnIndicator`, including source and return representation. |
+| `org.ta4j.core.indicators.forecast` | **EwmaReturnForecastStateIndicator** | Builds return forecast state from a log-return `ReturnIndicator` using EWMA mean and variance. |
+| `org.ta4j.core.indicators.forecast.state` | **ReturnForecastState** | Default state record composing one validated `ReturnMoments` value. |
+| `org.ta4j.core.indicators.forecast` | **RoughVolatilityForecastStateIndicator** | Enriches shared EWMA log-return moments with bounded roughness, log-volatility vol-of-vol, and cumulative fractional horizon variances. |
+| `org.ta4j.core.indicators.forecast.state` | **RoughVolatilityForecastState** | Immutable rich return state containing canonical moments and typed rough-volatility diagnostics. |
+| `org.ta4j.core.indicators.forecast` | **OnlineChangePointForecastStateIndicator** | Constant-hazard Bayesian online run-length estimator with reset-aware warm-up and recent-change posterior mass. |
+| `org.ta4j.core.indicators.forecast.state` | **OnlineChangePointForecastState** | Immutable return state containing MAP moments, the probability's recent-change window, and ordered posterior summaries. |
+| `org.ta4j.core.indicators.forecast.state` | **RunLengthPosterior** | Typed run-length probability and posterior expected observation moments from the complete distribution. |
+| `org.ta4j.core.indicators.forecast.projection` | **ReturnForecastProjectionIndicator** | Interface for return projections that declare their return representation. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloPriceForecastIndicator** | Exact terminal-path price simulation with inferred or explicit price source and advanced builder. |
+| `org.ta4j.core.indicators.forecast` | **MonteCarloReturnProjectionIndicator** | Monte Carlo cumulative log-return projection indicator with standard constructors and a builder for advanced configuration. |
+| `org.ta4j.core.indicators.forecast` | **AnalogReturnProjectionIndicator&lt;S&gt;** | Weighted empirical cumulative log-return projection from matured, schema-compatible historical states. |
+| `org.ta4j.core.indicators.forecast` | **RollingConformalForecastProjectionIndicator** | Rolling finite-sample tail calibration over matured realized values; cumulative log-return calibration preserves semantic return typing and tail-less inputs remain unavailable. |
+| `org.ta4j.core.indicators.forecast.adapters` | **LognormalApproximationPriceForecastIndicator** | Explicit analytic lognormal moment-match from a cumulative log-return summary. |
+| `org.ta4j.core.indicators.forecast.projection` | **ForwardForecastIndicator** | Adapts a forecast projection indicator into a point forecast indicator. |
+| `org.ta4j.core.indicators.forecast.projection` | **Forecast** | Num-only immutable distribution summary with empirical samples, validated builder, affine transforms, and provenance. |
+
+**Short usage**
+- **What it is:** A forecasting layer that estimates future return or price distributions from historical returns and rolling volatility state.
+- **Theory:** Pipelines convert prices to semantic returns, estimate canonical, rough-volatility, or Bayesian run-length state, then choose exact simulation, state-conditioned analogs, or explicit analytic projection; rolling conformal calibration can widen an existing model's tails from matured errors.
+- **When to use:** Probabilistic research labels, forecast-aware filters, risk bounds, tail checks, and point projections exposed as regular ta4j indicators.
+- **When not to use:** As a guaranteed target, without warm-up checks, or as a replacement for realistic execution and out-of-sample validation.
+- See also: [Forecast Indicators](Forecast-Indicators.md) and [Forecast Projection Models](Forecast-Projection-Models.md).
+
+---
+
+## 16. Supporting public types (facades, enums, records)
 
 These types live in `org.ta4j.core.indicators` and its subpackages and are part of the public indicator API surface, even though they are not all `*Indicator` classes.
 
@@ -595,7 +699,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 
 ## Summary
 
-- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, and analysis.
+- **ta4j-core** currently provides indicator classes across helpers, averages, volatility, momentum, trend, volume, candles, pivots, swing, Elliott, statistics, renko, analysis, and forecasting. The representation-aware forecast foundation above targets 0.23.1 and intentionally corrects the initial 0.23.0 forecast API.
 - The inventory also tracks supporting public types (facades, enums, records, interfaces) in indicator packages that are required for complete API coverage.
 - **ta4j-examples** adds charting-oriented indicators (labels, channel boundary).  
 - All entries above use the **fully qualified name** and **class name** and a **short description as in the ta4j codebase**.  

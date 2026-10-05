@@ -205,7 +205,22 @@ Strategy restored = Strategy.fromJson(series, json);
 
 That JSON payload captures the full rule graph, making it safe to persist strategies between runs, transmit them over an API, or archive the configuration used for a specific backtest run. Use `rule.toJson()` and `Rule.fromJson(series, json)` when you only need to persist one rule subtree.
 
+The companion ta4j PR #1507, targeting 0.23.1, adds an opt-in compact v2 strategy JSON form:
+
+```java
+Strategy crossover = Strategy.fromJson(series, """
+        {
+          "version": 2,
+          "strategy": "SMA(7,21)",
+          "name": "Daily_SMA_Crossover"
+        }
+        """);
+
+String compactJson = crossover.toCompactJson();
+```
+
 `NamedStrategy` variants generate compact IDs (`ToggleNamedStrategy_true_false_u3`) that you can store alongside backtest results or in configuration files.
+For the complete preview guide to strategy, rule, indicator, and analysis-criterion serialization in that PR, see [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md).
 
 ## Execution context tips
 

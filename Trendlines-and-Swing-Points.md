@@ -2,9 +2,13 @@
 
 Trendlines and swing points are the core building blocks behind support/resistance analysis, breakout systems, and Elliott-style structure detection. Ta4j ships a full toolkit for detecting swings, turning them into markers, and projecting data-driven support and resistance lines that behave the way traders draw them by hand.
 
+For the complete detector comparison, canonical default, confirmation timing,
+forming-point API, and ETH/USD reference behavior, see
+[Highs and Lows](Highs-and-Lows.md).
+
 ## What you get
 - **Fractal swing detectors**: window-based swing highs/lows with configurable symmetry and tolerance for flat tops/bottoms.
-- **ZigZag swing detectors**: ATR/price-threshold reversals for adaptive swing confirmation without fixed lookahead windows.
+- **ZigZag swing detectors**: OHLC-aware ATR/price-threshold reversals for adaptive swing confirmation without fixed lookahead windows.
 - **Swing markers**: `SwingPointMarkerIndicator` converts swing indexes into chart-friendly markers (values only on swing bars, `NaN` elsewhere).
 - **Trendlines**: `TrendLineSupportIndicator` / `TrendLineResistanceIndicator` that score every valid line in the lookback window and pick the best candidate with tunable weights and touch tolerance.
 - **Chart-ready metadata**: `getSwingPointIndexes()` and `getCurrentSegment()` expose anchors, slope/intercept, and scoring so you can debug or annotate charts.
@@ -47,35 +51,62 @@ charts.display(plan);
 
 - `precedingHigherBars` / `precedingLowerBars`: how many bars immediately before must be strictly above/below the candidate. Must be ≥ 1 (default convenience constructor uses 3).
 - `followingHigherBars` / `followingLowerBars`: how many bars after must be strictly above/below the candidate. Needs future bars, so swings confirm only after this window elapses.
-- `allowedEqualBars`: how many bars on each side may equal the candidate value (helps catch rounded tops/bottoms instead of rejecting plateaus).
+- `allowedEqualBars`: maximum additional equal bars allowed in the candidate plateau. A plateau is emitted once at its canonical extreme instead of producing duplicate pivots.
 - Defaults: `new RecentFractalSwingLowIndicator(series)` → 3/3/0 on lows (highs mirror the parameters).
 
 Use fractals when you want visually obvious turning points and don’t mind waiting a few bars for confirmation.
 
 ```java
-// 7-bar symmetric window that tolerates one equal neighbor on each side
+// 7-bar symmetric window that tolerates one additional equal bar in the plateau
 RecentFractalSwingHighIndicator majorHighs = new RecentFractalSwingHighIndicator(high, 7, 7, 1);
-int latestHighIndex = majorHighs.getLatestSwingHighIndex(series.getEndIndex());
+int latestHighIndex = majorHighs.getLatestSwingIndex(series.getEndIndex());
 ```
 
 ### ZigZag swings (reversal-threshold based)
 `RecentZigZagSwingHighIndicator` / `RecentZigZagSwingLowIndicator` track swings confirmed when price reverses by at least a configured threshold—no fixed lookahead window.
 
-- Driven by `ZigZagStateIndicator(price, reversalAmount)`.
-- **Price indicator**: typically `HighPriceIndicator`, `LowPriceIndicator`, or `ClosePriceIndicator`.
+The OHLC-aware state constructors and state-only recent-swing constructors below are available in ta4j 0.23.0 and later. On 0.22.8, use the released single-price `ZigZagStateIndicator(price, reversalAmount)` and explicit-price recent-swing constructors.
+
+- Driven by `ZigZagStateIndicator(high, low, confirmationPrice, reversalAmount)`; the older single-price constructor remains available.
+- **Extreme sources**: use highs to extend upward legs and lows to extend downward legs. Confirmation commonly uses the close so an intrabar wick can set an extreme without confirming its own reversal.
 - **Reversal threshold** (`reversalAmount`): indicator in price units. Defaults to `ATR(14)` in the convenience constructor; pass `ConstantIndicator` for fixed-point thresholds or any indicator for adaptive ones.
+- Dynamic thresholds are anchored when the candidate extreme is established. Later volatility changes therefore cannot move the confirmation boundary for that candidate.
 - Returns `NaN` until a reversal large enough to confirm the prior extreme.
 
 ```java
+HighPriceIndicator high = new HighPriceIndicator(series);
+LowPriceIndicator low = new LowPriceIndicator(series);
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 // Confirm swings after a 1.5 * ATR move
 ATRIndicator atr = new ATRIndicator(series, 14);
 Indicator<Num> atrThreshold = BinaryOperationIndicator.product(atr, 1.5);
-ZigZagStateIndicator zigzagState = new ZigZagStateIndicator(close, atrThreshold);
+ZigZagStateIndicator zigzagState = new ZigZagStateIndicator(high, low, close, atrThreshold);
 
-RecentZigZagSwingLowIndicator zigzagLows = new RecentZigZagSwingLowIndicator(zigzagState, close);
-RecentZigZagSwingHighIndicator zigzagHighs = new RecentZigZagSwingHighIndicator(zigzagState, close);
+RecentZigZagSwingLowIndicator zigzagLows = new RecentZigZagSwingLowIndicator(zigzagState);
+RecentZigZagSwingHighIndicator zigzagHighs = new RecentZigZagSwingHighIndicator(zigzagState);
 ```
+
+The state-only recent-swing constructors automatically reuse the matching low or
+high source. Use the explicit-source overloads only when custom pivot pricing is
+intentional.
+
+### Choosing a trendline swing source
+
+No single formula is best for every turn shape:
+
+| Detector | Best fit | Confirmation trade-off |
+|----------|----------|------------------------|
+| Fractal | Distinct local extrema and fixed timing requirements | Waits for the configured right-side window. |
+| ZigZag | Sharp reversals whose importance is defined by price distance or volatility | Confirms after the reversal threshold is crossed. |
+
+All detector families can now be exposed as paired `RecentSwingIndicator`
+instances through `RecentSwingIndicators`, including slope-change, prominence,
+adaptive ZigZag, and tolerant consensus. See
+[Highs and Lows](Highs-and-Lows.md#method-guide) for selection guidance and
+[Pluggable Swing Detection](Elliott-Wave-Indicators.md#pluggable-swing-detection)
+for Elliott-specific composition.
+
+Both trendline swing sources are causal at the requested evaluation index: they use only bars available at that index, while the reported pivot can refer to the earlier bar where the confirmed extreme occurred.
 
 ### Showing swings on charts
 `SwingPointMarkerIndicator` outputs prices only at swing indexes (`NaN` elsewhere) so chart overlays become discrete markers instead of lines.
@@ -171,7 +202,11 @@ TrendLineResistanceIndicator tightResistance = new TrendLineResistanceIndicator(
 - **Descriptor/JSON**: `support.toJson()` serializes parameters and the swing subtree for persistence.
 
 ### Runnable analysis harness
-`ta4jexamples.analysis.TrendLineAndSwingPointAnalysis` is the companion example for this page. It performs regression-style headroom checks across bundled datasets for fractal and ZigZag swing sources, then renders a chart with support/resistance lines and swing markers.
+`ta4jexamples.analysis.TrendLineAndSwingPointAnalysis` is the companion example
+for this page. It performs regression-style headroom checks, compares all recent
+swing methods across ossified ETH/USD `PT5M` through `PT1D` fixtures, verifies
+the July 22 hourly reference high, then renders a chart with support/resistance
+lines and swing markers.
 
 Run it from the ta4j source checkout:
 
@@ -210,7 +245,7 @@ Strategy trendlineStrategy = new BaseStrategy("Trendline break/bounce", breakout
 ## Best practices & pitfalls
 - Swings need future bars: fractals confirm only after the `following*` window; ZigZag confirms after price moves by the threshold. Guard against `NaN` when rules fire.
 - Align parameters with timeframe: wide windows on low-timeframe data will feel sluggish; on daily/weekly charts they remove noise.
-- Keep price inputs consistent: if your ZigZag tracks highs/lows, feed the same price indicator into `RecentZigZagSwing*` and the trendline.
+- Keep price inputs consistent: pair `RecentZigZagSwingHighIndicator` with the ZigZag state's high source and `RecentZigZagSwingLowIndicator` with its low source.
 - Match lookback to data retention: if you set `series.setMaximumBarCount(250)`, keep trendline `barCount <= 250` or earlier anchors will be evicted.
 - Tune tolerance to the instrument: use absolute/tick-size tolerance for low-priced or fixed-tick assets; percentage works well for equities.
 - Watch performance with dense swing series: if you detect thousands of swings, lower `maxSwingPointsForTrendline` or raise the reversal/plateau thresholds to avoid combinatorial explosions.
