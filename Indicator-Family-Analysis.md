@@ -9,6 +9,9 @@ It does not rank indicators by profitability or predictive power. Rank candidate
 Create the series and indicators yourself, then pass a named map to `IndicatorFamilyManager`. The manager intentionally does not scan packages or build indicators for you; explicit construction keeps the analysis catalog readable and reproducible.
 
 ```java
+import org.ta4j.core.analysis.IndicatorFamilyManager;
+import org.ta4j.core.analysis.IndicatorFamilyResult;
+
 BarSeries series = ...;
 ClosePriceIndicator close = new ClosePriceIndicator(series);
 
@@ -23,7 +26,7 @@ IndicatorFamilyManager manager = new IndicatorFamilyManager(series);
 IndicatorFamilyResult result = manager.analyze(indicators, 0.90);
 ```
 
-Use `LinkedHashMap` when result order matters. The map keys become the names shown in families and pair-similarity output. The threshold is a `Number` and is converted through the series' `NumFactory`.
+Any `Map` is accepted. Names are sorted by their natural Java `String` order before pair evaluation, family IDs, and representative tie-breaking, so opposite insertion orders, `HashMap`, and `Map.of` produce the same analysis for the same indicators and samples. The threshold is a `Number` and is converted through the series' `NumFactory`. The API lives in `org.ta4j.core.analysis`; the manager also implements `AnalysisRunner<Map<String, Indicator<Num>>, IndicatorFamilyResult>`. Its interface overload accepts the same bound series and the catalog.
 
 The default manager uses `CorrelationCoefficientIndicator(..., SampleType.POPULATION)` over a 120-bar rolling window. To analyze a shorter or longer horizon, pass the window length to the constructor:
 
@@ -34,10 +37,10 @@ IndicatorFamilyResult shortHorizonResult = shortHorizonManager.analyze(indicator
 
 ## Reading Results
 
-`IndicatorFamilyResult` contains:
+`IndicatorFamilyResult` and its nested `Family` and `PairSimilarity` values are immutable and constructed only by the manager; consumers use accessors rather than constructors. The result contains:
 
 - `similarityThreshold()` - the threshold used for this run.
-- `stableIndex()` - the first bar index where all pairwise correlation scores are stable.
+- `stableIndex()` - the first logical index where all pairwise correlation scores have a full stable window. It can exceed the retained end, in which case no common stable history is available. For a source with no warm-up, retained begin `150`, and window `120`, this boundary is `269`.
 - `families()` - grouped indicators in deterministic order.
 - `familyByIndicator()` - lookup from indicator name to family id.
 - `pairSimilarities()` - pair evidence for every indicator pair.
@@ -56,7 +59,7 @@ for (IndicatorFamilyResult.Family family : result.families()) {
 }
 
 for (IndicatorFamilyResult.PairSimilarity pair : result.pairSimilarities()) {
-    if (pair.similarity().isGreaterThanOrEqual(threshold)) {
+    if (pair.sampleCount() > 0 && pair.similarity().isGreaterThanOrEqual(threshold)) {
         System.out.println(pair.firstIndicatorName() + " ~ "
                 + pair.secondIndicatorName()
                 + " absoluteAverage=" + pair.similarity()
@@ -77,7 +80,7 @@ Family membership uses absolute average similarity, so directly inverse indicato
 - `minimumSignedSimilarity()` and `maximumSignedSimilarity()` show whether the relationship was stable or regime-sensitive.
 - `sampleCount()` shows how much valid evidence was available.
 
-Family cohesion fields help detect weak transitive chains. A family can exist because `A` is close to `B` and `B` is close to `C`, even if `A` and `C` are not close. In that case `minimumInternalSimilarity()` will be much lower than the threshold-like intuition you might expect from a tight cluster.
+Grouping uses complete-link clustering: a merge is allowed only when every cross-family pair is available and meets the threshold. The manager selects the strongest weakest-link score first, breaking equal-score ties by canonical family order. Every pair inside the resulting family meets the threshold, so `minimumInternalSimilarity()` is at least that threshold. If `A–B = 0.95`, `B–C = 0.95`, and `A–C = 0.40`, threshold `0.90` yields `{A, B}` and `{C}` for names `A`, `B`, `C`; the bridge cannot place `A` and `C` together. Singletons report average and minimum cohesion of `1`.
 
 ## Threshold Tuning
 
@@ -114,7 +117,7 @@ Custom metrics must:
 - Return signed values in `[-1, 1]`.
 - Return `NaN` or invalid values for samples that should be skipped.
 
-When no valid samples exist, pair similarity is reported as zero. Future metrics that may be useful include Spearman rank correlation, Kendall tau, lag-aware cross-correlation, distance correlation, mutual information, and regime-segmented correlation, but they are not default ta4j implementations today.
+When no valid samples exist, `sampleCount()` is zero and all numeric pair diagnostics are `NaN.NaN`. Such pairs are excluded from grouping and ranking, including at threshold `0`. A later analysis can recover when enough valid data is available. Correlation sample availability follows both source warm-up and the retained full-window boundary; partial retained windows do not count as stable evidence.
 
 ## Parallel Analysis
 
@@ -124,7 +127,11 @@ Pair scoring is sequential by default because ta4j indicators are not required t
 IndicatorFamilyManager manager = new IndicatorFamilyManager(series, 120, 4);
 ```
 
-The manager precomputes pair requests, executes at most the requested number of pair analyses at once, and returns deterministic pair and family order. Avoid this constructor when indicators cache mutable state without concurrency guarantees.
+The manager precomputes admitted pair requests and evaluates bounded batches, with at most the requested parallelism and the runtime's available processor count in flight. Pair and family order remains deterministic. Avoid this constructor when indicators cache mutable state without concurrency guarantees.
+
+## Work Budget
+
+`IndicatorFamilyManager.MAX_PAIR_COUNT` is `8_128`, admitting at most 128 indicators. The pair count uses checked `long` arithmetic and larger catalogs fail with `IllegalArgumentException` before catalog copying, metric construction, or pair allocation. Clustering reads the existing pair list rather than allocating a second dense matrix. Split oversized catalogs into meaningful research groups. History length and custom metric cost still determine evaluation time; the budget bounds pair state, not total elapsed time.
 
 ## Runnable Example
 
@@ -133,7 +140,7 @@ The manager precomputes pair requests, executes at most the requested number of 
 Run it from the ta4j repository root:
 
 ```bash
-mvn -pl ta4j-examples exec:java \
+./mvnw -pl ta4j-examples exec:java \
   -Dexec.mainClass=ta4jexamples.analysis.IndicatorFamilyAnalysisDemo
 ```
 
