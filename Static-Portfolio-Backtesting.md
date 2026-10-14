@@ -297,7 +297,7 @@ PortfolioAllocation walkForwardAllocation =
                 portfolio,
                 decisionIndex,
                 120,
-                0.25)
+                0.50)
                 .optimize();
 ```
 
