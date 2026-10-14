@@ -16,7 +16,7 @@ Technical indicators (a.k.a. *technicals*) transform price/volume data into stru
 | Volume & Breadth | OBV, VWAP/VWMA, Accumulation/Distribution, Chaikin, Force Index, Ease of Movement, Klinger Volume Oscillator. | Indicators package |
 | Market Structure (VWAP/SR/Wyckoff) | Anchored VWAP, VWAP bands/z-score, price clusters, bounce counts, KDE volume profile, Wyckoff phase/cycle detection. | [VWAP, Support/Resistance, and Wyckoff Guide](VWAP-Support-Resistance-and-Wyckoff.md) |
 | Bill Williams Toolkit | Alligator (jaw/teeth/lips), FractalHigh/Low, Gator Oscillator, Market Facilitation Index. | [Bill Williams Indicators](Bill-Williams-Indicators.md) |
-| Candle/Pattern | CandleBody/CandleRange geometry, upper/lower shadows, Hammer, Shooting Star, Three White Soldiers. | This page |
+| Candle/Pattern | CandleBody/CandleRange geometry, adaptive morphology, Hammer, Piercing Line, stars, Three Black Crows / White Soldiers. | This page |
 | Price Transformations | RenkoUp/Down/X (0.19), Heikin Ashi builders, `BinaryOperationIndicator`/`UnaryOperationIndicator` transforms. | `indicators.renko` |
 | Oscillators | TrueStrengthIndex, SchaffTrendCycle, ConnorsRSI (0.21.0), RSI family, MACD/MACDV, KST, Stochastics, CMO, ROC. | This page |
 
@@ -66,11 +66,15 @@ Indicator<?> rsiOfSma = Indicator.fromExpression(series, "RSI(SMA(14),9)");
 
 See [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md) for the full preview guide to strategy, rule, indicator, and analysis-criterion serialization in that PR.
 
-## Candlestick foundation (0.24.2 development)
+## Candlestick patterns (0.24.2 development)
 
-Candlestick patterns are easier to reason about when **geometry** and **direction** are separate concepts. This distinction matters in current development code: the latest stable release is **0.24.1**, while the geometry foundation below targets **0.24.2** and should not be copied into code that must compile against 0.24.1.
+What does a ta4j candlestick pattern actually tell you? In current development code, it tells you about **candle morphology**. Trend, confirmation, volume, and trading context belong to the caller unless a legacy compatibility class says otherwise.
 
-For a well-formed OHLC bar, the core candle measurements are:
+The latest stable release is **0.24.1**; the repository currently builds **0.24.2-SNAPSHOT**. The geometry primitives and pattern semantics below are 0.24.2 development APIs and should not be copied into code that must compile against 0.24.1.
+
+### Mental model: geometry → baseline → morphology → context
+
+Start with measurements that have an unambiguous meaning:
 
 | Quantity | ta4j type | Definition |
 | --- | --- | --- |
@@ -81,29 +85,71 @@ For a well-formed OHLC bar, the core candle measurements are:
 
 `CandleRangeIndicator` is not true range: true range also considers the previous close, while candle range uses only the current bar. These geometry indicators have no lookback warm-up themselves and produce non-negative measurements for valid OHLC data.
 
-### Migrate body size away from `RealBodyIndicator`
+Patterns that need body-size, shadow-size, or “near” classifications compare geometry with a **causal baseline built from preceding candles only**. The current bar never contributes to the threshold used to classify itself. The shared default baseline is five prior candles. Pure geometry patterns such as engulfing do not invent a baseline they do not need.
 
-`RealBodyIndicator` is deprecated on the 0.24.2 development branch. It returns the legacy **signed** quantity `close - open`: positive for a bullish candle and negative for a bearish candle. That is useful only when signed close-to-open change is intentionally what you want; it is not a body-size measurement.
+| Shared classification | Current endpoint |
+| --- | --- |
+| Long body | `body > precedingAverageBody` |
+| Short body | `body < 0.5 * precedingAverageBody` |
+| Doji | `body <= rangeFactor * precedingAverageRange` (`rangeFactor = 0.1` by default) |
+| Short shadow / “near” test | `measurement <= 0.1 * precedingAverageRange` |
 
-Use `CandleBodyIndicator` for body magnitude and `Bar#isBullish()` / `Bar#isBearish()` for direction. Keeping magnitude and direction separate avoids sign-dependent bugs when comparing body sizes, ratios, or thresholds.
+The distinction between strict and inclusive endpoints is intentional. Long/short-body tests and pattern gaps/reversal crossings are strict; containment and penetration endpoints are inclusive. Pattern-specific Javadocs remain the authority for the complete formula. One notable exception is `ThreeBlackCrowsIndicator`: the second and third crows must open strictly inside the preceding crow's body, while the first crow's open only needs to be strictly below the preceding bar's high.
 
-### Pattern thresholds need history
+### The 60-second path: add context explicitly
 
-Recent 0.24.2 candlestick work also moves pattern classification toward shared, causal recent-history thresholds. The shared support used by pattern indicators computes baselines from **preceding candles only**, so the candle being classified does not influence its own baseline. The current recommended shared profile uses a five-candle prior window and compares body/shadow geometry with recent average body or range.
+A named pattern is not a complete reversal model. For example, `PiercingLineIndicator` reports two-candle morphology only. If your interpretation requires a preceding downtrend, compose that condition explicitly and make sure the trend window ends **before** the two pattern candles.
 
-The support object itself is package-private implementation detail; use the public pattern indicators. Exact constructor semantics and unstable-bar counts remain indicator-specific, so respect `getCountOfUnstableBars()` rather than assuming that every pattern becomes meaningful at index zero. During warm-up, a `false` result can mean “not yet confirmable,” not evidence for the opposite pattern.
+The following is a focused fragment from the tested [`NamedPatternContextExample`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/research/NamedPatternContextExample.java); use that class for the complete runnable example:
 
-### Pattern name is not a strategy
+```java
+Indicator<Num> close = new ClosePriceIndicator(series);
+PiercingLineIndicator piercing = new PiercingLineIndicator(series);
 
-A hammer, engulfing candle, star, or similar pattern describes geometry plus local context; it is not evidence of profitability by itself. Treat candlestick indicators as features or conditions to compose with trend/regime, volatility, volume, support/resistance, or other strategy logic, then evaluate the resulting strategy with realistic backtesting assumptions.
+// A two-bar shift ends both context inputs immediately before the pattern starts.
+Indicator<Num> closeBeforePattern = new PreviousValueIndicator(close, 2);
+Indicator<Num> averageBeforePattern =
+        new PreviousValueIndicator(new SMAIndicator(close, 20), 2);
 
-Also avoid assuming that the same pattern name implies identical thresholds across libraries or textbooks. When exact semantics matter, check the current constructor, Javadocs, and unstable-bar behavior.
+Rule priorDowntrend = new UnderIndicatorRule(closeBeforePattern, averageBeforePattern);
+Rule reversalCandidate = new BooleanIndicatorRule(piercing).and(priorDowntrend);
 
-### OHLC data must be internally consistent
+int firstReliableIndex = series.getBeginIndex()
+        + Math.max(piercing.getCountOfUnstableBars(),
+                averageBeforePattern.getCountOfUnstableBars());
+```
 
-The 0.24.2 development branch tightens `BaseBar` validation so contradictory high/low values relative to open and close are rejected. That protects body, shadow, and range algebra from nonsensical negative geometry. If an upgrade exposes invalid bars, fix the source feed rather than weakening candlestick calculations.
+**What to notice:** the pattern does not secretly inspect ADX or trend state; shifting by the pattern width prevents the context model from learning from the candles it is supposed to contextualize; and `Rule` does **not** enforce indicator warm-up for you. Gate evaluation at or after the latest unstable boundary of every component. In the deterministic example, `firstReliableIndex` is `21`, and the final bar satisfies the piercing morphology, the prior-downtrend rule, and their conjunction.
 
-For a live candle that is still changing, the same geometry may legitimately change until the bar closes. See [Live Candle vs Closed Candle](Live-Candle-vs-Closed-Candle-Evaluation.md) when deciding whether a strategy should act on the mutable current bar or only on closed candles.
+The same separation works in the other direction: use [`CandleMorphologyExample`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/research/CandleMorphologyExample.java) when you need a deliberately custom shape assembled from body/range/shadow primitives rather than pretending it is a canonical named pattern.
+
+### Migrating pattern code to 0.24.2
+
+The candle-foundation work is a behavioral migration, not just a refactor. Re-check parameter meaning and surrounding context even when old code still compiles.
+
+| Area | 0.24.2 guidance |
+| --- | --- |
+| Body size | `RealBodyIndicator` is deprecated. It is the legacy signed `close - open`; use `CandleBodyIndicator` for magnitude and `Bar#isBullish()` / `Bar#isBearish()` for direction. |
+| Doji | Defaults to a five-candle prior **range** baseline with `rangeFactor = 0.1`. The custom constructor remains `(BarSeries, int, double)`, but the `double` now means a factor of prior average **range**, not the old factor of average body height. Source code can therefore compile while changing meaning. |
+| Hammer / Hanging Man / Inverted Hammer / Shooting Star / bullish and bearish Marubozu | Ratio-style configuration has been replaced by the shared adaptive profile. Use the default constructor or the current `(series, averagePeriod)` form. |
+| Engulfing | Current engulfing indicators are pure two-body containment geometry and take only `BarSeries`; old threshold/configuration tuning is gone. |
+| Harami / Kicker families | Threshold/configuration tuning now uses the shared adaptive profile; use the default or current `(series, averagePeriod)` form. |
+| `PiercingLineIndicator` / `DarkCloudCoverIndicator` | Default to a five-candle long-body baseline and `0.5` penetration. Custom tuning is `(series, averagePeriod, penetration)`. Their gap tests are strict and penetration endpoints inclusive. |
+| Morning / Evening Star | Default to a five-candle baseline and `0.5` penetration; custom tuning is `(series, averagePeriod, penetration)`. Trend context is no longer hidden in the pattern. |
+| Three Inside / Three Black Crows / Three White Soldiers | Legacy ratio/factor tuning has been replaced by the shared adaptive average-period model. Trend context is caller-owned. |
+| `DarkCloudIndicator` / `PiercingIndicator` | Deprecated compatibility classes. Migrate to `DarkCloudCoverIndicator` / `PiercingLineIndicator`, but do not treat them as aliases: the old classes retain divergent formulas and embedded `UpTrendIndicator` / `DownTrendIndicator` gates. |
+
+A `false` pattern value during warm-up means “not confirmable at this index,” not evidence for the opposite pattern. Use each indicator's `getCountOfUnstableBars()`; pattern width and baseline period both matter. For example, the current `PiercingLineIndicator` reports `averagePeriod + 1`, while `MorningStarIndicator` reports `averagePeriod + 2`.
+
+### Data and interpretation limits
+
+The 0.24.2 development branch tightens `BaseBar` validation so contradictory high/low values relative to open and close are rejected. If an upgrade exposes invalid bars, fix the source feed rather than weakening candlestick calculations.
+
+A pattern name is still only a description of geometry under ta4j's documented thresholds. It is not evidence of profitability or a universal textbook definition. Compose regime, trend, volume, support/resistance, risk, or confirmation only when your hypothesis needs them, and validate the resulting strategy with realistic out-of-sample/backtest assumptions.
+
+For a live candle that is still changing, the morphology may change until the bar closes. See [Live Candle vs Closed Candle](Live-Candle-vs-Closed-Candle-Evaluation.md) before deciding whether a strategy may act on the mutable current bar.
+
+For exact formulas and endpoint semantics, see the current [`org.ta4j.core.indicators.candles` package documentation](https://github.com/ta4j/ta4j/blob/master/ta4j-core/src/main/java/org/ta4j/core/indicators/candles/package-info.java) and the individual pattern Javadocs.
 
 ## Robust Kalman smoothing (0.24.2 development)
 
