@@ -119,6 +119,7 @@ MonteCarloPriceForecastIndicator prices =
 | `volatilityUpdateMode(...)` | `CONSTANT` | Use `EWMA` only when path-dependent volatility is intentional. |
 | `volatilityDecayFactor(...)` | `0.94` | Path EWMA persistence when updates are enabled. |
 | `quantiles(...)` | five defaults | Request only tails consumed by rules or reports. |
+| `monteCarloMethod(...)` | shock-path defaults above | Replace the whole sampling technique, e.g. with a decorator composition. |
 
 Shock model choices:
 
@@ -128,7 +129,37 @@ Shock model choices:
 | `STANDARDIZED_EMPIRICAL` | Samples standardized residuals and applies state drift/volatility. | Current scale plus empirical tail shape is desired. |
 | `NORMAL` | Samples standard-normal shocks. | A transparent parametric baseline is appropriate. |
 
-`MonteCarloReturnProjectionIndicator` exposes the same builder settings when the required output is cumulative log return rather than price.
+## Custom Techniques and Composition
+
+`monteCarloMethod(...)` replaces the entire sampling technique behind the forecast while the engine keeps gating, lookback-window assembly, seeding, quantiles, and price mapping. A technique is a `MonteCarloMethod` receiving a `MonteCarloContext` (decision index, horizon, iteration count, historical log-return window, stable `ReturnMoments`, and a deterministic `random()`). It must draw exclusively from `context.random()` and return exactly `iterationCount` finite samples; a `null` result, a wrong sample count, or a non-finite sample degrades the forecast to unstable.
+
+Stock techniques and composition decorators live in `org.ta4j.core.analysis.montecarlo`:
+
+| Type | Behavior |
+| --- | --- |
+| `ShockPathMonteCarloMethod` | Shock/volatility engine behind the builder defaults (shock model, update mode, decay factor). |
+| `NormalInverseGammaForecastMethod` | Samples horizon paths from the conjugate Normal-Inverse-Gamma posterior predictive of the lookback window; data-driven weakly-informative priors by default. |
+| `PosteriorSmoothedResidualMonteCarloMethod` | Draws `(mu, sigma^2)` from the NIG posterior and re-composes kernel-smoothed residual paths over an inner technique's shocks. |
+| `RecentVolatilityWideningMonteCarloMethod` | Scales an inner technique's samples around its empirical center by the bounded ratio of recent realized to state volatility, so widening shifts dispersion without moving the forecast location; calm regimes stay untouched. |
+| `StudentTScaleMixingMonteCarloMethod` | Fattens tails with a mean-normalized Student-t scale-mixing factor so the quantile spread grows in high-volatility regimes. |
+| `EnsembleMonteCarloMethod` | Pools two techniques 50/50 through derived sub-generators. |
+
+Composition is recursive: wrap an inner technique with any decorator and hand the result to the builder:
+
+```java
+MonteCarloMethod technique = new StudentTScaleMixingMonteCarloMethod(
+        new RecentVolatilityWideningMonteCarloMethod(
+                new PosteriorSmoothedResidualMonteCarloMethod(
+                        new ShockPathMonteCarloMethod(
+                                ShockModel.NORMAL, VolatilityUpdateMode.CONSTANT, 0.94))));
+MonteCarloPriceForecastIndicator prices =
+        MonteCarloPriceForecastIndicator.builder(close, state)
+                .horizon(4)
+                .monteCarloMethod(technique)
+                .build();
+```
+
+`WalkForwardCalibrationBakeoffExample` is a paired bake-off of these techniques (11 arms) scored by central-interval coverage, pinball loss, and sample-based CRPS, sliced by forward-volatility terciles. With zero drift (below), the composition decorators close roughly half of the high-volatility under-coverage of the baseline: the winning arm `NIG-NORMAL+RECENTVOL+TTAIL` reaches 78% (S&P 500) and 79% (ETH-USD) coverage on the highest-volatility tercile against 69% and 72% for the un-widened NIG composition, at essentially unchanged CRPS.
 
 ## Explicit Analytic Approximation
 
@@ -166,7 +197,7 @@ EwmaReturnForecastStateIndicator state =
 | `decayFactor` | `0.94` | Higher values react more slowly. |
 | `driftMode` | `ZERO` | `ROLLING_MEAN` uses EWMA mean as simulated drift. |
 
-Prefer zero drift unless a rolling drift assumption has earned its place in out-of-sample testing.
+Prefer zero drift unless a rolling drift assumption has earned its place in out-of-sample testing. The walk-forward bake-off above runs zero drift throughout and closes the high-volatility coverage gap with composition decorators rather than by switching to a rolling drift.
 
 ## Rough-Volatility State
 
