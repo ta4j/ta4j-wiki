@@ -138,7 +138,7 @@ Choose the ranking style that matches the job:
 
 ## Static Multi-Asset Portfolio Backtests
 
-Use the portfolio package when the unit of analysis is one static target-weight portfolio across multiple asset series rather than one strategy over one series. `org.ta4j.core.portfolio` aligns asset-labeled `BarSeries` inputs, applies target weights and rebalance schedules, accounts for transaction costs and residual cash, and returns portfolio snapshots plus a value-series export.
+Use the portfolio package when the unit of analysis is one static target-weight allocation over one or more asset series, including a one-asset cash-sleeve benchmark. `org.ta4j.core.portfolio` aligns asset-labeled `BarSeries` inputs, applies target weights and rebalance schedules, accounts for transaction costs and residual cash, and returns portfolio snapshots plus a value-series export.
 
 See [Static Portfolio Backtesting](Static-Portfolio-Backtesting.md) for the full workflow and API guide.
 

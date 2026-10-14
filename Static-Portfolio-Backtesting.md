@@ -1,12 +1,10 @@
 # Portfolio Backtesting and Correlation Analytics
 
-The ta4j 0.23.1 development line introduces a constructor-first multi-asset workflow for strict time alignment, static target-weight execution, correlation and hierarchy analysis, and long-only minimum-variance allocation. The same `PortfolioSeries` drives accounting, optimizers, charts, and reports, so one prepared data window has one asset order and one numeric domain.
+ta4j 0.26.0 provides a constructor-first portfolio workflow for strict time alignment, static target-weight execution, correlation and hierarchy analysis, and long-only minimum-variance allocation. The same `PortfolioSeries` drives accounting, the optional optimizer, charts, and reports, so one prepared data window has one asset order and one numeric domain.
 
-Use this feature for deterministic research across two or more assets. Continue to use `BarSeriesManager` or `BacktestExecutor` for a strategy over one `BarSeries`.
+Use this workflow for static allocation research with one or more risk assets and an optional cash sleeve, including a one-asset benchmark. Correlations and minimum-variance optimization require at least two risk assets. Continue to use `BarSeriesManager` or `BacktestExecutor` for strategy-driven trades over one `BarSeries`.
 
-**Release status:** This is a preview of APIs on the companion
-[`feature/portfolio-correlation-analytics-20260723`](https://github.com/ta4j/ta4j/tree/feature/portfolio-correlation-analytics-20260723)
-branch. They are not yet available in a published ta4j release.
+**Release status:** This API is available in [ta4j 0.26.0](https://github.com/ta4j/ta4j/releases/tag/0.26.0). The runnable example links below are pinned to that release.
 
 ## Quick Start
 
@@ -17,7 +15,6 @@ import java.util.Set;
 
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.analysis.cost.LinearTransactionCostModel;
-import org.ta4j.core.num.Num;
 import org.ta4j.core.portfolio.PortfolioAllocation;
 import org.ta4j.core.portfolio.PortfolioExecutionResult;
 import org.ta4j.core.portfolio.PortfolioSeries;
@@ -34,11 +31,11 @@ assets.put("BONDS", bondSeries);
 assets.put("COMMODITIES", commoditySeries);
 PortfolioSeries portfolio = new PortfolioSeries(assets);
 
-Map<String, Num> weights = new LinkedHashMap<>();
-weights.put("EQUITY", portfolio.numFactory().numOf("0.60"));
-weights.put("BONDS", portfolio.numFactory().numOf("0.30"));
-weights.put("COMMODITIES", portfolio.numFactory().numOf("0.05"));
-PortfolioAllocation allocation = new PortfolioAllocation(weights, portfolio.numFactory());
+Map<String, Double> weights = new LinkedHashMap<>();
+weights.put("EQUITY", 0.60);
+weights.put("BONDS", 0.30);
+weights.put("COMMODITIES", 0.05);
+PortfolioAllocation allocation = new PortfolioAllocation(weights);
 
 PortfolioSeriesManager manager = new PortfolioSeriesManager(
         portfolio,
@@ -53,7 +50,7 @@ System.out.println("Total return: " + result.getTotalReturn());
 System.out.println("Costs: " + result.getTotalTransactionCost());
 ```
 
-The weights sum to `0.95`, so the remaining `0.05` is held as cash. Rebalance trade sizes are solved against post-cost portfolio value and constrained so transaction costs cannot make cash negative.
+The weights sum to `0.95`, so the remaining `0.05` is held as cash. Rebalance trade sizes are solved against post-cost portfolio value and constrained so transaction costs cannot make cash negative. Holdings are fractional and long-only; trades and valuation use aligned closes in one common quote currency, with adjustments supplied upstream and no implicit forward fill. Returns are fractions, so `0.05` means 5%.
 
 ## Canonical Flow
 
@@ -109,7 +106,7 @@ The original source index is retained even when an input has a nonzero begin ind
 
 Alignment rules:
 
-- At least two nonempty series are required.
+- At least one nonempty series is required for execution; correlation and optimizer calculations require two.
 - Asset names must be nonblank and unique.
 - Every source must share at least one common bar end time.
 - Duplicate end times inside one source are rejected.
@@ -124,16 +121,16 @@ Prepare currency conversion, exchange-calendar joins, or intentional carry-forwa
 Use explicit weights when a cash sleeve is intentional:
 
 ```java
-Map<String, Num> weights = new LinkedHashMap<>();
-weights.put("US_EQUITY", numFactory.numOf("0.60"));
-weights.put("TREASURY", numFactory.numOf("0.30"));
-PortfolioAllocation allocation = new PortfolioAllocation(weights, numFactory);
+Map<String, Double> weights = new LinkedHashMap<>();
+weights.put("US_EQUITY", 0.60);
+weights.put("TREASURY", 0.30);
+PortfolioAllocation allocation = new PortfolioAllocation(weights);
 
 Num investedWeight = allocation.getTotalWeight(); // 0.90
 Num cashWeight = allocation.getCashWeight();      // 0.10
 ```
 
-Weights must be finite and non-negative, and their sum must not exceed one. A finite `DecimalNum` remains valid even when its primitive `doubleValue()` would overflow.
+Map weights are plain `Number` values, including `BigDecimal`; the manager converts them using the portfolio's `NumFactory`. Weights must be finite and non-negative, and their sum must not exceed one. Relative `WeightedValue` inputs retain their `Num` weights, including finite `DecimalNum` values outside the primitive double range.
 
 Use relative weighted values for a normalized, fully invested allocation:
 
@@ -141,8 +138,7 @@ Use relative weighted values for a normalized, fully invested allocation:
 PortfolioAllocation allocation = new PortfolioAllocation(
         List.of(
                 new WeightedValue<>("US_EQUITY", numFactory.two()),
-                new WeightedValue<>("TREASURY", numFactory.one())),
-        numFactory);
+                new WeightedValue<>("TREASURY", numFactory.one())));
 ```
 
 This constructor normalizes the values to one and combines duplicate asset names. `getTargetWeight(name)` returns zero for an intentionally unallocated asset.
@@ -162,16 +158,18 @@ PortfolioExecutionResult scheduled = manager.run(
         RebalancePolicy.onIndexes(Set.of(0, 63, 126, 189)));
 ```
 
-The two-argument `run(...)` performs an initial rebalance. Available policies are:
+The two-argument `run(...)` invests at the first aligned bar and then holds. A supplied policy schedules **every** trade, including the initial investment: `onIndexes(Set.of(3))` stays in cash through bar 2; `atStart().or(onIndexes(Set.of(3)))` invests at bar 0 and rebalances at bar 3. Available policies are:
 
 ```java
 RebalancePolicy.atStart();
 RebalancePolicy.everyBar();
 RebalancePolicy.onIndexes(Set.of(0, 20, 40));
-RebalancePolicy monthEnd = index -> monthEndIndexes.contains(index);
+RebalancePolicy.everyNthBar(20);
+RebalancePolicy.firstBarOf(ChronoUnit.MONTHS, ZoneOffset.UTC);
+RebalancePolicy.whenDriftExceeds(0.03);
 ```
 
-`RebalancePolicy` is a functional interface. Derive calendar-aware indexes from `portfolio.getEndTimes()` and capture them in a lambda or `onIndexes(...)`.
+`RebalancePolicy` is a functional interface whose lambda receives a `RebalancePolicy.Context`, including the current aligned index and pre-trade weights. `firstBarOf(...)` uses aligned timestamps for calendar periods; `everyNthBar(...)` counts retained bars and does not imply a calendar month. Policies compose with `or(...)` and `and(...)`.
 
 Use any ta4j `CostModel`:
 
@@ -207,11 +205,15 @@ for (PortfolioSnapshot snapshot : result.getSnapshots()) {
 | `getPortfolioValue()` | Cash plus marked-to-market holdings. |
 | `getPeriodReturn()` | Return since the previous snapshot, net of costs. |
 | `getTransactionCost()` | Costs paid at this snapshot. |
-| `getTurnover()` | Gross traded notional, excluding costs. |
+| `getTradedNotional()` | Gross traded notional in the quote currency, excluding costs. |
+| `getTurnover()` | Traded notional divided by pre-trade portfolio value. |
 | `getAssetValue(name)` | Marked-to-market asset value. |
-| `getAssetWeight(name)` | Actual marked-to-market asset weight. |
+| `getAssetWeights()` / `getCashWeight()` | Achieved asset and cash weights. |
+| `getRebalanceStatus()` | `NOT_SCHEDULED`, `COMPLETED`, `PARTIAL`, or `SKIPPED`. |
 
 Result summaries include `getFinalValue()`, `getTotalReturn()`, `getTotalTransactionCost()`, `getTotalTurnover()`, and `getFinalWeights()`.
+
+`toString()` gives a compact summary. Full snapshot history is explicit through `getSnapshots()`, including filtering by rebalance status.
 
 Export the equity curve for normal ta4j indicators and criteria:
 
@@ -220,6 +222,8 @@ BarSeries equityCurve = result.toPortfolioValueSeries("portfolio-value");
 ClosePriceIndicator value = new ClosePriceIndicator(equityCurve);
 SMAIndicator smoothedValue = new SMAIndicator(value, 20);
 ```
+
+The exported curve begins with the initial capital before the first aligned bar, so existing return and drawdown criteria include initial trading fees. `StaticPortfolioBacktest` demonstrates `EnterAndHoldCriterion(NetReturnCriterion)` agreeing with `getTotalReturn()`.
 
 ## Correlation Matrices
 
@@ -270,7 +274,7 @@ A matrix containing `NaN` or infinite coefficients is rejected rather than silen
 
 ## Minimum-Variance Allocation
 
-`MinimumVarianceOptimizer` estimates a population covariance matrix from aligned one-bar simple returns and minimizes portfolio variance subject to non-negative weights summing to one.
+`MinimumVarianceOptimizer` is an optional core calculation that returns the same `PortfolioAllocation` used by static execution. It estimates covariance from aligned one-bar simple returns and minimizes portfolio variance subject to non-negative weights summing to one. Ledoit-Wolf shrinkage toward a scaled identity is the default; `withCovarianceEstimator(CovarianceEstimator.SAMPLE)` selects raw sample covariance. Static allocation does not require the optimizer or any network/reporting dependency.
 
 ```java
 PortfolioAllocation pure =
@@ -279,7 +283,7 @@ PortfolioAllocation pure =
 PortfolioAllocation capped =
         new MinimumVarianceOptimizer(
                 portfolio,
-                portfolio.numFactory().numOf("0.50"))
+                0.50)
                 .optimize();
 ```
 
@@ -293,7 +297,7 @@ PortfolioAllocation walkForwardAllocation =
                 portfolio,
                 decisionIndex,
                 120,
-                portfolio.numFactory().numOf("0.25"))
+                0.25)
                 .optimize();
 ```
 
@@ -342,7 +346,7 @@ It writes:
 - simple-return heatmap and dendrogram
 - equal-weight, pure minimum-variance, and 25%-capped allocations
 - `report.html`
-- `portfolio-analysis.xlsx`
+- `price-correlations.csv`, `return-correlations.csv`, `allocations.csv`, and `return-linkage.csv`
 - `ai-analysis-prompt.md`
 
 Run it from the ta4j repository root:
@@ -365,7 +369,7 @@ The response is HTML-escaped before it is embedded. Use `--output=/path/to/direc
 
 ## No-Look-Ahead Contract
 
-Correlation and optimization constructors with an explicit index read prices only through that index. A rolling rebalance loop should compute an allocation at decision index `i`, then apply it according to the execution timing in the research design.
+Correlation methods and optimizer constructors with an explicit index read prices only through that index. A rolling rebalance loop should compute an allocation at decision index `i`, then apply it according to the execution timing in the research design.
 
 Do not estimate one full-history allocation and present it as a historical strategy. That is an in-sample description, not a walk-forward backtest.
 
@@ -398,8 +402,8 @@ Do not estimate one full-history allocation and present it as a historical strat
 
 ## Runnable Examples
 
-- [`StaticPortfolioBacktest`](https://github.com/ta4j/ta4j/blob/feature/portfolio-correlation-analytics-20260723/ta4j-examples/src/main/java/ta4jexamples/portfolio/StaticPortfolioBacktest.java)
-- [`PortfolioCorrelationAnalysis`](https://github.com/ta4j/ta4j/blob/feature/portfolio-correlation-analytics-20260723/ta4j-examples/src/main/java/ta4jexamples/portfolio/PortfolioCorrelationAnalysis.java)
-- [`DiversifiedPortfolioAnalysis`](https://github.com/ta4j/ta4j/blob/feature/portfolio-correlation-analytics-20260723/ta4j-examples/src/main/java/ta4jexamples/portfolio/DiversifiedPortfolioAnalysis.java)
+- [`StaticPortfolioBacktest`](https://github.com/ta4j/ta4j/blob/0.26.0/ta4j-examples/src/main/java/ta4jexamples/portfolio/StaticPortfolioBacktest.java)
+- [`PortfolioCorrelationAnalysis`](https://github.com/ta4j/ta4j/blob/0.26.0/ta4j-examples/src/main/java/ta4jexamples/portfolio/PortfolioCorrelationAnalysis.java)
+- [`DiversifiedPortfolioAnalysis`](https://github.com/ta4j/ta4j/blob/0.26.0/ta4j-examples/src/main/java/ta4jexamples/portfolio/DiversifiedPortfolioAnalysis.java)
 
 For general strategy mechanics, see [Backtesting](Backtesting.md). For promotion gates and realism checks, see [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md).
