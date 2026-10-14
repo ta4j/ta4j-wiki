@@ -13,6 +13,7 @@
     <![endif]-->
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="wrapper">
       <header>
         <a href="{{ '/' | relative_url }}"> <h3>Ta4j Wiki</h3> </a>
@@ -75,7 +76,7 @@
         <p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }} Organization</a></p>
       </header>
 
-      <section>
+      <section id="main-content" tabindex="-1">
 
       {{ content }}
 
