@@ -57,6 +57,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Forecast State Estimation](Forecast-State-Estimation.md)** - Minimal lifecycle state, canonical, rough-volatility, and Bayesian regime moments, representation-bound schemas, and provenance-aware summaries
 - **[Forecast Projection Models](Forecast-Projection-Models.md)** - Analog neighbors, rolling conformal calibration, maturity guards, tuning, and failure behavior
 - **[Trading Strategies](Trading-strategies.md)** - Rules, strategies, unstable bars, and serialization
+- **[Static Portfolio Backtesting](Static-Portfolio-Backtesting.md)** - Multi-asset target-weight portfolio accounting, rebalances, costs, snapshots, and value-series export
 - **[Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)** - Preview guide for canonical JSON, compact strategy JSON v2, and named asset expressions
 - **[Charting](Charting.md)** - Visual overlays, trading-record rendering, and analysis charts
 
@@ -66,6 +67,7 @@ Use the canonical matrix for execution choices:
 
 - [Execution Decision Matrix](Execution-Decision-Matrix.md) for driver and simulation-path selection
 - [Backtesting](Backtesting.md) for implementation patterns once you choose a backtest path
+- [Static Portfolio Backtesting](Static-Portfolio-Backtesting.md) for deterministic multi-asset target-weight portfolio runs
 - [Live Trading](Live-trading.md) for fill-driven and event-driven live loops
 
 ## Where To Go Next
