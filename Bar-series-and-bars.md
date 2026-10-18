@@ -97,6 +97,37 @@ Best practices:
 - **Set maximum bar count** via `setMaximumBarCount(int)` to cap memory usage. This turns the series into a moving window—be careful not to reference bars older than `getBeginIndex()`.
 - **Threading** – For single-threaded scenarios, `BaseBarSeries` is sufficient. For concurrent read/write access, use `ConcurrentBarSeries` (see below).
 
+### Moving series and continued indicator state
+
+**Development behavior, not released in 0.26.0:** a continuously evaluated EMA-family indicator can carry already-consumed history across raw-bar eviction. A fresh instance on the same pruned series instead seeds from retained inputs. The [cache-policy guide](Technical-indicators.md#moving-series-cache-policies) owns the precise window requirements, mutation handling, explicit-reset exceptions and version boundary.
+
+This example uses the prices, period and capacity from the core EMA continuation regression. Imports: `java.time.Duration`, `java.time.Instant`, `org.ta4j.core.BarSeries`, `org.ta4j.core.BaseBarSeriesBuilder`, `org.ta4j.core.indicators.averages.EMAIndicator`, `org.ta4j.core.indicators.helpers.ClosePriceIndicator`.
+
+```java
+BarSeries moving = new BaseBarSeriesBuilder().build();
+moving.setMaximumBarCount(4);
+EMAIndicator continued = new EMAIndicator(new ClosePriceIndicator(moving), 3);
+double[] closes = { 10, 13, 9, 15, 11, 17, 12, 19, 14, 21, 13, 18 };
+Instant start = Instant.parse("2026-01-01T00:00:00Z");
+for (int i = 0; i < closes.length; i++) {
+    moving.addBar(moving.barBuilder()
+            .timePeriod(Duration.ofMinutes(1))
+            .endTime(start.plusSeconds(60L * (i + 1)))
+            .openPrice(closes[i]).highPrice(closes[i]).lowPrice(closes[i])
+            .closePrice(closes[i]).volume(1).build());
+    continued.getValue(moving.getEndIndex()); // consume every append, including warm-up
+}
+// Retained absolute indexes are 8..11; continued matches an unbounded replay.
+
+EMAIndicator fresh = new EMAIndicator(new ClosePriceIndicator(moving), 3);
+fresh.getValue(10); // NaN: this instance is still warming up from retained index 8
+fresh.getValue(11); // 18: first usable seed; not the continued full-history EMA
+```
+
+Keep the established instance if continuation is intended. A missed interval that loses required history, explicit source resets or historical revisions can require reseeding; merely constructing a new indicator does not restore the old chain. Choose capacity for the whole source graph, not only the outer EMA period.
+
+Removed indexes are not historical-data access: some APIs map them to the retained head rather than throw or return `NaN`. Always restrict raw-bar reads to `getBeginIndex()..getEndIndex()`. State computed earlier from past bars does not authorize reading evicted bars or bars after the evaluation index.
+
 ## Concurrent bar series for multi-threaded scenarios
 
 Since 0.22.2, `ConcurrentBarSeries` provides thread-safe access for scenarios where multiple threads need to read from or write to a bar series simultaneously. This is essential for live trading systems where one thread ingests market data while another thread evaluates strategies.

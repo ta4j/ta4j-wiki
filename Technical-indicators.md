@@ -314,10 +314,26 @@ Indicators should be evaluated the same way strategies are—prefer realistic da
 
 ## Caching & stability
 
-- Every indicator extends `CachedIndicator`, so once a value is computed (except for the most recent bar) it is reused.
-- Mutating the latest bar (common with streaming data) invalidates just that slot; the rest stays cached.
-- Compare the current index with `indicator.getCountOfUnstableBars()` before trusting early values, or pass that number to `strategy.setUnstableBars(...)`.
-- When using moving `BarSeries` via `setMaximumBarCount`, cached entries older than the oldest remaining bar disappear. Always guard against `NaN` if you try to access evicted indexes.
+`CachedIndicator` reuses computed values while their inputs remain valid; not every `Indicator` implementation uses this cache. The latest bar is **cached with mutation detection**, not categorically excluded. Supported price/trade updates, last-bar replacement and published historical revisions invalidate affected values. Unchanged latest-bar reads can reuse the cached result. Do not assume arbitrary, unnotified edits to older custom bars are detected: use the series' supported mutation/change-tracking paths.
+
+### Moving-series cache policies
+
+**Version boundary:** the continuation repair described here is on the development branch, under [Unreleased / Fixed](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md#unreleased), not in the latest stable release, 0.26.0. It restores the EMA-family continuation policy used in 0.24.1; results on moving series can differ from 0.25.0–0.26.0. This is not a claim that every library output matches 0.24.1.
+
+| Policy | What a head advance means |
+| --- | --- |
+| Continued, unbounded-history recurrence | An established EMA-family chain keeps usable cached predecessors and extends them on append. Eviction alone does not erase information already consumed. Reading every appended bar, with sufficient source history and warm-up, lets EMA, ATR, RSI, ADX and MACD chains match their unbounded-series counterparts. |
+| Finite-window computation | Recompute affected values against the retained window. A declared lookback is not permission to read before `series.getBeginIndex()`; insufficient input can leave values unavailable. |
+| Explicitly reanchoring source | Discard state when the owning source requires a reset; registered dependents must not mix pre-reset and post-reset values. This follows the series whose head actually advanced, not an unrelated series in a multi-source graph. |
+| Fresh or invalidated chain | With no usable predecessor, seed from available retained inputs and warm up again. A new indicator on an already-pruned series cannot reconstruct the removed prefix. An evaluation gap that loses required inputs/predecessors, or a source revision/reset, can also break continuation. |
+
+Capacity is component-specific. `EWMAIndicator` needs at least `barCount` retained bars for its seed window; `WildersMAIndicator` needs **more than** `barCount`. At this development baseline, RSI and ATR wrappers require a window longer than their warm-up for bounded/unbounded agreement. A simple continuously evaluated EMA can carry its seed-relative warm-up across eviction even with a shorter window; that does not remove the raw lookbacks or warm-up requirements of a composite.
+
+Explicit resets remain intentional at this baseline: `StochasticIndicator`/`StochasticRSIIndicator`, Klinger volume oscillator (KVO), `JMAIndicator`, `SchaffTrendCycleIndicator`, `CusumIndicator` and `EwmaVarianceIndicator` reanchor. Pivot-point/reversal families have their own retained-period policies; `ElliottSwingIndicator`, empirical Elliott forecasts and `EwmaReturnForecastStateIndicator` reset too. Forecast projections follow their configured state source's policy, so not every forecast resets identically. Independent repair PRs are not shipped behavior.
+
+Warm-up belongs to the actual dependency graph and seed, not simply the current absolute index or a chosen capacity. Respect each indicator's `getCountOfUnstableBars()` and unavailable (`NaN`) results after fresh seeding or invalidation. Previously consumed recursive state is causal; it neither restores removed raw bars nor permits using future bars. For a runnable append/read versus fresh-instance example, see [Moving series and continued indicator state](Bar-series-and-bars.md#moving-series-and-continued-indicator-state).
+
+Source baseline: [CachedIndicator policies](https://github.com/ta4j/ta4j/blob/369eae35a189af21730a1d17b1f08b54ec109128/ta4j-core/src/main/java/org/ta4j/core/indicators/CachedIndicator.java), [EMA recurrence](https://github.com/ta4j/ta4j/blob/369eae35a189af21730a1d17b1f08b54ec109128/ta4j-core/src/main/java/org/ta4j/core/indicators/averages/AbstractEMAIndicator.java) and [continuation regression](https://github.com/ta4j/ta4j/blob/369eae35a189af21730a1d17b1f08b54ec109128/ta4j-core/src/test/java/org/ta4j/core/indicators/averages/EMAIndicatorTest.java#L63-L89). Recheck exceptions when moving to a newer core version.
 
 ## Creating custom indicators
 
@@ -352,6 +368,4 @@ chartWorkflow.builder()
 
 ### Caching mechanism
 
-Some indicators need recursive calls and/or values from the previous bars in order to calculate their last value. For that reason, a caching mechanism has been implemented for all the indicators provided by ta4j. This system avoids calculating the same value twice. Therefore, if a value has been already calculated it is retrieved from cache the next time it is requested. **Values for the last Bar will not be cached**. This allows you to modify the last bar of the BarSeries by adding price/trades to it and to recalculate results with indicators.
-
-**Warning!** If a maximum bar count has been set for the related bar Series, then the results calculated for evicted bars are evicted too. They also cannot be recomputed since the related bars have been removed. That being said, moving bar Series should not be used when you need to access long-term past bars.
+See [Caching & stability](#caching--stability) for mutation-aware latest-bar caching, continuation, retained-window resets and fresh-instance behavior. Keep a separate history store if you need removed raw bars: cached recursive state is not a replacement for historical data.
