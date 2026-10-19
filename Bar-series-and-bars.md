@@ -99,7 +99,7 @@ Best practices:
 
 ### Moving series and continued indicator state
 
-**Development behavior, not released in 0.26.0:** a continuously evaluated EMA-family indicator can carry already-consumed history across raw-bar eviction. A fresh instance on the same pruned series instead seeds from retained inputs. The [cache-policy guide](Technical-indicators.md#moving-series-cache-policies) owns the precise window requirements, mutation handling, explicit-reset exceptions and version boundary.
+**Released in 0.27.0:** a continuously evaluated EMA-family indicator can carry already-consumed history across raw-bar eviction. A fresh instance on the same pruned series instead seeds from retained inputs. The [cache-policy guide](Technical-indicators.md#moving-series-cache-policies) owns the precise window requirements, mutation handling, explicit-reset exceptions and version boundary.
 
 This example uses the prices, period and capacity from the core EMA continuation regression. Imports: `java.time.Duration`, `java.time.Instant`, `org.ta4j.core.BarSeries`, `org.ta4j.core.BaseBarSeriesBuilder`, `org.ta4j.core.indicators.averages.EMAIndicator`, `org.ta4j.core.indicators.helpers.ClosePriceIndicator`.
 

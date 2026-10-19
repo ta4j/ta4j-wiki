@@ -318,7 +318,7 @@ Indicators should be evaluated the same way strategies are—prefer realistic da
 
 ### Moving-series cache policies
 
-**Version boundary:** the continuation repair described here is on the development branch, under [Unreleased / Fixed](https://github.com/ta4j/ta4j/blob/master/CHANGELOG.md#unreleased), not in the latest stable release, 0.26.0. It restores the EMA-family continuation policy used in 0.24.1; results on moving series can differ from 0.25.0–0.26.0. This is not a claim that every library output matches 0.24.1.
+**Version boundary:** the continuation repair described here shipped in [0.27.0](https://github.com/ta4j/ta4j/releases/tag/0.27.0). It restores the EMA-family continuation policy used in 0.24.1; results on moving series can differ from 0.25.0–0.26.0. This is not a claim that every library output matches 0.24.1.
 
 | Policy | What a head advance means |
 | --- | --- |
