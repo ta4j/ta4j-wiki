@@ -1,14 +1,15 @@
 # Analysis Criteria and Risk Metrics
 
-Use analysis criteria after a strategy run to compare returns, risk, duration, fees, and open exposure. Current ta4j criteria work with the same `TradingRecord` model used by both backtests and fill-driven live-style simulations.
+Use analysis criteria after a strategy run or portfolio simulation to compare returns, risk, duration, fees, open exposure, and statistical process control. Current ta4j criteria work with the same `TradingRecord` model used by both backtests and fill-driven live-style simulations.
 
 ## Recent Criteria Surface
 
 | Need | Primary classes | Notes |
 | --- | --- | --- |
-| Risk-adjusted return | `SharpeRatioCriterion`, `SortinoRatioCriterion` | Support `SamplingFrequency`, including trade-level sampling, `Annualization`, risk-free rates, grouping zones, cash-return policy, equity-curve mode, and open-position handling. |
+| Risk-adjusted return | `SharpeRatioCriterion`, `SortinoRatioCriterion` | Support `SamplingFrequency` (including trade-level sampling), `Annualization`, risk-free rates, grouping zones, cash-return policy, equity-curve mode, and open-position handling. |
 | Drawdown-adjusted return | `CalmarRatioCriterion`, `ReturnOverMaxDrawdownCriterion` | `CalmarRatioCriterion` annualizes return and divides by maximum drawdown. |
 | Distribution-aware return | `OmegaRatioCriterion` | Compares upside excess returns against downside shortfalls around a configurable threshold. |
+| Statistical process capability | `ProcessCapabilityCriterion` | Ranks strategies by $C_{pk}$ capability over closed-position gross returns relative to one- or two-sided specification limits. |
 | Trade duration | `PositionDurationCriterion` | Summarizes closed-position durations with `Statistics` such as mean/min/max. |
 | Stop-model quality | `RMultipleCriterion` | Computes profit divided by per-trade risk from a `PositionRiskModel`. |
 | Open exposure | `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion` | Useful when evaluating records that can still have an open position. |
@@ -54,7 +55,7 @@ Num perTradeSortino = tradeSortino.calculate(series, tradingRecord);
 
 `TRADE` is for criteria that receive a `TradingRecord`, such as Sharpe and Sortino. It is intentionally not supported by `SamplingFrequencyIndexes`, because that helper can only group bar indices and cannot inspect positions.
 
-## Windowed Criterion Evaluation
+## Windowed Criterion Evaluation & Logical Bounds
 
 Since the window-aware criterion API, any `AnalysisCriterion` can be evaluated over a bounded slice without hand-copying a `TradingRecord`.
 
@@ -74,6 +75,8 @@ Available windows:
 - `AnalysisWindow.timeRange(startInclusive, endExclusive)`
 - `AnalysisWindow.lookbackDuration(duration)`
 
+When evaluating a `BaseTradingRecord` created with explicit start or end bounds, position-based criteria automatically evaluate only positions entered at or after the start index, preventing pre-window trades on rolling series from leaking into results.
+
 Use `MissingHistoryPolicy.STRICT` when a missing lookback should fail fast. Use `CLAMP` for moving-series dashboards where the oldest requested bars may already have been evicted.
 
 ## Risk-Unit Evaluation
@@ -89,15 +92,12 @@ Num averageR = rMultiple.calculate(series, tradingRecord);
 
 ## Practical Workflow
 
-1. Pick the business question first: absolute return, downside risk, trade duration, open exposure, or stop-model quality.
+1. Pick the business question first: absolute return, downside risk, trade duration, open exposure, statistical process capability, or stop-model quality.
 2. Match equity-curve mode and open-position handling to the system being measured.
 3. Use `AnalysisWindow` for rolling dashboards, recent-regime checks, and moving-series records.
 4. Use the same `NumFactory` through the originating `BarSeries`; criteria return `Num` values from that factory.
 
-## Rationale Notes (2026-04-27)
+## Rationale Notes
 
-- The new-feature scout flagged recent criteria and analysis classes that had no dedicated wiki entry point.
-- Commit `9e0f63a9` added `SharpeRatioCriterion` plus sampling helpers such as `SamplingFrequency`, `SamplingFrequencyIndexes`, `Sample`, and `SampleSummary`.
-- Commit `8d319169` added `SortinoRatioCriterion`; commit `b5f5d2d0` added `CalmarRatioCriterion` and `OmegaRatioCriterion`.
-- Commit `3e7299a3` added the window-aware `AnalysisCriterion#calculate(..., AnalysisWindow, AnalysisContext)` API with `AnalysisWindow` and `AnalysisContext`.
-- Commit `89cd2271` added risk-unit scoring around `RMultipleCriterion` and `PositionRiskModel`.
+- Added `ProcessCapabilityCriterion` ($C_{pk}$) and updated logical position bounds behavior on `BaseTradingRecord`.
+- Preserved `SharpeRatioCriterion`, `SortinoRatioCriterion`, `CalmarRatioCriterion`, `OmegaRatioCriterion`, and `AnalysisWindow` overloads.

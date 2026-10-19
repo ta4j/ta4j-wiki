@@ -1,8 +1,9 @@
 # Backtesting
 
-Backtesting estimates how a strategy would have behaved over historical data. In current ta4j, the default building blocks are:
+Backtesting estimates how a strategy or portfolio allocation would have behaved over historical data. In current ta4j, the default building blocks are:
 
 - `BarSeriesManager` for one strategy over one series
+- `PortfolioSeriesManager` for multi-asset portfolio backtesting and rebalancing
 - `BacktestExecutor` for many strategies over one series
 - `BaseTradingRecord` as the trading-state object underneath both backtest and live-style flows
 
@@ -74,8 +75,37 @@ Current execution-model choices are:
 - `TradeOnCurrentCloseModel` - signal and fill on the current bar close.
 - `SlippageExecutionModel` - applies directional slippage to either next-open or current-close fills.
 - `StopLimitExecutionModel` - models pending stop-limit orders, partial fills, expiries, and rejected-order metadata.
+- `ExitOnRunEndModel` - wraps any execution model (e.g. `new ExitOnRunEndModel(new TradeOnNextOpenModel())`) so positions open at run end close at the final bar close and pay exit costs.
 
 Execution models can do per-bar work before signals through `TradeExecutionModel.onBar(...)` and clean up at the end of the run through `onRunEnd(...)`. That matters for pending-order models such as `StopLimitExecutionModel`; immediate-fill models leave those hooks as no-ops.
+
+## Multi-Asset Baskets: `PortfolioSeriesManager`
+
+Backtest a basket of instruments held at target weights using `PortfolioSeriesManager`:
+
+```java
+PortfolioSeries portfolioSeries = PortfolioSeries.builder()
+        .add("SPY", spySeries)
+        .add("TLT", tltSeries)
+        .build();
+
+PortfolioAllocation allocation = PortfolioAllocation.of(Map.of(
+        "SPY", 0.60,
+        "TLT", 0.40));
+
+PortfolioSeriesManager manager = new PortfolioSeriesManager(portfolioSeries);
+PortfolioExecutionResult result = manager.run(
+        allocation,
+        RebalancePolicy.periodic(CalendarPeriod.MONTHLY));
+```
+
+Key portfolio components:
+- `PortfolioSeries`: Aligns multiple bar series by bar end time.
+- `PortfolioAllocation`: Specifies long-only target weights. Leftover weight remains as uninvested cash.
+- `RebalancePolicy`: Triggers rebalancing on schedule (every bar, every N bars, monthly/quarterly/yearly, or on weight drift thresholds).
+- `MinimumVarianceOptimizer`: Generates lower-risk target weights from a `PortfolioSeries` using Ledoit-Wolf covariance shrinkage.
+
+See the `StaticPortfolioBacktest` and `DiversifiedPortfolioAnalysis` examples in `ta4j-examples`.
 
 ## Provide Your Own `BaseTradingRecord`
 
@@ -201,13 +231,14 @@ Useful companions:
 - `CommissionsImpactPercentageCriterion`
 - `PositionDurationCriterion`
 - `RMultipleCriterion`
+- `ProcessCapabilityCriterion`
 - `MonteCarloMaximumDrawdownCriterion`
 - `SharpeRatioCriterion`
 - `SortinoRatioCriterion`
 - `CalmarRatioCriterion`
 - `OmegaRatioCriterion`
 
-For open exposure, prefer `getCurrentPosition()` as the canonical net-open view and `getOpenPositions()` when you want one snapshot per remaining lot. `getNetOpenPosition()` remains available only as a compatibility alias.
+For open exposure, prefer `getCurrentPosition()` as the canonical net-open view and `getOpenPositions()` when you want one snapshot per remaining lot. `getNetOpenPosition()` remains available only as a compatibility alias. Position-based criteria automatically respect logical bounds on `BaseTradingRecord`, preventing pre-window trades from skewing results.
 
 Risk-adjusted criteria can be configured for sampling frequency, annualization, equity-curve mode, and open-position handling. Use `SharpeRatioCriterion` and `SortinoRatioCriterion` when you need return distributions with risk-free-rate handling; use `CalmarRatioCriterion` when maximum drawdown is the denominator; use `OmegaRatioCriterion` when you want upside-vs-downside return mass around a configurable threshold.
 
@@ -233,14 +264,14 @@ After you have a `TradingRecord`, render it with `ChartWorkflow` or inspect it w
 
 - **Look-ahead bias** - Ensure your indicator windows and any custom execution logic never peek past the current bar.
 - **Insufficient warm-up** - Set `strategy.setUnstableBars(n)` so signals do not fire before your indicators stabilize.
-- **Moving series** - If you use `setMaximumBarCount`, do not evaluate criteria against evicted bars.
+- **Moving series** - On bounded series, indicators re-anchor safely on head advances without re-seeding repeatedly.
 - **Execution assumptions** - Keep your `TradeExecutionModel`, fees, and borrowing costs aligned with what you are trying to simulate.
 
 For production promotion gates, run through the [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md).
 
 ## Walk-Forward And Tuning
 
-Use walk-forward execution when you want training and testing windows instead of one monolithic run:
+Use walk-forward execution or hyperparameter tuning when you want training and testing windows instead of one monolithic run:
 
 ```java
 WalkForwardConfig config = WalkForwardConfig.defaultConfig(series);
@@ -252,6 +283,8 @@ BacktestExecutionResult standardRun = result.backtest();
 StrategyWalkForwardExecutionResult walkForward = result.walkForward();
 ```
 
+For budget-exact parameter tuning, `ParameterResearch` provides structured grid, genetic, and particle-swarm optimization (`SearchPlan.grid`, `genetic`, `particleSwarm`) over typed parameter domains.
+
 For fixed study geometry, construct `WalkForwardConfig` directly with your chosen train/test, purge, embargo, holdout, horizon, top-K, and seed values, then keep that configuration unchanged across candidate comparisons. For large-scale performance tuning, use [`BacktestPerformanceTuningHarness`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java), which sits on top of `BacktestExecutor`.
 
 If your results look unstable or surprising, use the [Troubleshooting Hub](Troubleshooting-Hub.md) for symptom-driven debugging paths.
@@ -262,6 +295,6 @@ If your results look unstable or surprising, use the [Troubleshooting Hub](Troub
 
 ## Maintainer rationale notes
 
-- Execution-model guidance reflects `TradeExecutionModel`, `SlippageExecutionModel`, `StopLimitExecutionModel`, `BarSeriesManager`, and `BacktestExecutor` changes from commit `49f3f5f8`.
-- Criteria coverage reflects `CalmarRatioCriterion` and `OmegaRatioCriterion` from commit `b5f5d2d0`, plus the windowed `MaximumDrawdownCriterion` fix from commit `a6cf6149`.
-- Walk-forward examples now match `WalkForwardConfig.defaultConfig(...)` and `BacktestExecutor.executeWithWalkForward(...)` in the current `org.ta4j.core.backtest` and `org.ta4j.core.walkforward` APIs.
+- Execution-model guidance reflects `TradeExecutionModel`, `SlippageExecutionModel`, `StopLimitExecutionModel`, `ExitOnRunEndModel`, `BarSeriesManager`, `PortfolioSeriesManager`, and `BacktestExecutor`.
+- Criteria coverage reflects `CalmarRatioCriterion`, `OmegaRatioCriterion`, `ProcessCapabilityCriterion`, and logical position bounds filtering.
+- Walk-forward examples match `WalkForwardConfig.defaultConfig(...)` and `ParameterResearch` hyperparameter optimization.

@@ -10,9 +10,11 @@ If you are deciding where to start, use this map:
 - Build and compare strategy logic: [Strategy patterns](#strategy-patterns)
 - Preview compact serialization configuration: [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)
 - Validate execution assumptions and metrics: [Backtesting & analytics](#backtesting--analytics)
+- Multi-asset portfolio backtesting & asset optimization: [Portfolio backtesting](#portfolio-backtesting)
+- Parameter optimization & research: [Parameter research](#parameter-research)
 - Integrate bot loops and fill-driven recording: [Bots & live trading](#bots--live-trading)
 - Debug indicators and visual behavior: [Indicators & visualization](#indicators--visualization)
-- Deep Elliott workflows: [Elliott Wave analysis](#elliott-wave-analysis)
+- Deep Elliott & Wyckoff workflows: [Market structure analysis](#market-structure-analysis)
 
 For a curated progression, also see the module-level examples index: [`ta4j-examples/README.md`](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/README.md).
 For verification signals and common failure patterns, see [Examples Expected Outputs](Examples-Expected-Outputs.md).
@@ -27,8 +29,12 @@ For verification signals and common failure patterns, see [Examples Expected Out
 - **[IndicatorsToCsv](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToCsv.java)** - Export indicator values for spreadsheet analysis
 - **[IndicatorsToChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/IndicatorsToChart.java)** - Plot price plus indicator overlays
 - **[CandlestickChart](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/CandlestickChart.java)** - Candlestick chart overlays
+- **[AdaptiveKalmanNoiseExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/indicators/AdaptiveKalmanNoiseExample.java)** - Adaptive Kalman filter with ATR and relative volume measurement noise
 - **[Forecast Indicators](Forecast-Indicators.md)** - Build forward-looking return and price distributions, then project them to rule-friendly point forecasts
 - **[Charting](Charting.md)** - Full `ChartWorkflow` guide
+
+## Market structure analysis
+
 - **[ElliottWaveIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWaveIndicatorSuiteDemo.java)** - Full Elliott Wave indicator-suite run with charts and scenario analysis
 - **[ElliottWavePresetDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/ElliottWavePresetDemo.java)** - Preset Elliott Wave launcher for ossified BTC/ETH/SP500 datasets or live datasource arguments
 - **[WyckoffCycleIndicatorSuiteDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/wyckoff/WyckoffCycleIndicatorSuiteDemo.java)** - Wyckoff cycle facade and one-shot analysis demo
@@ -41,27 +47,28 @@ For verification signals and common failure patterns, see [Examples Expected Out
 - **[HighRewardElliottWaveStrategy](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/strategies/HighRewardElliottWaveStrategy.java)** - Elliott Wave strategy using scenario confidence, risk/reward, trend, and momentum gates
 - **[WalkForward](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/walkforward/WalkForward.java)** - Full walk-forward optimization loop
 
+## Portfolio backtesting
+
+- **[StaticPortfolioBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/portfolio/StaticPortfolioBacktest.java)** - Multi-asset portfolio backtest with `PortfolioSeriesManager` and periodic rebalancing
+- **[DiversifiedPortfolioAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/portfolio/DiversifiedPortfolioAnalysis.java)** - Asset correlation heatmaps, hierarchical clustering dendrograms, and minimum-variance target weights
+
+## Parameter research
+
+- **[SimpleMovingAverageRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageRangeBacktest.java)** - Parameter grid sweep over SMA windows with weighted ranking
+- **[RelationshipObjectiveSearchExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/research/RelationshipObjectiveSearchExample.java)** - Unified parameter research (`ParameterResearch`) switching easily between grid, genetic, and particle-swarm optimization
+
 ## Backtesting & analytics
 
 - **[SimpleMovingAverageBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageBacktest.java)** - Baseline crossover backtest
 - **[MovingAverageCrossOverRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/MovingAverageCrossOverRangeBacktest.java)** - Parameter sweeps across SMA windows
-- **[SimpleMovingAverageRangeBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/SimpleMovingAverageRangeBacktest.java)** - Parameter sweep that ranks the shortlist with weighted normalized criteria (`WeightedCriterion.of(...)`, `getTopStrategiesWeighted(...)`)
 - **[CoinbaseBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/CoinbaseBacktest.java)** - Backtest against Coinbase-sourced data
 - **[YahooFinanceBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/YahooFinanceBacktest.java)** - Backtest against Yahoo Finance data
 - **[TradingRecordParityBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradingRecordParityBacktest.java)** - Compare next-open, current-close, and slippage execution models side by side, then show the same fills across default, provided, and factory-configured `BaseTradingRecord` runs
 - **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Stream fills with `TradingRecord.operate(fill)`, group batches with `Trade.fromFills(...)`, and compare `FIFO`, `LIFO`, `AVG_COST`, and `SPECIFIC_ID` exit matching
 - **[BacktestPerformanceTuningHarness](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java)** - Tune large batch runs built on `BacktestExecutor`
 - **[StrategyExecutionLogging](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/logging/StrategyExecutionLogging.java)** - Trace rule evaluation and execution decisions line by line
-- **[ElliottWaveTrendBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/ElliottWaveTrendBacktest.java)** - Evaluate Elliott Wave trend-bias prediction accuracy across ossified datasets
-- **[HighRewardElliottWaveBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/HighRewardElliottWaveBacktest.java)** - Run several parameter profiles for the high-reward Elliott Wave strategy
 
-If you are learning the current execution stack, start with `Quickstart`, then `TradingRecordParityBacktest`, then `TradeFillRecordingExample`, and finally `SimpleMovingAverageRangeBacktest`.
-
-## Elliott Wave analysis
-
-- **[ElliottWaveAdaptiveSwingAnalysis](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWaveAdaptiveSwingAnalysis.java)** - Composite fractal/adaptive-ZigZag swing detection with confidence breakdown logging
-- **[ElliottWaveMultiDegreeAnalysisDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWaveMultiDegreeAnalysisDemo.java)** - Multi-degree analysis with cross-degree scenario support
-- **[ElliottWavePatternProfileDemo](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/demo/ElliottWavePatternProfileDemo.java)** - Compare default and pattern-aware confidence profiles
+If you are learning the current execution stack, start with `Quickstart`, then `TradingRecordParityBacktest`, then `TradeFillRecordingExample`, and finally `SimpleMovingAverageRangeBacktest` or `StaticPortfolioBacktest`.
 
 ## Bots & live trading
 
@@ -78,7 +85,7 @@ For new live code:
 
 ## More examples
 
-The examples module also contains data-source adapters, charting helpers, Elliott Wave demos, and indicator showcases. If a workflow is documented in the wiki but missing a runnable example, contributions are welcome.
+The examples module also contains data-source adapters, charting helpers, Elliott Wave demos, portfolio optimization tools, and indicator showcases. If a workflow is documented in the wiki but missing a runnable example, contributions are welcome.
 
 For compatibility migration between legacy and preferred APIs, see
 [Migration and Version Compatibility](Migration-and-Version-Compatibility.md).
