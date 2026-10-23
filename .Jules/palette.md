@@ -1,0 +1,3 @@
+## 2026-10-14 - Skip-to-content Link in Static Documentation Layout
+**Learning:** In static documentation themes with long sidebars (like Jekyll's minimal theme with 30+ navigation links), keyboard users must tab through every single sidebar link before reaching the page body. Adding a `.skip-link` right after `<body>` targeting `<section id="main-content" tabindex="-1">` dramatically improves keyboard accessibility without affecting visual layout for mouse users.
+**Action:** When working on doc themes or side-nav layouts, always provide an off-screen `.skip-link` that appears on focus at the top-left of the viewport.
