@@ -188,10 +188,14 @@ For an overview of indicator categories and composition patterns, see [Technical
 | `org.ta4j.core.indicators` | **DPOIndicator** | Detrended Price Oscillator. |
 | `org.ta4j.core.indicators` | **DistanceFromMAIndicator** | Distance of price from a moving average. |
 | `org.ta4j.core.indicators` | **KalmanFilterIndicator** | Kalman filter on price (smoothing/estimation). |
+| `org.ta4j.core.indicators` | **CorrentropyKalmanFilterIndicator** | Robust same-index smoothing that downweights or rejects outlier measurements; not a forward forecast. |
+| `org.ta4j.core.indicators` | **CorrentropyKalmanWeightIndicator** | Filter-owned measurement weight in `[0, 1]`; zero means rejection, and unavailable estimates report `NaN`. The weight is not a confidence probability. |
 | `org.ta4j.core.indicators` | **RWIHighIndicator** | RWI high (range expansion). |
 | `org.ta4j.core.indicators` | **RWILowIndicator** | RWI low. |
 | `org.ta4j.core.indicators` | **MassIndexIndicator** | Mass Index (range expansion for reversals). |
 | `org.ta4j.core.indicators` | **ParabolicSarIndicator** | Parabolic SAR (trailing stop / trend). |
+
+Obtain the correntropy weight through `filter.measurementWeight()` and the residual (`source - estimate`) through `filter.residual()`. Both views share the filter's state and warm-up. See [Technical Indicators](Technical-indicators.md) for noise-variance units, bandwidth, and failure/recovery behavior.
 
 **Short usage**  
 - **What it is:** Oscillators and momentum measures (RSI, Stochastic, MACD, ROC, CCI, etc.) from price and optionally volume.  
