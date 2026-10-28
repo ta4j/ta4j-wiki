@@ -638,7 +638,7 @@ These types live in `org.ta4j.core.indicators` and its subpackages and are part 
 | FQN | Class | Description (from codebase) |
 |-----|-------|-----------------------------|
 | `org.ta4j.core.indicators` | **AbstractIndicator** | Base class for indicators that stores the backing `BarSeries`. |
-| `org.ta4j.core.indicators` | **CachedIndicator** | Base class for cached indicators; caches calculated values except the latest bar. |
+| `org.ta4j.core.indicators` | **CachedIndicator** | Base class for cached indicators; caches calculated values, including the latest bar with mutation detection. |
 | `org.ta4j.core.indicators` | **RecursiveCachedIndicator** | Cached base class for recursive indicators with iterative warmup support. |
 | `org.ta4j.core.indicators` | **AbstractRecentSwingIndicator** | Base class for recent-swing indicators that expose the latest confirmed swing level. |
 | `org.ta4j.core.indicators.averages` | **AbstractEMAIndicator** | Base class for EMA-family implementations. |
