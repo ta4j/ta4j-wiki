@@ -11,7 +11,15 @@ Each `Bar` represents the market action during a time window and captures:
 - **Time period** (`Duration`)
 - **Begin and end timestamps** (stored as `Instant` since 0.18)
 
-Bars are immutable once added to a series (except for the latest bar which may be updated in-place while a period is in progress).
+### Mutating retained bars
+
+A bar retained by a series must publish its mutations to the retaining series, or must not be mutated after a newer bar is appended.
+
+`BaseBar` and `BaseRealtimeBar` publish their supported mutations when retained by `BaseBarSeries` or `ConcurrentBarSeries`. This includes changes to a historical bar that is still retained, so these built-in bars can be updated after a newer bar is appended.
+
+A custom `Bar` that does not publish mutations may be updated while it is the terminal (latest) bar. Once a newer bar is appended, leave that custom bar unchanged. `CachedIndicator` fingerprints non-publishing bars only while they are terminal; its former-terminal promotion recheck does not keep watching historical bars. A later unannounced mutation can therefore leave cached indicator values stale.
+
+See the `Bar` and `BarSeries.addBar` Javadoc for the API contract, and [indicator cache policies](Technical-indicators.md#moving-series-cache-policies) for cache behavior. Individual indicators may provide stronger mutation detection; this general contract does not remove those guarantees.
 
 ## Building series for backtesting
 
