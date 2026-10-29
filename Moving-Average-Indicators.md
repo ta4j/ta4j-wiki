@@ -38,7 +38,7 @@ Moving averages are versatile tools used in a variety of ways:
 
 ## Moving Averages in TA4J
 
-Package: `org.ta4j.core.indicators.averages` (ta4j mainline `0.22.7-SNAPSHOT`).
+Package: `org.ta4j.core.indicators.averages`. The classes listed here exist in the [published 0.27.0 release](https://github.com/ta4j/ta4j/releases/tag/0.27.0) (October 19, 2026). Current `master` builds `0.27.1-SNAPSHOT`; changes after the release are not available in 0.27.0.
 
 | Abbreviation | Full Name                                     | Indicator Name             | Moving Average Type            |
 |--------------|-----------------------------------------------|----------------------------|--------------------------------|
@@ -47,6 +47,7 @@ Package: `org.ta4j.core.indicators.averages` (ta4j mainline `0.22.7-SNAPSHOT`).
 | DMA          | Displaced Moving Average                      | DMAIndicator               | Specialized Moving Average     |
 | EDMA         | Exponential Displaced Moving Average          | EDMAIndicator              | Exponential Moving Average     |
 | EMA          | Exponential Moving Average                    | EMAIndicator               | Exponential Moving Average     |
+| EWMA         | Exponentially Weighted Moving Average         | EWMAIndicator              | Exponential Moving Average     |
 | HMA          | Hull Moving Average                           | HMAIndicator               | Specialized Moving Average     |
 | JMA          | Jurik Moving Average                          | JMAIndicator               | Specialized Moving Average     |
 | KAMA         | Kaufman Adaptive Moving Average               | KAMAIndicator              | Adaptive Moving Average        |
@@ -67,9 +68,16 @@ Package: `org.ta4j.core.indicators.averages` (ta4j mainline `0.22.7-SNAPSHOT`).
 | ZLEMA        | Zero Lag Exponential Moving Average           | ZLEMAIndicator             | Exponential Moving Average     |
 
 Notes:
-- `AbstractEMAIndicator` is an internal base class used by EMA-family implementations, not a standalone trading indicator.
-- Commit `d0ef59e7` (2026-02-06, "Update Indicator Unstable Counts") adjusted warmup/unstable behavior for multiple averages (for example `SMAIndicator`, `DoubleEMAIndicator`, `TripleEMAIndicator`) without introducing new average indicator types.
-- Through commit `90aa7495` (2026-03-26), the public class surface in `org.ta4j.core.indicators.averages` remains stable: 23 concrete moving-average indicators plus `AbstractEMAIndicator` as the internal EMA base (while other packages in the same version window added APIs such as `ElliottWaveAnalysisRunner` and the 0.22.4 volume indicators).
+- The 0.27.0 release contains **24 concrete moving-average indicators** in this package. `AbstractEMAIndicator` is a shared base class, not a separately usable moving average.
+- For the complete API index, see [Indicators Inventory](Indicators-Inventory.md).
+
+### EMA or EWMA?
+
+Choose `EMAIndicator` for the familiar period-based smoothing factor `2 / (barCount + 1)`. Choose `EWMAIndicator` when you need to specify the **decay factor** directly: each new result is `previous × decayFactor + current × (1 − decayFactor)`, where `0 < decayFactor < 1`. A smaller decay factor responds more to the latest observation. For EWMA, `barCount` sets the initial simple-average seed window; it does not set the decay factor.
+
+For example, the [0.27.0 EWMA regression test](https://github.com/ta4j/ta4j/blob/0.27.0/ta4j-core/src/test/java/org/ta4j/core/indicators/averages/EWMAIndicatorTest.java) uses inputs `1, 3, 5, 7`, seed window `3`, and decay `0.5`. The result is unavailable (`NaN`) at index `1`, `3` at index `2` (the average of the first three inputs), then `5` at index `3` (`3 × 0.5 + 7 × 0.5`). These are smoothing values, not forecasts or evidence that a trading strategy will profit.
+
+On a bounded series, EWMA needs the complete seed window before those bars are evicted. An already-evaluated indicator can retain its history, but a newly created indicator on a pruned series cannot reconstruct removed observations. If the maximum retained window is shorter than its seed window, it cannot initialize. See [Moving series and continued indicator state](Bar-series-and-bars.md#moving-series-and-continued-indicator-state) for the distinction between continued and fresh indicators.
 
 
 ## Classification of Moving Averages
@@ -95,6 +103,7 @@ Notes:
 - These averages assign exponentially increasing weights to recent data.
 - **Indicators**:
   - EMA (Exponential Moving Average)
+  - EWMA (Exponentially Weighted Moving Average)
   - ZLEMA (Zero Lag Exponential Moving Average)
   - DEMA (Double Exponential Moving Average)
   - TEMA (Triple Exponential Moving Average)
