@@ -181,6 +181,47 @@ PortfolioSeriesManager manager = new PortfolioSeriesManager(
 
 Execution is long-only and uses fractional units. Buys and sells are reduced or skipped when a fixed or step-like transaction cost would otherwise make cash negative. Invalid, negative, or non-finite costs are rejected.
 
+## Strategy-Driven Portfolio Runs
+
+Since 0.27.1, one `PortfolioStrategy` can trade many assets: each aligned bar it decides, per asset, whether to enter or exit, and the manager keeps one trading record per asset. Use this for rotation, top-N, and "trade whichever market qualifies" research where the strategy, not a fixed weight vector, picks the assets.
+
+```java
+Map<String, BarSeries> markets = new LinkedHashMap<>();
+markets.put("BTC-USD", btc);
+markets.put("ETH-USD", eth);
+markets.put("SOL-USD", sol);
+PortfolioSeriesView view = PortfolioSeries.union(markets);
+
+PortfolioRule entry = new AssetRankRule(IndicatorAssetRanker.of(new VolumeIndicator(btc)), 1)
+        .and(new MaxOpenPositionsRule(2))
+        .and(AssetRule.of(new CrossedUpIndicatorRule(fastSma, slowSma)));
+PortfolioRule exit = AssetRule.of(new StopLossRule(new ClosePriceIndicator(btc), 5));
+PortfolioStrategy rotation = new BasePortfolioStrategy("volume-rotation", entry, exit);
+
+PortfolioTradingRecord result = new PortfolioSeriesManager(view).run(rotation, view.numFactory().one());
+TradingRecord solTrades = result.record("SOL-USD");
+```
+
+Indicators and rules passed to `AssetRule.of(...)` or `IndicatorAssetRanker.of(...)` are templates: their descriptors are rebuilt on each asset's own series, so the sample series above only shapes the definition. Use the `Function<BarSeries, ...>` constructors when a component cannot be described by a descriptor; those strategies run but refuse to serialize.
+
+To reuse an existing single-series strategy unchanged on every asset:
+
+```java
+PortfolioStrategy perAsset = PerAssetStrategy.of(existingStrategy); // or PerAssetStrategy.ofJson(json)
+String json = perAsset.toJson();
+```
+
+Run semantics:
+
+- `PortfolioSeries.union(...)` aligns on the union of end times, so late-listed or delisted assets stay in the view. `hasBar(asset, i)` is true only when the asset has a bar ending exactly at aligned time `i`; assets without a bar are skipped for that index. The ordinary constructors keep strict intersection alignment.
+- Rules receive the aligned index; asset-scoped rules evaluate at `getSourceIndex(asset, i)`, and unstable bars apply to each asset's own source index.
+- Per asset, an open position is evaluated only for exit and a flat asset only for entry, so an asset never exits and re-enters on the same bar. With current-close execution, `MaxOpenPositionsRule` counts positions opened by earlier assets in the same bar.
+- `IndicatorAssetRanker` drops assets with no bar, unstable values, or `NaN`; equal scores order by ascending asset name.
+- `run(strategy, amount)` fills on each asset's current close and closes remaining positions at that asset's last processed close. `run(strategy, positionSizer, executionModel)` reuses ordinary `TradeExecutionModel` and `PositionSizer` implementations on source indexes and cannot see bars beyond the run window.
+- `BasePortfolioTradingRecord(view, factory)` lets callers supply their own per-asset `TradingRecord`, for example one backed by a persistent ledger.
+
+For live feeds, `LivePortfolioSeries` wraps caller-owned series without copying. Call `advance()` after appending bars to extend the aligned timeline, and `addAsset`/`removeAsset` as the tradable universe changes; a removed asset no longer resolves a source index. The caller must not mutate member series concurrently with strategy evaluation.
+
 ## Snapshots and Results
 
 Output types are immutable and created by the manager:
@@ -399,6 +440,11 @@ Do not estimate one full-history allocation and present it as a historical strat
 | `CorrelationMatrix` | Immutable matrix, pairs, stability metadata, and hierarchy entrypoint. |
 | `CorrelationHierarchy` / `ClusterMerge` | Complete-linkage result. |
 | `MinimumVarianceOptimizer` | Num-native long-only covariance optimizer. |
+| `PortfolioSeriesView` / `LivePortfolioSeries` | Aligned multi-asset view; live, caller-owned variant with `advance()` and universe changes. |
+| `PortfolioStrategy` / `BasePortfolioStrategy` / `PerAssetStrategy` | One strategy deciding entries and exits per asset. |
+| `PortfolioRule`, `AssetRule`, `AssetRankRule`, `MaxOpenPositionsRule`, `EndTimeRule` | Composable portfolio-level and asset-scoped rules. |
+| `AssetRanker` / `IndicatorAssetRanker` | Deterministic cross-asset ranking. |
+| `PortfolioTradingRecord` / `BasePortfolioTradingRecord` | One trading record per asset plus open-position counts. |
 
 ## Runnable Examples
 
