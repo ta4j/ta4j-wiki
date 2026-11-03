@@ -51,6 +51,7 @@ The current wiki reflects ta4j's newer unified trading stack:
 - **[Data Sources](Data-Sources.md)** - Loading bars or trades from files and HTTP providers
 - **[Num](Num.md)** - Precision-aware numeric types such as `DoubleNum` and `DecimalNum`
 - **[Technical Indicators](Technical-indicators.md)** - Indicator composition and caching
+- **[Indicator Family Analysis](Indicator-Family-Analysis.md)** - Group similar indicators so research and confluence workflows do not double-count redundant signals
 - **[Highs and Lows](Highs-and-Lows.md)** - Recent swing methods, canonical defaults, confirmation timing, and forming extremes
 - **[Correlation, Lead-Lag & Event Dependence](Correlation-Lead-Lag-Event-Analysis.md)** - Lead/lag profiles, DTW shape distance, event-synchronization F1, and event-aware mutual information
 - **[Forecast Indicators](Forecast-Indicators.md)** - Forward-looking return and price distributions, point projections, and strategy filters

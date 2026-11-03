@@ -21,6 +21,7 @@
 - [Data Sources](Data-Sources.md)
 - [Num](Num.md)
 - [Technical Indicators](Technical-indicators.md)
+- [Indicator Family Analysis](Indicator-Family-Analysis.md)
 - [Indicators Inventory](Indicators-Inventory.md)
 - [Forecast Indicators](Forecast-Indicators.md)
 - [Forecast State & Regime Estimation](Forecast-State-Estimation.md)
