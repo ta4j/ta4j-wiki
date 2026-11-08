@@ -17,6 +17,8 @@ A bar retained by a series must publish its mutations to the retaining series, o
 
 `BaseBar` and `BaseRealtimeBar` publish their supported mutations when retained by `BaseBarSeries` or `ConcurrentBarSeries`. This includes changes to a historical bar that is still retained, so these built-in bars can be updated after a newer bar is appended.
 
+For concurrent readers, publication is not the same as an atomic bar update. Directly calling `bar.addPrice(...)` on a retained bar can change its fields before `ConcurrentBarSeries` publishes the new revision. Use the series' `addPrice(...)` or `addTrade(...)` for the latest bar, or `replaceBar(index, correctedBar)` for an older bar, when bar values and revisions must change together.
+
 A custom `Bar` that does not publish mutations may be updated while it is the terminal (latest) bar. Once a newer bar is appended, leave that custom bar unchanged. `CachedIndicator` fingerprints non-publishing bars only while they are terminal; its former-terminal promotion recheck does not keep watching historical bars. A later unannounced mutation can therefore leave cached indicator values stale.
 
 See the `Bar` and `BarSeries.addBar` Javadoc for the API contract, and [indicator cache policies](Technical-indicators.md#moving-series-cache-policies) for cache behavior. Individual indicators may provide stronger mutation detection; this general contract does not remove those guarantees.
@@ -138,7 +140,7 @@ Removed indexes are not historical-data access: some APIs map them to the retain
 
 ## Concurrent bar series for multi-threaded scenarios
 
-Since 0.22.2, `ConcurrentBarSeries` provides thread-safe access for scenarios where multiple threads need to read from or write to a bar series simultaneously. This is essential for live trading systems where one thread ingests market data while another thread evaluates strategies.
+Since 0.22.2, `ConcurrentBarSeries` has supported concurrent bar-series reads and writes, including live ingestion alongside strategy evaluation. It locks individual series operations; it does **not** make an entire strategy evaluation an atomic snapshot.
 
 ### Creating a concurrent series
 
@@ -234,43 +236,15 @@ if (bar.hasLiquidityData()) {
 
 Note: Side and liquidity data are optional—exchanges may not provide this information for every trade. When unavailable, the corresponding getters return zero values.
 
-### Thread safety guarantees
+### Thread safety and read consistency
 
-`ConcurrentBarSeries` uses `ReentrantReadWriteLock` to provide:
-- **Multiple concurrent readers**: Read operations (getters, indicator evaluation) can proceed in parallel
-- **Exclusive writers**: Write operations (bar ingestion, modifications) are serialized
-- **Safe access patterns**: Read operations are lock-protected, and `getBarData()` returns an immutable snapshot (`List.copyOf(...)`)
+`ConcurrentBarSeries` uses a `ReentrantReadWriteLock`: multiple readers can access the series together, while series-managed writes are exclusive. But separate getter calls are **not** one transaction. A writer can append or correct a bar between `getEndIndex()` and a later `getBar()` or indicator read. The strategy can therefore observe inputs from different moments of the feed.
 
-Example concurrent usage:
+`getBarData()` returns an unmodifiable snapshot of the **list structure**, not copies of the bars. Its `Bar` objects can still change. Keeping that list does not freeze its OHLCV values.
 
-```java
-// Thread 1: Ingest trades from WebSocket
-executorService.submit(() -> {
-    while (running) {
-        Trade trade = websocket.receiveTrade();
-        concurrentSeries.ingestTrade(trade.getTime(), trade.getVolume(), trade.getPrice());
-    }
-});
+For one consistent set of raw bar values, indexes, and revisions, use `withReadLock(...)` for a short read and copy the values you need before releasing the lock. This works when writers use the series APIs, not when other threads mutate a retained `Bar` directly. **Do not evaluate indicators, strategies, or callbacks inside `withReadLock`:** indicator caches take their own locks, which can deadlock against a waiting series writer.
 
-// Thread 2: Evaluate strategy
-executorService.submit(() -> {
-    while (running) {
-        int endIndex = concurrentSeries.getEndIndex();
-        if (strategy.shouldEnter(endIndex, tradingRecord)) {
-            // Execute trade...
-        }
-    }
-});
-
-// Thread 3: Calculate indicators
-executorService.submit(() -> {
-    while (running) {
-        int endIndex = concurrentSeries.getEndIndex();
-        Num rsiValue = rsiIndicator.getValue(endIndex);
-        // Use indicator value...
-    }
-});
-```
+For a strategy that needs one market-data state, coordinate ingestion and evaluation at a completed-bar boundary, or evaluate against separately copied, stable bar data. `ConcurrentBarSeries` does not provide an atomic snapshot across indicator evaluations or multiple series.
 
 ### Serialization
 
