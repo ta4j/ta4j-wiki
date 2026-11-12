@@ -35,11 +35,14 @@ The complete runnable class at the source link supplies imports, constants, synt
 
 ## 3) Run and interpret
 
-From a checkout containing the example, run:
+From the repository root of a checkout containing the pending example, install the core dependency, then compile and run the example:
 
 ```shell
-mvn -pl ta4j-examples exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesBacktest
+mvn -pl ta4j-core -am install
+mvn -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesBacktest
 ```
+
+`compile` builds the example classes; `exec:java` alone does not compile a fresh checkout.
 
 The synthetic closes are 100, 104, 98, 110, 107 and 115; capital is 10,000 quote units, leverage is 3, and the rounded amount is 299.85 base units. The example logs net profit **4459.3692** quote units, return on capital **44.593692%**, and maximum absolute drawdown **1802.03853** quote units. Results are illustrative, not a venue reconciliation.
 

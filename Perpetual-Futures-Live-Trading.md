@@ -2,7 +2,7 @@
 
 Use this page when recording venue-confirmed perpetual fills, fees and funding settlements for analysis and restart recovery.
 
-Requires ta4j 0.28.1 or later. The APIs and [`PerpetualFuturesFillRecordingExample`](https://github.com/ta4j/ta4j/blob/ee7cd1bebb3d405f8363f262d5b2256bfbf0177b/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesFillRecordingExample.java) are in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734), stacked on the [backtest examples PR](https://github.com/ta4j/ta4j/pull/1733). These are proposed additions, not APIs already available in a released version.
+Requires ta4j 0.28.1 or later. The APIs and [`PerpetualFuturesFillRecordingExample`](https://github.com/ta4j/ta4j/blob/00d3479673539ea7f7b86f45892195179d331740/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesFillRecordingExample.java) are in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734), stacked on the [backtest examples PR](https://github.com/ta4j/ta4j/pull/1733). These are proposed additions, not APIs already available in a released version.
 
 ## 1) Ownership boundary
 
@@ -45,10 +45,10 @@ The offline example has no venue timestamps. In your adapter, retain the real ev
 
 - Positive `recordHoldingCost(index, cost)` means paid; negative means received. Pass the total settlement for the exposure currently open in this record, not a rate or one amount per lot.
 - Allocation is proportional to each open lot's remaining amount. A cost of 8 across amounts 1 and 3 becomes 2 and 6. A partial close of one third of a lot carrying 6 takes 2 to the closed position and leaves 4 with the remaining amount.
-- Allocation uses the lots open **when the method is called**. The index determines when that recorded cost becomes visible to analysis; it does not reconstruct historical exposure. Apply events in venue order and reconcile late corrections in your own ledger before replaying.
+- Allocation uses the lots open **when the method is called**. The index determines when that recorded cost becomes visible to analysis; it does not reconstruct historical exposure. Apply events in venue order: an exit before a settlement already allocated to an open lot is rejected. Reconcile late corrections in your own ledger before replaying.
 - Use the same settlement-to-bar convention on every run. The index cannot precede any currently open lot's entry. Unlike modeled periodic funding, an explicitly recorded cost at the entry index is included from that index.
 - `Position.getHoldingCost(finalIndex)` includes recorded costs through that index; `getHoldingCost()` includes all applicable recorded costs. A closed position does not include costs after its exit. Use position-level accessors, not the record's configured holding model, to inspect allocated costs.
-- Null and NaN amounts are rejected. Nonzero costs require open exposure; zero is a no-op. Other `TradingRecord` implementations may reject recording with `UnsupportedOperationException`.
+- Null and non-finite amounts are rejected. Nonzero costs require open exposure; zero is a no-op. Other `TradingRecord` implementations may reject recording with `UnsupportedOperationException`.
 
 A method call is additive and is not idempotent. Deduplicate venue settlement identifiers before applying them. Do not record the same aggregate settlement once for each lot.
 
@@ -64,7 +64,7 @@ The example's `main` uses `GrossProfitLossCriterion`, `TotalFeesCriterion`, `Pos
 
 `BaseTradingRecord` serializes indexed recorded holding-cost shares alongside its lots and closed positions. Existing streams without those fields deserialize with no recorded costs. Cost models are transient: after deserialization call the existing `rehydrate` overload with `RecordedTradeCostModel.INSTANCE` and the intended modeled holding cost (`ZeroCostModel` for this example) before evaluating profit or resuming analysis.
 
-Persist your last consumed fill/settlement identifiers and venue checkpoint with the record so a restart cannot replay charges twice or miss events. Preserve the same bar-index mapping and matching policy. Load Java serialization only from trusted storage. After restart, reconcile open quantities and outstanding venue events before resuming order submission.
+Atomically commit the record together with the last consumed fill/settlement identifiers and venue checkpoint. Saving them separately can either apply a charge twice or skip it after a crash. If your storage cannot commit them atomically, keep an append-only event log keyed by unique venue identifiers and publish an immutable record snapshot plus its checkpoint as one generation; restart from the last completely published generation and replay each later logged event once. Preserve the same bar-index mapping and matching policy. Load Java serialization only from trusted storage. After restart, reconcile open quantities and outstanding venue events before resuming order submission.
 
 ## 6) Troubleshooting
 

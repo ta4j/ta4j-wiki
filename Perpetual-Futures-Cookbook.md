@@ -4,7 +4,7 @@ Use this page when adapting common funding, sizing and risk techniques to a perp
 
 Requires ta4j 0.28.1 or later. The examples and APIs are pending human merge. The excerpts below are from [`PerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java) and [`InversePerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java), pinned to the pending example commit.
 
-The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerpts come from [`PerpetualFuturesRecipes`](https://github.com/ta4j/ta4j/blob/ee7cd1bebb3d405f8363f262d5b2256bfbf0177b/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java), in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734). Its `main` runs offline; retain the surrounding class and imports when adapting individual methods.
+The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerpts come from [`PerpetualFuturesRecipes`](https://github.com/ta4j/ta4j/blob/00d3479673539ea7f7b86f45892195179d331740/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java), in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734). Its `main` runs offline; retain the surrounding class and imports when adapting individual methods.
 
 ## 1) Fee floors and maker/taker rates
 
@@ -52,13 +52,18 @@ The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerp
 
 ```java
     static Strategy fundingAwareStrategy(BarSeries series, Indicator<Num> rates) {
-        // Only enter on the chosen signal when the observed rate is below 0.1%.
-        Rule entry = new FixedRule(series.getBeginIndex()).and(new UnderIndicatorRule(rates, 0.001));
+        // Zero/NaN denotes no observed settlement in this sample, not free funding.
+        Rule observedRate = (index, record) -> {
+            Num rate = rates.getValue(index);
+            return !rate.isNaN() && !rate.isZero();
+        };
+        Rule entry = new FixedRule(series.getBeginIndex()).and(observedRate)
+                .and(new UnderIndicatorRule(rates, 0.001));
         return new BaseStrategy(entry, new FixedRule(series.getEndIndex()));
     }
 ```
 
-**Notes:** Use only rates available at the decision time. The guard illustrates an economic long; adapt the threshold and sign for shorts. Replace the fixed entry/exit signals with your own strategy without changing the funding model.
+**Notes:** Use only rates available at the decision time. This sample uses zero or NaN for bars without an observed settlement and rejects entry on those bars; do not infer a free rate or carry a future observation backwards. The guard illustrates an economic long; adapt the threshold and sign for shorts. Replace the fixed entry/exit signals with your own strategy without changing the funding model.
 
 ## 4) Approximate liquidation stop
 

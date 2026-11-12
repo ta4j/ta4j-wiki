@@ -46,8 +46,10 @@ Success signals:
 
 Requires ta4j 0.28.1 or later and the pending [example stack](https://github.com/ta4j/ta4j/pull/1733).
 
+For examples 4–7, first run `mvn -pl ta4j-core -am install` from the repository root of a checkout containing the corresponding pending PRs. Each command below compiles the examples before execution; `exec:java` alone requires previously compiled classes.
+
 ```bash
-mvn -pl ta4j-examples exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesBacktest
+mvn -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesBacktest
 ```
 
 With the bundled synthetic bars, success signals are net profit `4459.3692`, return on capital `44.593692%`, and maximum absolute drawdown `1802.03853`, in quote currency.
@@ -55,7 +57,7 @@ With the bundled synthetic bars, success signals are net profit `4459.3692`, ret
 ### 5) `ta4jexamples.backtesting.InversePerpetualFuturesBacktest`
 
 ```bash
-mvn -pl ta4j-examples exec:java -Dexec.mainClass=ta4jexamples.backtesting.InversePerpetualFuturesBacktest
+mvn -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.InversePerpetualFuturesBacktest
 ```
 
 With the bundled synthetic bars, success signals are net profit `0.2982091541666667`, return on capital `59.64183083333334%`, and maximum absolute drawdown `0.2381427738095233`, in base coin.
@@ -67,7 +69,7 @@ See [Perpetual Futures Backtesting](Perpetual-Futures-Backtesting.md) for the ac
 Requires the pending recorded-cost branch and ta4j 0.28.1 or later.
 
 ```bash
-mvn -pl ta4j-examples exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesFillRecordingExample
+mvn -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesFillRecordingExample
 ```
 
 The offline confirmed-fill sequence logs gross profit `25`, recorded fees `6`, net recorded holding costs `4.0`, and net profit `15.0`, all in quote currency. See [Live trading](Perpetual-Futures-Live-Trading.md) for allocation and restart reconciliation.
@@ -75,7 +77,7 @@ The offline confirmed-fill sequence logs gross profit `25`, recorded fees `6`, n
 ### 7) `ta4jexamples.backtesting.PerpetualFuturesRecipes`
 
 ```bash
-mvn -pl ta4j-examples exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesRecipes
+mvn -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesRecipes
 ```
 
 With the bundled observations and 1,000 quote units of capital, spot enters 2 base units and logs fees `0.530000`, funding `0.0`, net profit `79.470000` and return on capital `7.94700%`. The perpetual enters 6 base units and logs fees `1.440000`, funding `-0.900000`, net profit `239.460000` and return on capital `23.94600%`. Both drawdown/capital fractions are `0E+1` on this rising synthetic path. See the [Cookbook](Perpetual-Futures-Cookbook.md); these figures are not a venue-performance claim.
