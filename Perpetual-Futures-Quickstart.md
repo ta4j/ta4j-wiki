@@ -37,7 +37,7 @@ The complete runnable class at the source link supplies imports, constants, synt
 
 ## 3) Run and interpret
 
-From the repository root of a checkout containing the pending example, install the core dependency, then compile and run the example:
+With JDK 25 or later, use the repository root of a checkout containing the pending example to install the core dependency, then compile and run the example:
 
 ```shell
 ./mvnw -pl ta4j-core -am install -DskipTests

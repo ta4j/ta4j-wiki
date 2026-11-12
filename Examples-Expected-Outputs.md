@@ -2,6 +2,8 @@
 
 This page defines success signals for the canonical example lane.
 
+Building and running these examples from source requires JDK 25 or later.
+
 ## Golden lane examples
 
 ### 1) `ta4jexamples.Quickstart`
