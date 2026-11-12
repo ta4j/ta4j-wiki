@@ -10,6 +10,7 @@ This hub centralizes common ta4j issues for production-minded users.
 | Strategy behaves differently in live vs backtest | Execution assumptions differ (fill timing, partial fills, costs) | [Backtesting](Backtesting.md), [Live Trading](Live-trading.md) |
 | Strategy keeps buying (or selling) repeatedly on one candle | Live-candle evaluation without `tradingRecord` context or fill-sync/de-dup guards | [Live Candle vs Closed Candle Evaluation](Live-Candle-vs-Closed-Candle-Evaluation.md), [Live Trading](Live-trading.md) |
 | Unrealized/open-position numbers look wrong | Trade recording mismatch or lot policy misunderstanding | [Live Trading](Live-trading.md), [Live Trading Runbook](Live-Trading-Runbook.md) |
+| Perpetual P&L differs from venue statement | Funding timing, mark price, fees, or rounding differs | [Perpetual Futures Live Trading](Perpetual-Futures-Live-Trading.md) |
 | Results change after enabling moving windows | Historical bars evicted by `setMaximumBarCount` | [Bar Series and Bars](Bar-series-and-bars.md) |
 | Noisy or unstable leaderboard across reruns | Overfitting, weak validation geometry, or non-deterministic data pipeline | [Walk-Forward Research](Walk-Forward-Research.md), [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md) |
 | Charting fails in CI/headless environment | GUI rendering unavailable | [Charting](Charting.md) |

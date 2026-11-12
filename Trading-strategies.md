@@ -225,6 +225,7 @@ For the complete preview guide to strategy, rule, indicator, and analysis-criter
 ## Execution context tips
 
 - **Backtesting** – Inject custom `CostModel` implementations (for example `LinearTransactionCostModel`, `LinearBorrowingCostModel`) or a custom `TradeExecutionModel` into `BarSeriesManager` to simulate slippage and commissions accurately.
+- **Perpetual futures** – Account for funding, leverage and quantity steps as described in [Perpetual Futures Backtesting](Perpetual-Futures-Backtesting.md).
 - **Live trading** – Feed real-time bars into a moving `BarSeries`, call `strategy.shouldEnter(index, record)` / `shouldExit(...)`, then execute trades through your broker (see [Live Trading](Live-trading.md)).
 - **Diagnostics** – Mirror the approach in `ta4jexamples.logging.StrategyExecutionLogging` to trace which rule triggered each trade.
 

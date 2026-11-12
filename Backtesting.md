@@ -238,6 +238,7 @@ After you have a `TradingRecord`, render it with `ChartWorkflow` or inspect it w
 ## Avoid common pitfalls
 
 - **Look-ahead bias** - Ensure your indicator windows and any custom execution logic never peek past the current bar.
+- **Perpetual futures assumptions** - Model funding, leverage, quantity steps, and liquidation limits explicitly; see [Perpetual Futures Backtesting](Perpetual-Futures-Backtesting.md).
 - **Insufficient warm-up** - Set `strategy.setUnstableBars(n)` so signals do not fire before your indicators stabilize.
 - **Moving series** - If you use `setMaximumBarCount`, do not evaluate criteria against evicted bars.
 - **Execution assumptions** - Keep your `TradeExecutionModel`, fees, and borrowing costs aligned with what you are trying to simulate.

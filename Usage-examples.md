@@ -10,6 +10,7 @@ If you are deciding where to start, use this map:
 - Build and compare strategy logic: [Strategy patterns](#strategy-patterns)
 - Preview compact serialization configuration: [Serialization and Named Shorthand](Serialization-and-Named-Shorthand.md)
 - Validate execution assumptions and metrics: [Backtesting & analytics](#backtesting--analytics)
+- Backtest perpetual futures: [Perpetual Futures](Perpetual-Futures.md)
 - Integrate bot loops and fill-driven recording: [Bots & live trading](#bots--live-trading)
 - Debug indicators and visual behavior: [Indicators & visualization](#indicators--visualization)
 - Deep Elliott workflows: [Elliott Wave analysis](#elliott-wave-analysis)
@@ -50,11 +51,17 @@ For verification signals and common failure patterns, see [Examples Expected Out
 - **[YahooFinanceBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/YahooFinanceBacktest.java)** - Backtest against Yahoo Finance data
 - **[TradingRecordParityBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradingRecordParityBacktest.java)** - Compare next-open, current-close, and slippage execution models side by side, then show the same fills across default, provided, and factory-configured `BaseTradingRecord` runs
 - **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Stream fills with `TradingRecord.operate(fill)`, group batches with `Trade.fromFills(...)`, and compare `FIFO`, `LIFO`, `AVG_COST`, and `SPECIFIC_ID` exit matching
+- **[PerpetualFuturesBacktest](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java)** - Offline linear perpetual with funding, leveraged sizing, and a liquidation-stop approximation
+- **[InversePerpetualFuturesBacktest](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java)** - Offline inverse perpetual using a reciprocal price series
+- **[PerpetualFuturesFillRecordingExample](https://github.com/ta4j/ta4j/blob/ee7cd1bebb3d405f8363f262d5b2256bfbf0177b/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesFillRecordingExample.java)** - Reconcile actual fill fees, paid funding, received funding and partial closes
+- **[PerpetualFuturesRecipes](https://github.com/ta4j/ta4j/blob/ee7cd1bebb3d405f8363f262d5b2256bfbf0177b/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java)** - Run custom fee floors, historical funding, entry filters, contract rounding and a spot/perpetual comparison
 - **[BacktestPerformanceTuningHarness](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/BacktestPerformanceTuningHarness.java)** - Tune large batch runs built on `BacktestExecutor`
 - **[StaticPortfolioBacktest](https://github.com/ta4j/ta4j/blob/0.26.0/ta4j-examples/src/main/java/ta4jexamples/portfolio/StaticPortfolioBacktest.java)** - Run a deterministic static target-weight portfolio simulation with aligned assets, cash and transaction costs
 - **[StrategyExecutionLogging](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/logging/StrategyExecutionLogging.java)** - Trace rule evaluation and execution decisions line by line
 - **[ElliottWaveTrendBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/ElliottWaveTrendBacktest.java)** - Evaluate Elliott Wave trend-bias prediction accuracy across ossified datasets
 - **[HighRewardElliottWaveBacktest](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/analysis/elliottwave/backtest/HighRewardElliottWaveBacktest.java)** - Run several parameter profiles for the high-reward Elliott Wave strategy
+
+These perpetual examples target ta4j 0.28.1 or later and are linked to the pending example stack, not current master. See the [perpetual futures guides](Perpetual-Futures.md).
 
 If you are learning the current execution stack, start with `Quickstart`, then `TradingRecordParityBacktest`, then `TradeFillRecordingExample`, and finally `SimpleMovingAverageRangeBacktest`.
 
@@ -67,6 +74,7 @@ If you are learning the current execution stack, start with `Quickstart`, then `
 ## Bots & live trading
 
 - **[TradingBotOnMovingBarSeries](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/bots/TradingBotOnMovingBarSeries.java)** - Minimal manual bot loop using a moving series and `BaseTradingRecord`
+- **[Perpetual Futures Live Trading](Perpetual-Futures-Live-Trading.md)** - Recording fills and funding settlements
 - **[Live Trading](Live-trading.md)** - Production-oriented guidance for `ConcurrentBarSeries`, fill-driven record updates, and recovery
 - **[Bar Series & Bars](Bar-series-and-bars.md)** - Streaming aggregation and bar-ingestion patterns
 

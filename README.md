@@ -74,6 +74,7 @@ Use the canonical matrix for execution choices:
 
 - **[Analysis Criteria and Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)** - Rolling criteria, risk-adjusted return, open exposure, and risk-unit scoring
 - **[Walk-Forward Research](Walk-Forward-Research.md)** - Strategy walk-forward runs and generic prediction research workflows
+- **[Perpetual Futures](Perpetual-Futures.md)** - Funding, leveraged sizing, live recording, and inverse-contract recipes (requires ta4j 0.28.1 or later)
 
 ## Community
 

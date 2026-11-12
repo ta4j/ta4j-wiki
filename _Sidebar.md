@@ -44,6 +44,13 @@
 - [Walk-Forward Research](Walk-Forward-Research.md)
 - [Charting Quickstart](Charting-Quickstart.md)
 
+## Perpetual Futures
+- [Overview](Perpetual-Futures.md)
+- [Quickstart](Perpetual-Futures-Quickstart.md)
+- [Backtesting](Perpetual-Futures-Backtesting.md)
+- [Live Trading](Perpetual-Futures-Live-Trading.md)
+- [Cookbook](Perpetual-Futures-Cookbook.md)
+
 ## Project & Community
 - [How to Contribute](https://github.com/ta4j/ta4j/blob/master/.github/CONTRIBUTING.md)
 - [Documentation Governance](Documentation-Governance.md)

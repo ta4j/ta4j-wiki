@@ -13,6 +13,7 @@ Use analysis criteria after a strategy run to compare returns, risk, duration, f
 | Stop-model quality | `RMultipleCriterion` | Computes profit divided by per-trade risk from a `PositionRiskModel`. |
 | Open exposure | `OpenPositionCostBasisCriterion`, `OpenPositionUnrealizedProfitCriterion` | Useful when evaluating records that can still have an open position. |
 | Recorded fees | `TotalFeesCriterion` | Reads fees recorded on fills/trades instead of re-estimating them from a cost model. |
+| Return on committed capital | `ReturnOnCapitalCriterion` | Divides net closed-position profit by supplied capital; see [Perpetual Futures Backtesting](Perpetual-Futures-Backtesting.md). Requires ta4j 0.28.1 or later; the implementation is in [PR #1732](https://github.com/ta4j/ta4j/pull/1732). |
 
 ## Sampling And Equity-Curve Controls
 
