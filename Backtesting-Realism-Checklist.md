@@ -19,6 +19,7 @@ Use this checklist before trusting a strategy leaderboard.
 
 - [ ] Execution model (`next-open`, `current-close`, slippage, stop-limit) matches intended simulation
 - [ ] Fee and holding cost models reflect expected market conditions
+  - [ ] For perpetuals, funding timing and mark prices, leverage, and liquidation assumptions are explicit
 - [ ] Order-sizing assumptions are explicit and reproducible
 - [ ] Partial-fill semantics are tested if they matter for deployment
 
@@ -45,6 +46,7 @@ Use this checklist before trusting a strategy leaderboard.
 ## Recommended companion docs
 
 - [Backtesting](Backtesting.md)
+- [Perpetual Futures Backtesting](Perpetual-Futures-Backtesting.md)
 - [Walk-Forward Research](Walk-Forward-Research.md)
 - [Analysis Criteria and Risk Metrics](Analysis-Criteria-and-Risk-Metrics.md)
 - [Troubleshooting Hub](Troubleshooting-Hub.md)

@@ -199,6 +199,7 @@ For a full production operating model (startup, persistence, recovery, reconcili
 ## Examples And References
 
 - **[TradeFillRecordingExample](https://github.com/ta4j/ta4j/blob/master/ta4j-examples/src/main/java/ta4jexamples/backtesting/TradeFillRecordingExample.java)** - Runnable walkthrough of streamed fills, grouped batches, and partial-exit matching policies
+- **[Perpetual Futures Live Trading](Perpetual-Futures-Live-Trading.md)** - Fill and funding settlement recording and venue reconciliation
 - **[TradingBotOnMovingBarSeries](Usage-examples.md#bots--live-trading)** - Minimal manual bot loop
 - **[Backtesting](Backtesting.md)** - Historical and replay-style execution patterns
 - **[Bar Series & Bars](Bar-series-and-bars.md)** - Bar ingestion and aggregation details

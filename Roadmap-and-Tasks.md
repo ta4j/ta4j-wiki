@@ -44,6 +44,6 @@ Thoughts, suggestions, contributions, etc toward any of these items would be gre
 |**TradingRecord QoL -** Enhance TradingRecord to allow multiple, open positions. Model funds/principal.                                        |
 |**Order book models & analysis -** New model classes representing order books along with tools to analyze them.                                |
 |**Options models & analysis -** New model classes representing options contracts along with tools to analyze them.                             |
-|**Futures models & analysis -** New model classes representing futures contracts along with tools to analyze them.                             |
+|**Perpetual futures through existing APIs -** Pending human merge for 0.28.1: compose funding costs, leveraged sizing, capital-relative returns and recorded settlements rather than introduce a separate contract hierarchy. Start with the [perpetual futures guides](Perpetual-Futures.md). Venue contract conversion, collateral and liquidation remain application responsibilities. |
 |~~**Strategy (& Rule) serialization API -**~~ ✅ **COMPLETED in 0.19** – `StrategySerialization` with `Strategy#toJson()` and `Strategy#fromJson(BarSeries, String)` methods enables saving and restoring complete strategy configurations (including entry/exit rules) as JSON. `NamedStrategy` serialization with compact format also available.                   |
 <br />

@@ -116,4 +116,5 @@ Track and alert on:
 
 - [Troubleshooting Hub](Troubleshooting-Hub.md)
 - [Backtesting Realism Checklist](Backtesting-Realism-Checklist.md)
+- [Perpetual Futures Live Trading](Perpetual-Futures-Live-Trading.md)
 - [Usage Examples](Usage-examples.md#bots--live-trading)
