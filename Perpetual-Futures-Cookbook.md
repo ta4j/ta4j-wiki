@@ -4,7 +4,7 @@ Use this page when adapting common funding, sizing and risk techniques to a perp
 
 Requires ta4j 0.28.1 or later. The examples and APIs are pending human merge. The excerpts below are from [`PerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java) and [`InversePerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java), pinned to the pending example commit.
 
-The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerpts come from [`PerpetualFuturesRecipes`](https://github.com/ta4j/ta4j/blob/00d3479673539ea7f7b86f45892195179d331740/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java), in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734). Its `main` runs offline; retain the surrounding class and imports when adapting individual methods.
+The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerpts come from [`PerpetualFuturesRecipes`](https://github.com/ta4j/ta4j/blob/eb8de38dd938f3549f461d8e6cea840144891128/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java), in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734). Its `main` runs offline; retain the surrounding class and imports when adapting individual methods.
 
 ## 1) Fee floors and maker/taker rates
 
