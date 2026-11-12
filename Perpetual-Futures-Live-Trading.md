@@ -64,7 +64,11 @@ The example's `main` uses `GrossProfitLossCriterion`, `TotalFeesCriterion`, `Pos
 
 `BaseTradingRecord` serializes indexed recorded holding-cost shares alongside its lots and closed positions. Existing streams without those fields deserialize with no recorded costs. Cost models are transient: after deserialization call the existing `rehydrate` overload with `RecordedTradeCostModel.INSTANCE` and the intended modeled holding cost (`ZeroCostModel` for this example) before evaluating profit or resuming analysis.
 
-Atomically commit the record together with the last consumed fill/settlement identifiers and venue checkpoint. Saving them separately can either apply a charge twice or skip it after a crash. If your storage cannot commit them atomically, keep an append-only event log keyed by unique venue identifiers and publish an immutable record snapshot plus its checkpoint as one generation; restart from the last completely published generation and replay each later logged event once. Preserve the same bar-index mapping and matching policy. Load Java serialization only from trusted storage. After restart, reconcile open quantities and outstanding venue events before resuming order submission.
+Atomically commit the record together with its applied-event deduplication state and venue checkpoint. Saving them separately can either apply a charge twice or skip it after a crash.
+
+If your storage cannot commit them atomically, keep an append-only event log keyed by unique venue identifiers and publish an immutable record snapshot plus its log checkpoint as one generation. The checkpoint must mark a contiguous, fully applied log prefix, and the snapshot must contain exactly that prefix—not merely everything applied through the most recent venue identifier. If venue-order processing leaves gaps in arrival-log order, buffer events or delay publication until those gaps are applied; never advance the checkpoint past an unapplied entry. Restart from the last completely published generation and replay entries after its checkpoint once, in venue order.
+
+Preserve the same bar-index mapping and matching policy. Load Java serialization only from trusted storage. After restart, reconcile open quantities and outstanding venue events before resuming order submission.
 
 ## 6) Troubleshooting
 
