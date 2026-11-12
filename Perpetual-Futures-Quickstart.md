@@ -2,7 +2,7 @@
 
 Use this page when you want to run an offline leveraged linear perpetual backtest and understand its results.
 
-Requires ta4j 0.28.1 or later. The example and supporting APIs are pending human merge; this excerpt is from [`PerpetualFuturesBacktest` at commit 71db021](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java), not a claim about master.
+Requires ta4j 0.28.1 or later. The example and supporting APIs are pending human merge; this excerpt is from [`PerpetualFuturesBacktest` at commit 50dbf50](https://github.com/ta4j/ta4j/blob/50dbf50339bde9086308fcd5a8a5b0c2c5b15645/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java), not a claim about master.
 
 ## 1) What you will build
 
@@ -12,6 +12,8 @@ The complete runnable class at the source link supplies imports, constants, synt
     static TradingRecord run(BarSeries series, double leverage, double fundingRate) {
         ClosePriceIndicator price = new ClosePriceIndicator(series);
         double liquidationLossPercentage = 100 * (1 / leverage - MAINTENANCE_MARGIN_RATE);
+        // Close-only approximation: intrabar wicks through the level are missed,
+        // and a triggered exit still fills at that bar's close.
         Rule liquidationStop = new StopLossRule(price, liquidationLossPercentage);
         Strategy strategy = new BaseStrategy(new FixedRule(series.getBeginIndex()),
                 new FixedRule(series.getEndIndex()).or(liquidationStop));
@@ -27,7 +29,7 @@ The complete runnable class at the source link supplies imports, constants, synt
 
 ## 2) Read the example
 
-1. The close-price indicator feeds an approximate liquidation stop. The stop threshold is `100 × (1 / leverage − maintenance margin rate)` percent; it is not a venue liquidation engine.
+1. The close-price indicator feeds an approximate liquidation stop. The stop threshold is `100 × (1 / leverage − maintenance margin rate)` percent; it misses intrabar wicks and fills a triggered exit at close, not necessarily at the threshold. It is not a venue liquidation engine.
 2. The fixed rules enter at the first bar and exit at the last, unless the stop triggers first. This is an illustration, not a trading recommendation.
 3. The fixed funding rate settles every eight hours; positive rates charge a long. Fees apply on notional.
 4. The sizer treats capital as the unlevered budget, scales exposure, then floors to the quantity step. It does not create a margin account or reserve leveraged fees in advance.
@@ -38,11 +40,11 @@ The complete runnable class at the source link supplies imports, constants, synt
 From the repository root of a checkout containing the pending example, install the core dependency, then compile and run the example:
 
 ```shell
-mvn -pl ta4j-core -am install
-mvn -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesBacktest
+./mvnw -pl ta4j-core -am install -DskipTests
+./mvnw -pl ta4j-examples compile exec:java -Dexec.mainClass=ta4jexamples.backtesting.PerpetualFuturesBacktest
 ```
 
-`compile` builds the example classes; `exec:java` alone does not compile a fresh checkout.
+The repository wrapper selects its pinned Maven version. `-DskipTests` avoids running the full core suite just to prepare this quickstart; `compile` builds the example classes, while `exec:java` alone does not compile a fresh checkout.
 
 The synthetic closes are 100, 104, 98, 110, 107 and 115; capital is 10,000 quote units, leverage is 3, and the rounded amount is 299.85 base units. The example logs net profit **4459.3692** quote units, return on capital **44.593692%**, and maximum absolute drawdown **1802.03853** quote units. Results are illustrative, not a venue reconciliation.
 

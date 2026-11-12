@@ -2,7 +2,7 @@
 
 Use this page when you need realistic units, costs, sizing and risk interpretation for a perpetual-futures backtest.
 
-Requires ta4j 0.28.1 or later. The APIs and examples described here are pending human merge; the [linear example](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java) and [inverse example](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java) are pinned to the pending example commit.
+Requires ta4j 0.28.1 or later. The APIs and examples described here are pending human merge; the [linear example](https://github.com/ta4j/ta4j/blob/50dbf50339bde9086308fcd5a8a5b0c2c5b15645/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java) and [inverse example](https://github.com/ta4j/ta4j/blob/50dbf50339bde9086308fcd5a8a5b0c2c5b15645/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java) are pinned to the pending example commit.
 
 ## 1) Units and contract size
 
@@ -26,7 +26,7 @@ Choose a sell entry for a short. Its price P&L and funding sign reverse relative
 
 ## 4) Liquidation approximation
 
-The example combines its regular exit with a `StopLossRule` at `100 × (1 / leverage − maintenance margin rate)` percent. This approximation requires a positive threshold and does not reproduce venue margin tiers, cross-margin, collateral haircuts, liquidation fees, or forced fills. Gaps and execution slippage can also exceed the stop. Check the venue's actual rules and stress scenarios separately.
+The example combines its regular exit with a `StopLossRule` at `100 × (1 / leverage − maintenance margin rate)` percent. It checks closes only: intrabar wicks through the level are missed, and a triggered exit fills at close. This approximation requires a positive threshold and does not reproduce venue margin tiers, cross-margin, collateral haircuts, liquidation fees, or forced fills. Gaps and execution slippage can also exceed the stop. Check the venue's actual rules and stress scenarios separately.
 
 ## 5) Measure results
 
@@ -48,6 +48,12 @@ Use the existing [walk-forward workflow](Walk-Forward-Research.md) to select par
 ## 8) Inverse contracts
 
 An inverse long of N quote units has gross base-coin profit `N × (1 / entry − 1 / exit)`. The example transforms positive-price bars to reciprocal prices, swapping high and low, and models the economic long as a short of amount N. Capital, fees, funding and drawdown are then in base coin. Negate the venue funding rate for this transformed short so a positive venue rate still charges the economic long. Volume remains source metadata, not inverse notional. This is a recipe, not native inverse valuation or a liquidation model.
+
+## Maintainer update conditions
+
+Hold publication until the core stack has merged and ta4j 0.28.1 has been released. At that point, remove the pending notices throughout these guides and replace commit-pinned source URLs with the actual release tag.
+
+If a released core API gains execution-phase-aware funding, inverse-contract helpers, or modeled-versus-recorded settlement replacement, revise the corresponding convention notes here and in [Live trading, section 2](Perpetual-Futures-Live-Trading.md#2-create-the-record-and-record-confirmed-events). Remove manual conventions only when the replacement API actually guarantees them.
 
 ## Related pages
 

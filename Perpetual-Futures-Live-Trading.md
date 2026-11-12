@@ -2,7 +2,7 @@
 
 Use this page when recording venue-confirmed perpetual fills, fees and funding settlements for analysis and restart recovery.
 
-Requires ta4j 0.28.1 or later. The APIs and [`PerpetualFuturesFillRecordingExample`](https://github.com/ta4j/ta4j/blob/eb8de38dd938f3549f461d8e6cea840144891128/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesFillRecordingExample.java) are in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734), stacked on the [backtest examples PR](https://github.com/ta4j/ta4j/pull/1733). These are proposed additions, not APIs already available in a released version.
+Requires ta4j 0.28.1 or later. The APIs and [`PerpetualFuturesFillRecordingExample`](https://github.com/ta4j/ta4j/blob/350c19840962b8430c99d1c35895de146849b9fa/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesFillRecordingExample.java) are in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734), stacked on the [backtest examples PR](https://github.com/ta4j/ta4j/pull/1733). These are proposed additions, not APIs already available in a released version.
 
 ## 1) Ownership boundary
 

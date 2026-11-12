@@ -2,9 +2,9 @@
 
 Use this page when adapting common funding, sizing and risk techniques to a perpetual-futures strategy.
 
-Requires ta4j 0.28.1 or later. The examples and APIs are pending human merge. The excerpts below are from [`PerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java) and [`InversePerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/71db021f54852a3a91cb393d4857c552a92060c6/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java), pinned to the pending example commit.
+Requires ta4j 0.28.1 or later. The examples and APIs are pending human merge. The excerpts below are from [`PerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/50dbf50339bde9086308fcd5a8a5b0c2c5b15645/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesBacktest.java) and [`InversePerpetualFuturesBacktest`](https://github.com/ta4j/ta4j/blob/50dbf50339bde9086308fcd5a8a5b0c2c5b15645/ta4j-examples/src/main/java/ta4jexamples/backtesting/InversePerpetualFuturesBacktest.java), pinned to the pending example commit.
 
-The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerpts come from [`PerpetualFuturesRecipes`](https://github.com/ta4j/ta4j/blob/eb8de38dd938f3549f461d8e6cea840144891128/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java), in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734). Its `main` runs offline; retain the surrounding class and imports when adapting individual methods.
+The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerpts come from [`PerpetualFuturesRecipes`](https://github.com/ta4j/ta4j/blob/350c19840962b8430c99d1c35895de146849b9fa/ta4j-examples/src/main/java/ta4jexamples/backtesting/PerpetualFuturesRecipes.java), in the pending [recorded holding-costs PR](https://github.com/ta4j/ta4j/pull/1734). Its `main` runs offline; retain the surrounding class and imports when adapting individual methods.
 
 ## 1) Fee floors and maker/taker rates
 
@@ -23,7 +23,7 @@ The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerp
         }
 ```
 
-**Notes:** The example constructs `MinimumCommission(0.001, 0.25)` and implements the other `CostModel` overloads in the same nested class. Fees apply separately to entry and exit. A rate-only model cannot infer whether an order supplied liquidity: select maker/taker tiers and convert currencies in your adapter, or record actual fill fees with `RecordedTradeCostModel`. Reconcile with venue statements.
+**Notes:** The example constructs `MinimumCommission(series.numFactory(), 0.001, 0.25)` and implements the other `CostModel` overloads in the same nested class, including numeric zero for an empty position. Fees apply separately to entry and exit. A rate-only model cannot infer whether an order supplied liquidity: select maker/taker tiers and convert currencies in your adapter, or record actual fill fees with `RecordedTradeCostModel`. Reconcile with venue statements.
 
 ## 2) Historical funding
 
@@ -33,8 +33,15 @@ The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerp
 
 ```java
     static Indicator<Num> historicalRates(BarSeries series) {
-        return new FixedNumIndicator(series, 0.0005, 0.001, 0, -0.002, 0);
+        NumFactory nums = series.numFactory();
+        return new FixedIndicator<>(series, nums.numOf(0.0005), nums.numOf(0.001), NaN.NaN, nums.numOf(-0.002),
+                NaN.NaN);
     }
+```
+
+Pass these sparse settlement observations, not a carried-forward decision signal, to the cost model:
+
+```java
 
     static CostModel historicalFunding(BarSeries series, Indicator<Num> rates) {
         Indicator<Num> marks = new ClosePriceIndicator(series);
@@ -42,28 +49,42 @@ The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerp
     }
 ```
 
-**Notes:** Align settlements to the price-series indices; zero or NaN rates mean no settlement. Replace closes with venue marks where appropriate. These are historical observations, not a forecast available before publication. See [funding conventions](Perpetual-Futures-Backtesting.md#2-fees-and-funding).
+**Notes:** Align settlements to the price-series indices. NaN means no settlement; a genuine zero is an observed zero rate. Only settlement bars accrue costs. Replace closes with venue marks where appropriate. These are historical observations, not a forecast available before publication. See [funding conventions](Perpetual-Futures-Backtesting.md#2-fees-and-funding).
 
 ## 3) Funding-aware entry
 
 **Problem:** Filter entries when funding is expensive.
 
-**Code:** Reuse the observed rate indicator in an entry rule:
+**Code:** Carry the latest published observation forward in a separate decision signal:
 
 ```java
-    static Strategy fundingAwareStrategy(BarSeries series, Indicator<Num> rates) {
-        // Zero/NaN denotes no observed settlement in this sample, not free funding.
-        Rule observedRate = (index, record) -> {
-            Num rate = rates.getValue(index);
-            return !rate.isNaN() && !rate.isZero();
-        };
-        Rule entry = new FixedRule(series.getBeginIndex()).and(observedRate)
-                .and(new UnderIndicatorRule(rates, 0.001));
+    static Indicator<Num> latestObservedRates(BarSeries series, Indicator<Num> settlementRates) {
+        FixedIndicator<Num> signal = new FixedIndicator<>(series);
+        Num latest = NaN.NaN;
+        for (int index = 0; index <= series.getEndIndex(); index++) {
+            if (index >= series.getBeginIndex()) {
+                Num observed = settlementRates.getValue(index);
+                if (Num.isFinite(observed)) {
+                    latest = observed;
+                }
+            }
+            signal.addValue(latest);
+        }
+        return signal;
+    }
+```
+
+Use that signal in the entry rule:
+
+```java
+    static Strategy fundingAwareStrategy(BarSeries series, Indicator<Num> rateSignal) {
+        Rule observedRate = (index, record) -> Num.isFinite(rateSignal.getValue(index));
+        Rule entry = observedRate.and(new UnderIndicatorRule(rateSignal, 0.001));
         return new BaseStrategy(entry, new FixedRule(series.getEndIndex()));
     }
 ```
 
-**Notes:** Use only rates available at the decision time. This sample uses zero or NaN for bars without an observed settlement and rejects entry on those bars; do not infer a free rate or carry a future observation backwards. The guard illustrates an economic long; adapt the threshold and sign for shorts. Replace the fixed entry/exit signals with your own strategy without changing the funding model.
+**Notes:** Before the first observation, the signal is NaN and entry is rejected. Between settlements, the last observed rate remains available for entry decisions without being charged again. Genuine zero rates are valid observations. Never carry a future observation backwards. This offline sample uses a close-time economic long; adapt publication timing, threshold and sign for your strategy and shorts.
 
 ## 4) Approximate liquidation stop
 
@@ -74,12 +95,14 @@ The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerp
 ```java
         ClosePriceIndicator price = new ClosePriceIndicator(series);
         double liquidationLossPercentage = 100 * (1 / leverage - MAINTENANCE_MARGIN_RATE);
+        // Close-only approximation: intrabar wicks through the level are missed,
+        // and a triggered exit still fills at that bar's close.
         Rule liquidationStop = new StopLossRule(price, liquidationLossPercentage);
         Strategy strategy = new BaseStrategy(new FixedRule(series.getBeginIndex()),
                 new FixedRule(series.getEndIndex()).or(liquidationStop));
 ```
 
-**Notes:** Require a positive threshold. This stop does not simulate venue liquidation, collateral changes, gaps or liquidation fees.
+**Notes:** Require a positive threshold. This close-only stop misses intrabar wicks and fills triggered exits at close. It does not simulate venue liquidation, collateral changes, gaps or liquidation fees.
 
 ## 5) Inverse contract
 
@@ -141,13 +164,14 @@ The fee, historical-rate, entry-filter, drawdown, rounding and comparison excerp
 ```java
     public static void main(String[] args) {
         BarSeries series = PerpetualFuturesBacktest.createSeries(100, 110, 120, 130, 140);
-        Indicator<Num> rates = historicalRates(series);
-        Strategy strategy = fundingAwareStrategy(series, rates);
-        CostModel fees = new MinimumCommission(0.001, 0.25);
+        Indicator<Num> settlementRates = historicalRates(series);
+        Indicator<Num> rateSignal = latestObservedRates(series, settlementRates);
+        Strategy strategy = fundingAwareStrategy(series, rateSignal);
+        CostModel fees = new MinimumCommission(series.numFactory(), 0.001, 0.25);
         BigDecimal step = baseAmountIncrement("0.01", "0.1");
         double capital = 1_000;
         TradingRecord spot = run(series, strategy, fees, new ZeroCostModel(), 2, 1, step);
-        TradingRecord perpetual = run(series, strategy, fees, historicalFunding(series, rates), 2, 3, step);
+        TradingRecord perpetual = run(series, strategy, fees, historicalFunding(series, settlementRates), 2, 3, step);
         report("Spot", series, spot, capital);
         report("Perpetual", series, perpetual, capital);
     }
